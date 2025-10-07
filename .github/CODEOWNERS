@@ -1,0 +1,17 @@
+# Code owners for this repository
+# These owners will be requested for review when PRs modify these files
+
+# Default owners for everything
+* @your-username
+
+# Terraform configurations
+/terraform/ @your-username
+
+# Python scripts
+/scripts/*.py @your-username
+
+# Documentation
+/docs/ @your-username
+
+# GitHub workflows
+/.github/ @your-username

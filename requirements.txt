@@ -1,0 +1,4 @@
+# PLACEHOLDER
+# Copy content from artifact: "Python Requirements"
+
+This file is a placeholder. Copy the actual content from the Claude conversation artifact titled "Python Requirements".

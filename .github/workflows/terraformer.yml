@@ -1,0 +1,16 @@
+# Copy content from artifact: "Terraformer GitHub Actions Workflow"
+name: Terraformer Import and Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 0'
+
+jobs:
+  import-okta-resources:
+    name: Import Okta Resources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Add remaining workflow steps from artifact

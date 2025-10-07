@@ -1,0 +1,21 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts should use LF
+*.sh text eol=lf
+
+# Python files should use LF
+*.py text eol=lf
+
+# These files are text and should be normalized
+*.tf text
+*.md text
+*.yml text
+*.yaml text
+*.json text
+
+# These files are binary and should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary

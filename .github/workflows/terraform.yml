@@ -1,0 +1,18 @@
+# Copy content from artifact: "GitHub Actions Workflow for Okta Terraform"
+name: Okta Terraform OIG Demo
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Add remaining workflow steps from artifact
