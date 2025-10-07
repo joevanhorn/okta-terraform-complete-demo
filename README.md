@@ -1,45 +1,98 @@
-# Okta Terraform OIG Demo
+# Okta Terraform Provider Demo - OIG Features + Terraformer
 
-[![Terraform](https://img.shields.io/badge/Terraform-%3E%3D1.9.0-623CE4?logo=terraform)](https://www.terraform.io/)
-[![Okta Provider](https://img.shields.io/badge/Okta%20Provider-6.1.0-00297A?logo=okta)](https://registry.terraform.io/providers/okta/okta/latest)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+This repository demonstrates the **Okta Terraform Provider v6.1.0** with the new **Okta Identity Governance (OIG)** endpoints, automated through GitHub Actions, with full **Terraformer** support for importing existing Okta configurations.
 
-Complete Infrastructure as Code solution for Okta Identity Governance with Terraform v6.1.0 + Terraformer integration.
+## 🚨 Important: Terraformer Limitations
 
-## 🚀 Quick Start
+**Terraformer does NOT import OIG resources** (the Terraform provider endpoints are new).
 
+**What this means:**
+- ✅ Terraformer imports: users, groups, apps, policies, etc.
+- ❌ Terraformer cannot import: OIG reviews, catalogs, workflows, etc.
+- ✅ Solution: Create OIG resources fresh using our Terraform configs
+
+See [Terraformer + OIG FAQ](./docs/TERRAFORMER_OIG_FAQ.md) for full details.
+
+## 🎯 What's New in v6.1.0
+
+The Okta Terraform Provider v6.1.0 introduces comprehensive support for Okta Identity Governance, including:
+
+### New Resources & Data Sources
+
+- **`okta_reviews`** - Access review campaigns for periodic certification
+- **`okta_principal_entitlements`** - Define what principals have access to
+- **`okta_request_conditions`** - Conditions for access requests
+- **`okta_request_sequences`** - Approval workflows with multiple stages
+- **`okta_request_settings`** - Global access request configuration
+- **`okta_request_v2`** - Create access requests programmatically
+- **`okta_catalog_entry_default`** - Configure app catalog entries
+- **`okta_catalog_entry_user_access_request_fields`** - Custom request fields
+- **`okta_end_user_my_requests`** - Query user's access requests
+
+## 🏗️ Architecture
+
+This demo creates a complete OIG workflow with support for importing existing configurations:
+
+1. **Core Resources**: Groups, users, and an OAuth application
+2. **Access Request Configuration**: Settings, conditions, and approval sequences
+3. **Catalog Management**: Configurable app catalog with custom fields
+4. **Entitlements**: Principal-based access definitions
+5. **Access Reviews**: Quarterly certification campaigns
+6. **Request Management**: Automated access request creation
+7. **Resource Owners & Labels**: API-based management (not in Terraform provider yet)
+8. **Terraformer Integration**: Import existing Okta resources into Terraform
+
+## 📦 Features
+
+### Terraform Provider Support
+- ✅ All 9 new OIG resources from v6.1.0
+- ✅ Advanced approval workflows
+- ✅ Risk-based conditional access
+- ✅ Access review campaigns
+
+### API Management (Python)
+- ✅ Resource Owners assignment
+- ✅ Governance Labels creation and assignment
+- ✅ Bulk operations with rate limiting
+- ✅ Idempotent operations
+
+### Terraformer Integration
+- ✅ Import existing Okta configurations
+- ✅ Automated cleanup and refactoring
+- ✅ Drift detection
+- ✅ Weekly sync workflows
+- ✅ Resource inventory tracking
+- ⚠️ **Note:** OIG resources NOT supported by Terraformer (create fresh instead)
+
+## 📋 Prerequisites
+
+- **Okta Organization** with OIG enabled
+- **Terraform** >= 1.9.0
+- **Terraformer** >= 0.8.24 (for import functionality)
+- **Python** >= 3.8 (for API management scripts)
+- **GitHub** repository with Actions enabled
+- **AWS S3** bucket for Terraform state (or alternative backend)
+- **Okta API Token** with appropriate permissions
+
+### Required Okta Permissions
+
+Your API token needs these scopes:
+- `okta.groups.manage`
+- `okta.users.manage`
+- `okta.apps.manage`
+- `okta.governance.accessRequests.manage`
+- `okta.governance.accessReviews.manage`
+- `okta.governance.catalogs.manage`
+
+### Installation
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/okta-terraform-oig-demo.git
-cd okta-terraform-oig-demo
+# Install Terraform
+brew install terraform  # macOS
+# or download from https://www.terraform.io/downloads
 
-# Run setup
-./setup.sh
+# Install Terraformer
+brew install terraformer  # macOS
+# or download from https://github.com/GoogleCloudPlatform/terraformer/releases
 
-# Configure credentials
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
-
-# Deploy
-terraform init
-terraform plan
-terraform apply
-```
-
-## 📚 Documentation
-
-See [`docs/`](./docs/) for complete documentation.
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
-
-## 📝 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
-
----
-
-**Note:** Copy complete content from artifact "README - Okta Terraform OIG Demo"
+# Install Python dependencies
+pip install -r requirements.txt
