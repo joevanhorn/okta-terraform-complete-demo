@@ -1,0 +1,189 @@
+name: Admin User Protection Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Protection mode'
+        required: true
+        type: choice
+        options:
+          - check
+          - filter
+          - protect
+        default: 'check'
+      input_path:
+        description: 'Path to user.tf file'
+        required: false
+        default: 'imported/*/users/user.tf'
+  pull_request:
+    paths:
+      - '**/user.tf'
+      - 'terraform/**/*.tf'
+
+jobs:
+  protect-admins:
+    name: Check for Super Admin Users
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Set up environment
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.py
+
+      - name: Find user.tf files
+        id: find_files
+        run: |
+          echo "Finding user.tf files..."
+          FILES=$(find . -name "user.tf" -not -path "*/\.git/*" -not -path "*/\.terraform/*" | head -5)
+          if [ -z "$FILES" ]; then
+            echo "No user.tf files found"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found files:"
+            echo "$FILES"
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "files<<EOF" >> $GITHUB_OUTPUT
+            echo "$FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run admin protection check
+        if: steps.find_files.outputs.found == 'true'
+        run: |
+          MODE="${{ inputs.mode || 'check' }}"
+          echo "Running in ${MODE} mode..."
+
+          # Process each user.tf file found
+          echo "${{ steps.find_files.outputs.files }}" | while read -r file; do
+            if [ -f "$file" ]; then
+              echo ""
+              echo "================================================"
+              echo "Processing: $file"
+              echo "================================================"
+
+              if [ "$MODE" = "check" ]; then
+                python3 scripts/protect_admin_users.py \
+                  --input "$file" \
+                  --mode check || echo "Check completed with warnings"
+
+              elif [ "$MODE" = "filter" ]; then
+                OUTPUT="${file%.tf}_filtered.tf"
+                python3 scripts/protect_admin_users.py \
+                  --input "$file" \
+                  --output "$OUTPUT" \
+                  --mode filter
+
+              elif [ "$MODE" = "protect" ]; then
+                OUTPUT="${file%.tf}_protected.tf"
+                python3 scripts/protect_admin_users.py \
+                  --input "$file" \
+                  --output "$OUTPUT" \
+                  --mode protect
+              fi
+            fi
+          done
+
+      - name: Check for admin users in PR
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "🔍 Checking PR for super admin users..."
+
+          # Find user.tf files in PR
+          FILES=$(find . -name "user.tf" -not -path "*/\.git/*" | head -5)
+
+          if [ -z "$FILES" ]; then
+            echo "✅ No user.tf files in PR"
+            exit 0
+          fi
+
+          FOUND_ADMINS=false
+
+          for file in $FILES; do
+            if [ -f "$file" ]; then
+              echo "Checking: $file"
+              python3 scripts/protect_admin_users.py \
+                --input "$file" \
+                --mode check || FOUND_ADMINS=true
+            fi
+          done
+
+          if [ "$FOUND_ADMINS" = true ]; then
+            echo "⚠️ WARNING: Super admin users detected in PR!"
+            echo "This PR contains Terraform configurations that would manage super admin users."
+            echo "This is DANGEROUS and could lock you out of the tenant."
+            echo ""
+            echo "Recommended actions:"
+            echo "1. Run workflow with mode=filter to remove admin users"
+            echo "2. Run workflow with mode=protect to add prevent_destroy lifecycle"
+            echo "3. Manually review and remove admin users from the configuration"
+            exit 1
+          else
+            echo "✅ No super admin users found - PR is safe"
+          fi
+
+      - name: Upload filtered/protected files
+        if: inputs.mode != 'check'
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-protected-configs-${{ github.run_number }}
+          path: |
+            **/*_filtered.tf
+            **/*_protected.tf
+            **/*_admin_check.json
+          retention-days: 30
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## Admin User Protection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** ${{ inputs.mode || 'check (PR)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Okta Org:** ${OKTA_ORG_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find and display check results
+          if [ -f "*_admin_check.json" ]; then
+            echo "### Check Results" >> $GITHUB_STEP_SUMMARY
+            cat *_admin_check.json >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Protection Modes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **check**: Analyze and report admin users (safe, read-only)" >> $GITHUB_STEP_SUMMARY
+          echo "- **filter**: Remove admin users from Terraform config" >> $GITHUB_STEP_SUMMARY
+          echo "- **protect**: Add lifecycle prevent_destroy to admin users" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **IMPORTANT**: Never run \`terraform destroy\` on configs with super admins!" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if admins found (check mode)
+        if: steps.find_files.outputs.found == 'true' && (inputs.mode == 'check' || inputs.mode == '')
+        run: |
+          if grep -q "safe_to_manage.*false" *_admin_check.json 2>/dev/null; then
+            echo "❌ UNSAFE: Super admin users found in Terraform configuration"
+            echo "Use 'filter' or 'protect' mode to resolve this issue"
+            exit 1
+          fi
