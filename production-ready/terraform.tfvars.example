@@ -1,0 +1,6 @@
+# Example Terraform variables
+# Copy this file to terraform.tfvars and fill in your values
+
+okta_org_name  = "demo-terraform-test-example"
+okta_base_url  = "oktapreview.com"
+okta_api_token = "YOUR_API_TOKEN_HERE"
