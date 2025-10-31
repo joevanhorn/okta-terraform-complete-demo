@@ -1,16 +1,75 @@
-# Copy content from artifact: "Terraformer GitHub Actions Workflow"
 name: Terraformer Import and Sync
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger
   schedule:
-    - cron: '0 2 * * 0'
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
 
 jobs:
   import-okta-resources:
     name: Import Okta Resources
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-      # Add remaining workflow steps from artifact
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: Install Terraformer
+        run: |
+          curl -LO "https://github.com/GoogleCloudPlatform/terraformer/releases/download/0.8.24/terraformer-all-linux-amd64"
+          chmod +x terraformer-all-linux-amd64
+          sudo mv terraformer-all-linux-amd64 /usr/local/bin/terraformer
+          terraformer version
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq tree
+
+      - name: Set up environment
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Run Terraformer import
+        run: ./scripts/import_okta_resources.sh
+
+      - name: Upload imported resources
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: imported-resources-${{ github.run_number }}
+          path: |
+            imported/
+            generated/
+            import.log
+          retention-days: 30
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## Terraformer Import Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Okta Org:** ${OKTA_ORG_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "imported" ]; then
+            LATEST_IMPORT=$(ls -t imported/ | head -1)
+            if [ -n "$LATEST_IMPORT" ] && [ -f "imported/${LATEST_IMPORT}/import_report_"*.md ]; then
+              cat imported/${LATEST_IMPORT}/import_report_*.md >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
