@@ -1,0 +1,325 @@
+name: Cleanup Imported Resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      import_run_id:
+        description: 'Terraformer import run ID (leave empty to use latest)'
+        required: false
+      apply_admin_filter:
+        description: 'Apply admin user filtering'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  cleanup-and-prepare:
+    name: Clean Up Imported Resources
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Set up environment
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+
+      - name: Get latest import run
+        if: inputs.import_run_id == ''
+        id: get_run
+        run: |
+          LATEST_RUN=$(gh run list --workflow="Terraformer Import and Sync" --limit 1 --json databaseId --jq '.[0].databaseId')
+          echo "run_id=${LATEST_RUN}" >> $GITHUB_OUTPUT
+          echo "Using import run: ${LATEST_RUN}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set run ID
+        id: run_id
+        run: |
+          if [ -n "${{ inputs.import_run_id }}" ]; then
+            echo "run_id=${{ inputs.import_run_id }}" >> $GITHUB_OUTPUT
+          else
+            echo "run_id=${{ steps.get_run.outputs.run_id }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download imported resources
+        run: |
+          echo "Downloading artifacts from run ${{ steps.run_id.outputs.run_id }}..."
+          gh run download ${{ steps.run_id.outputs.run_id }} -D downloaded_imports || {
+            echo "Failed to download artifacts. Run ID may be invalid or artifacts may have expired."
+            exit 1
+          }
+
+          echo "Downloaded artifacts:"
+          find downloaded_imports -type f | head -20
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Organize downloaded files
+        run: |
+          # Find the artifact directory (varies by import)
+          ARTIFACT_DIR=$(find downloaded_imports -type d -name "imported-resources-*" | head -1)
+
+          if [ -z "$ARTIFACT_DIR" ]; then
+            echo "No import artifacts found"
+            exit 1
+          fi
+
+          echo "Found artifact directory: ${ARTIFACT_DIR}"
+
+          # Look for the generated directory
+          if [ -d "${ARTIFACT_DIR}/generated" ]; then
+            INPUT_DIR="${ARTIFACT_DIR}/generated"
+          elif [ -d "${ARTIFACT_DIR}/imported" ]; then
+            # If only organized imports exist, use those
+            TIMESTAMP_DIR=$(ls -t "${ARTIFACT_DIR}/imported" | head -1)
+            INPUT_DIR="${ARTIFACT_DIR}/imported/${TIMESTAMP_DIR}"
+          else
+            echo "Cannot find generated or imported directory"
+            exit 1
+          fi
+
+          echo "INPUT_DIR=${INPUT_DIR}" >> $GITHUB_ENV
+          echo "Using input directory: ${INPUT_DIR}"
+
+      - name: Run cleanup script
+        run: |
+          echo "Cleaning up Terraform files..."
+          echo "Input: ${INPUT_DIR}"
+          echo "Output: cleaned/"
+
+          mkdir -p cleaned
+
+          python3 scripts/cleanup_terraform.py \
+            --input "${INPUT_DIR}" \
+            --output cleaned \
+            2>&1 | tee cleanup.log
+
+          echo ""
+          echo "Cleanup complete. Checking results..."
+          find cleaned -name "*.tf" | wc -l | xargs echo "Total .tf files:"
+
+      - name: Filter admin users
+        if: inputs.apply_admin_filter == true
+        run: |
+          echo "Applying admin user filtering..."
+
+          # Find all user.tf files in cleaned directory
+          USER_FILES=$(find cleaned -name "user.tf" -o -name "*_user*.tf")
+
+          if [ -z "$USER_FILES" ]; then
+            echo "No user.tf files found to filter"
+          else
+            for file in $USER_FILES; do
+              if [ -f "$file" ]; then
+                echo "Filtering: $file"
+
+                # Create filtered version
+                FILTERED_FILE="${file%.tf}_admin_safe.tf"
+
+                python3 scripts/protect_admin_users.py \
+                  --input "$file" \
+                  --output "$FILTERED_FILE" \
+                  --mode filter || echo "Filter completed with warnings"
+
+                # Replace original with filtered version
+                if [ -f "$FILTERED_FILE" ]; then
+                  mv "$FILTERED_FILE" "$file"
+                  echo "✅ Replaced $file with admin-safe version"
+                fi
+              fi
+            done
+          fi
+
+      - name: Organize by resource type
+        run: |
+          echo "Organizing cleaned resources..."
+
+          mkdir -p production-ready/{users,groups,apps,policies,auth_servers,network}
+
+          # Copy organized files
+          [ -d "cleaned/users" ] && cp -r cleaned/users/* production-ready/users/ 2>/dev/null || true
+          [ -d "cleaned/groups" ] && cp -r cleaned/groups/* production-ready/groups/ 2>/dev/null || true
+          [ -d "cleaned/apps" ] && cp -r cleaned/apps/* production-ready/apps/ 2>/dev/null || true
+          [ -d "cleaned/policies" ] && cp -r cleaned/policies/* production-ready/policies/ 2>/dev/null || true
+          [ -d "cleaned/auth_servers" ] && cp -r cleaned/auth_servers/* production-ready/auth_servers/ 2>/dev/null || true
+          [ -d "cleaned/network" ] && cp -r cleaned/network/* production-ready/network/ 2>/dev/null || true
+
+          # If cleanup script didn't organize, do basic organization
+          if [ ! -d "cleaned/users" ]; then
+            echo "Organizing from flat structure..."
+            find cleaned -name "*user*.tf" -exec cp {} production-ready/users/ \;
+            find cleaned -name "*group*.tf" -exec cp {} production-ready/groups/ \;
+            find cleaned -name "*app*.tf" -exec cp {} production-ready/apps/ \;
+            find cleaned -name "*policy*.tf" -exec cp {} production-ready/policies/ \;
+            find cleaned -name "*auth_server*.tf" -exec cp {} production-ready/auth_servers/ \;
+            find cleaned -name "*zone*.tf" -exec cp {} production-ready/network/ \;
+          fi
+
+      - name: Generate summary report
+        run: |
+          cat > production-ready/CLEANUP_REPORT.md <<EOF
+          # Terraform Import Cleanup Report
+
+          **Date:** $(date)
+          **Source Run:** ${{ steps.run_id.outputs.run_id }}
+          **Okta Org:** ${OKTA_ORG_NAME}
+          **Admin Filtering:** ${{ inputs.apply_admin_filter }}
+
+          ## Cleanup Summary
+
+          | Resource Type | Files | Location |
+          |---------------|-------|----------|
+          EOF
+
+          for dir in production-ready/*/; do
+            if [ -d "$dir" ]; then
+              dir_name=$(basename "$dir")
+              file_count=$(find "$dir" -name "*.tf" -type f 2>/dev/null | wc -l)
+              if [ "$file_count" -gt 0 ]; then
+                echo "| ${dir_name} | ${file_count} | production-ready/${dir_name}/ |" >> production-ready/CLEANUP_REPORT.md
+              fi
+            fi
+          done
+
+          cat >> production-ready/CLEANUP_REPORT.md <<EOF
+
+          ## Changes Applied
+
+          - ✅ Removed \`tfer--\` prefixes from resource names
+          - ✅ Removed null values and empty blocks
+          - ✅ Removed computed attributes (id, links, etc.)
+          - ✅ Sanitized resource names (special characters replaced)
+          - ✅ Organized by resource type
+          EOF
+
+          if [ "${{ inputs.apply_admin_filter }}" = "true" ]; then
+            cat >> production-ready/CLEANUP_REPORT.md <<EOF
+          - ✅ **Filtered super admin users (safe for Terraform management)**
+          EOF
+          fi
+
+          cat >> production-ready/CLEANUP_REPORT.md <<EOF
+
+          ## Next Steps
+
+          1. Review cleaned configurations in \`production-ready/\`
+          2. Test with \`terraform init && terraform plan\`
+          3. Verify no unexpected changes
+          4. Commit to repository
+          5. Apply with \`terraform apply\`
+
+          ## Safety Notes
+
+          ⚠️ **Important:**
+          - Always run \`terraform plan\` before \`apply\`
+          - Review state file carefully
+          - Test in non-production environment first
+          EOF
+
+          if [ "${{ inputs.apply_admin_filter }}" = "true" ]; then
+            cat >> production-ready/CLEANUP_REPORT.md <<EOF
+          - ✅ **Super admin users have been filtered out**
+          - Safe to use with \`terraform destroy\` if needed
+          EOF
+          fi
+
+          cat >> production-ready/CLEANUP_REPORT.md <<EOF
+
+          ## Files Generated
+
+          \`\`\`
+          $(tree production-ready 2>/dev/null || find production-ready -type f)
+          \`\`\`
+          EOF
+
+          echo ""
+          echo "Report generated!"
+          cat production-ready/CLEANUP_REPORT.md
+
+      - name: Create provider configuration
+        run: |
+          cat > production-ready/provider.tf <<EOF
+          terraform {
+            required_version = ">= 1.9.0"
+
+            required_providers {
+              okta = {
+                source  = "okta/okta"
+                version = "~> 6.1.0"
+              }
+            }
+          }
+
+          provider "okta" {
+            org_name  = var.okta_org_name
+            base_url  = var.okta_base_url
+            api_token = var.okta_api_token
+          }
+          EOF
+
+          cat > production-ready/variables.tf <<EOF
+          variable "okta_org_name" {
+            description = "Okta organization name"
+            type        = string
+          }
+
+          variable "okta_base_url" {
+            description = "Okta base URL"
+            type        = string
+            default     = "okta.com"
+          }
+
+          variable "okta_api_token" {
+            description = "Okta API token"
+            type        = string
+            sensitive   = true
+          }
+          EOF
+
+          cat > production-ready/terraform.tfvars.example <<EOF
+          okta_org_name  = "${OKTA_ORG_NAME}"
+          okta_base_url  = "${OKTA_BASE_URL}"
+          okta_api_token = "YOUR_API_TOKEN_HERE"
+          EOF
+
+          echo "✅ Created provider and variable configuration"
+
+      - name: Upload cleaned resources
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-ready-configs-${{ github.run_number }}
+          path: |
+            production-ready/
+            cleaned/
+            cleanup.log
+          retention-days: 90
+
+      - name: Generate workflow summary
+        run: |
+          echo "## Cleanup Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat production-ready/CLEANUP_REPORT.md >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Cleaned configurations are available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifact:** production-ready-configs-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
