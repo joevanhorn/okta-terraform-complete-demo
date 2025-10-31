@@ -80,21 +80,33 @@ import_resource() {
 # Clean up generated files
 cleanup_generated() {
     print_info "Cleaning up generated files..."
-    
+
+    # Check if generated directory exists
+    if [ ! -d "$GENERATED_DIR" ]; then
+        print_warn "No generated directory found. Terraformer may not have created any files."
+        return 0
+    fi
+
     # Remove empty directories
-    find "$GENERATED_DIR" -type d -empty -delete
-    
+    find "$GENERATED_DIR" -type d -empty -delete 2>/dev/null || true
+
     # Count imported resources
-    local resource_count=$(find "$GENERATED_DIR" -name "*.tf" | wc -l)
+    local resource_count=$(find "$GENERATED_DIR" -name "*.tf" 2>/dev/null | wc -l)
     print_info "Total .tf files generated: $resource_count"
 }
 
 # Organize imported resources
 organize_resources() {
     print_info "Organizing imported resources..."
-    
+
+    # Check if generated directory exists
+    if [ ! -d "$GENERATED_DIR" ]; then
+        print_warn "No generated directory found. Skipping organization."
+        return 0
+    fi
+
     mkdir -p "$IMPORT_DIR"/{users,groups,apps,policies,auth_servers,network,idps}
-    
+
     # Move resources to organized structure
     [ -d "$GENERATED_DIR/okta/okta_user" ] && cp -r "$GENERATED_DIR/okta/okta_user"/* "$IMPORT_DIR/users/" 2>/dev/null || true
     [ -d "$GENERATED_DIR/okta/okta_group" ] && cp -r "$GENERATED_DIR/okta/okta_group"/* "$IMPORT_DIR/groups/" 2>/dev/null || true
@@ -103,7 +115,7 @@ organize_resources() {
     [ -d "$GENERATED_DIR/okta/okta_auth_server" ] && cp -r "$GENERATED_DIR/okta/okta_auth_server"/* "$IMPORT_DIR/auth_servers/" 2>/dev/null || true
     [ -d "$GENERATED_DIR/okta/okta_policy_mfa" ] && cp -r "$GENERATED_DIR/okta/okta_policy_mfa"/* "$IMPORT_DIR/policies/" 2>/dev/null || true
     [ -d "$GENERATED_DIR/okta/okta_network_zone" ] && cp -r "$GENERATED_DIR/okta/okta_network_zone"/* "$IMPORT_DIR/network/" 2>/dev/null || true
-    
+
     print_info "Resources organized in $IMPORT_DIR"
 }
 
@@ -175,12 +187,29 @@ main() {
     
     # Backup existing
     backup_existing
-    
-    # Initialize Terraform if needed
-    if [ ! -d ".terraform" ]; then
-        print_info "Initializing Terraform..."
-        terraform init
-    fi
+
+    # Create provider configuration for Terraformer
+    print_info "Creating Okta provider configuration..."
+    cat > provider.tf <<EOF
+terraform {
+  required_providers {
+    okta = {
+      source  = "okta/okta"
+      version = "~> 6.1.0"
+    }
+  }
+}
+
+provider "okta" {
+  org_name  = "${OKTA_ORG_NAME}"
+  base_url  = "${OKTA_BASE_URL}"
+  api_token = "${OKTA_API_TOKEN}"
+}
+EOF
+
+    # Initialize Terraform
+    print_info "Initializing Terraform..."
+    terraform init
     
     # Import resources
     print_info "Starting resource import..."
