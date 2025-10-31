@@ -105,27 +105,48 @@ class OktaAdminProtector:
         with open(tf_file, 'r') as f:
             content = f.read()
 
-        # Parse user resources using regex
-        pattern = r'resource\s+"okta_user"\s+"([^"]+)"\s+\{([^}]+(?:\{[^}]*\}[^}]*)*)\}'
-        matches = re.finditer(pattern, content, re.MULTILINE | re.DOTALL)
-
+        # Parse user resources by finding balanced braces
         users = []
-        for match in matches:
-            resource_name = match.group(1)
-            resource_body = match.group(2)
+        lines = content.split('\n')
+        i = 0
 
-            # Extract login (email)
-            login_match = re.search(r'login\s*=\s*"([^"]+)"', resource_body)
-            email_match = re.search(r'email\s*=\s*"([^"]+)"', resource_body)
+        while i < len(lines):
+            line = lines[i]
 
-            login = login_match.group(1) if login_match else None
-            email = email_match.group(1) if email_match else None
+            # Look for resource "okta_user"
+            resource_match = re.match(r'resource\s+"okta_user"\s+"([^"]+)"\s+\{', line)
+            if resource_match:
+                resource_name = resource_match.group(1)
+                resource_lines = [line]
+                brace_count = 1
+                i += 1
 
-            users.append({
-                'resource_name': resource_name,
-                'login': login or email,
-                'full_block': match.group(0)
-            })
+                # Collect lines until braces are balanced
+                while i < len(lines) and brace_count > 0:
+                    current_line = lines[i]
+                    resource_lines.append(current_line)
+
+                    # Count braces (simple approach)
+                    brace_count += current_line.count('{')
+                    brace_count -= current_line.count('}')
+                    i += 1
+
+                full_block = '\n'.join(resource_lines)
+
+                # Extract login (email)
+                login_match = re.search(r'login\s*=\s*"([^"]+)"', full_block)
+                email_match = re.search(r'email\s*=\s*"([^"]+)"', full_block)
+
+                login = login_match.group(1) if login_match else None
+                email = email_match.group(1) if email_match else None
+
+                users.append({
+                    'resource_name': resource_name,
+                    'login': login or email,
+                    'full_block': full_block
+                })
+            else:
+                i += 1
 
         return users
 
