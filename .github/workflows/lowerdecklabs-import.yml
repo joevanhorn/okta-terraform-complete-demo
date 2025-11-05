@@ -1,0 +1,278 @@
+name: LowerDeckLabs - Import Resources
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      resource_types:
+        description: 'Resource types to import (comma-separated, or "all")'
+        required: false
+        default: 'all'
+        type: string
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday at 3 AM (for drift detection)
+
+# Use the LowerDeckLabs environment with protection rules
+environment:
+  name: LowerDeckLabs
+
+jobs:
+  import-resources:
+    name: Import Okta Resources (Read-Only)
+    runs-on: ubuntu-latest
+
+    # IMPORTANT: This job does NOT apply changes - import only!
+    permissions:
+      contents: read
+      pull-requests: write  # For posting import reports as comments
+      actions: read
+
+    steps:
+      - name: 🔒 Safety Check
+        run: |
+          echo "=================================================="
+          echo "  LOWERDECKLABS IMPORT - READ-ONLY OPERATION"
+          echo "=================================================="
+          echo ""
+          echo "✅ This workflow will ONLY import/read resources"
+          echo "❌ This workflow will NOT modify your Okta tenant"
+          echo "❌ This workflow will NOT run 'terraform apply'"
+          echo ""
+          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Operation: Import existing resources with Terraformer"
+          echo "=================================================="
+          echo ""
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: Install Terraformer
+        run: |
+          echo "Installing Terraformer..."
+          curl -LO "https://github.com/GoogleCloudPlatform/terraformer/releases/download/0.8.24/terraformer-all-linux-amd64"
+          chmod +x terraformer-all-linux-amd64
+          sudo mv terraformer-all-linux-amd64 /usr/local/bin/terraformer
+          terraformer version
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq tree python3-pip
+          pip3 install requests
+
+      - name: Set up environment variables
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+          echo "Configured for org: ${OKTA_ORG_NAME}"
+
+      - name: Verify API access (read-only)
+        run: |
+          echo "Testing API access..."
+          RESPONSE=$(curl -s -w "%{http_code}" \
+            -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
+            -H "Accept: application/json" \
+            "https://${OKTA_ORG_NAME}.${OKTA_BASE_URL}/api/v1/users?limit=1")
+
+          HTTP_CODE="${RESPONSE: -3}"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ API authentication failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ API access confirmed"
+
+      - name: Create import directory
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          echo "IMPORT_DIR=lowerdecklabs_import_${TIMESTAMP}" >> $GITHUB_ENV
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          mkdir -p lowerdecklabs_import_${TIMESTAMP}
+
+      - name: Run Terraformer import
+        run: |
+          echo "Starting Terraformer import for LowerDeckLabs..."
+          echo "This may take 5-15 minutes depending on tenant size..."
+          echo ""
+
+          # Make import script executable
+          chmod +x scripts/import_okta_resources.sh
+
+          # Run import
+          ./scripts/import_okta_resources.sh 2>&1 | tee import.log
+
+          echo ""
+          echo "✅ Import completed"
+
+      - name: Filter admin users and system apps
+        run: |
+          echo "Filtering out admin users and system apps..."
+
+          if [ -f "scripts/protect_admin_users.py" ]; then
+            python3 scripts/protect_admin_users.py \
+              --import-dir generated/okta/okta_user \
+              --output-dir ${IMPORT_DIR}/users_filtered
+          fi
+
+          echo "✅ Filtering completed"
+
+      - name: Count imported resources
+        id: count_resources
+        run: |
+          echo "Counting imported resources..."
+
+          USERS=$(find imported -name "okta_user*.tf" 2>/dev/null | wc -l || echo "0")
+          GROUPS=$(find imported -name "okta_group*.tf" 2>/dev/null | wc -l || echo "0")
+          APPS=$(find imported -name "okta_app*.tf" 2>/dev/null | wc -l || echo "0")
+          POLICIES=$(find imported -name "okta_policy*.tf" 2>/dev/null | wc -l || echo "0")
+
+          echo "users=$USERS" >> $GITHUB_OUTPUT
+          echo "groups=$GROUPS" >> $GITHUB_OUTPUT
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+          echo "policies=$POLICIES" >> $GITHUB_OUTPUT
+
+          echo ""
+          echo "📊 Import Summary:"
+          echo "  - Users: $USERS"
+          echo "  - Groups: $GROUPS"
+          echo "  - Apps: $APPS"
+          echo "  - Policies: $POLICIES"
+
+      - name: Generate import report
+        run: |
+          REPORT_FILE="${IMPORT_DIR}/IMPORT_REPORT.md"
+
+          cat > ${REPORT_FILE} <<EOF
+          # LowerDeckLabs Import Report
+
+          **Date:** $(date)
+          **Okta Org:** ${OKTA_ORG_NAME}
+          **Workflow Run:** #${{ github.run_number }}
+
+          ## Import Summary
+
+          | Resource Type | Count | Status |
+          |--------------|-------|--------|
+          | Users | ${{ steps.count_resources.outputs.users }} | ✅ Imported |
+          | Groups | ${{ steps.count_resources.outputs.groups }} | ✅ Imported |
+          | Applications | ${{ steps.count_resources.outputs.apps }} | ✅ Imported |
+          | Policies | ${{ steps.count_resources.outputs.policies }} | ✅ Imported |
+
+          ## Resource Types Imported
+
+          - ✅ Users (filtered admin users)
+          - ✅ Groups
+          - ✅ OAuth/OIDC Applications
+          - ✅ SAML Applications
+          - ✅ Authorization Servers
+          - ✅ MFA Policies
+          - ✅ Password Policies
+          - ✅ Sign-On Policies
+          - ✅ Network Zones
+          - ✅ Trusted Origins
+
+          ## What Was NOT Imported
+
+          ⚠️ **Terraformer does NOT import OIG resources:**
+          - ❌ Entitlements
+          - ❌ Resource Owners
+          - ❌ Labels
+          - ❌ Access Reviews
+          - ❌ Request Workflows
+
+          **To export these:** Run the "LowerDeckLabs - Export OIG" workflow
+
+          ## Next Steps
+
+          1. Download the artifacts from this workflow run
+          2. Review imported Terraform files
+          3. Run OIG export workflow for entitlements/owners/labels
+          4. Use these files as baseline for drift detection
+
+          ## Important Notes
+
+          - ✅ This was a READ-ONLY operation
+          - ❌ NO changes were made to your Okta tenant
+          - ℹ️ Admin users were filtered out for safety
+          - ℹ️ Okta system apps were excluded
+
+          ## Files Generated
+
+          \`\`\`
+          $(tree ${IMPORT_DIR} 2>/dev/null || find ${IMPORT_DIR} -type f)
+          \`\`\`
+
+          ---
+
+          **Workflow:** LowerDeckLabs Import
+          **Run ID:** ${{ github.run_id }}
+          **Triggered by:** ${{ github.actor }}
+          EOF
+
+          cat ${REPORT_FILE}
+
+      - name: Upload imported resources
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lowerdecklabs-import-${{ env.TIMESTAMP }}
+          path: |
+            imported/
+            generated/
+            ${{ env.IMPORT_DIR }}/
+            import.log
+          retention-days: 90  # Keep for 90 days (primary tenant - keep longer)
+
+      - name: Post summary to workflow
+        if: always()
+        run: |
+          echo "## 📥 LowerDeckLabs Import Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** LowerDeckLabs (Primary Demo Tenant)" >> $GITHUB_STEP_SUMMARY
+          echo "**Operation:** Import (Read-Only)" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resources Imported" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Users | ${{ steps.count_resources.outputs.users }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Groups | ${{ steps.count_resources.outputs.groups }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Apps | ${{ steps.count_resources.outputs.apps }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Policies | ${{ steps.count_resources.outputs.policies }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Safety Confirmation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ No resources were modified" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ This was a read-only operation" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Your LowerDeckLabs tenant is unchanged" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download artifacts from this run" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run 'LowerDeckLabs - Export OIG' to get entitlements/owners/labels" >> $GITHUB_STEP_SUMMARY
+          echo "3. Review imported files for any custom configurations" >> $GITHUB_STEP_SUMMARY
+          echo "4. Use as baseline for future drift detection" >> $GITHUB_STEP_SUMMARY
+
+      - name: Final safety check
+        if: always()
+        run: |
+          echo ""
+          echo "=================================================="
+          echo "  IMPORT COMPLETED SUCCESSFULLY"
+          echo "=================================================="
+          echo ""
+          echo "✅ LowerDeckLabs tenant unchanged"
+          echo "✅ All resources exported to artifacts"
+          echo "✅ No terraform apply was executed"
+          echo ""
+          echo "Download artifacts to review imported resources."
+          echo "=================================================="

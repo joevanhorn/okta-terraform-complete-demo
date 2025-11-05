@@ -194,20 +194,69 @@ class OktaAPIManager:
         print(f"Removed label '{label_name}' from {len(resource_orns)} resources")
         return response.json()
     
+    # ==================== Entitlements ====================
+
+    def list_entitlements(self, limit: int = 200) -> Dict:
+        """List all entitlements in the org"""
+        url = f"{self.base_url}/api/v1/governance/entitlements"
+        params = {"limit": limit}
+
+        response = self._make_request("GET", url, params=params)
+        return response.json()
+
+    def get_entitlement(self, entitlement_id: str) -> Optional[Dict]:
+        """Get a specific entitlement by ID"""
+        url = f"{self.base_url}/api/v1/governance/entitlements/{entitlement_id}"
+
+        try:
+            response = self._make_request("GET", url)
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                return None
+            raise
+
+    def list_principal_entitlements(self, principal_id: str, principal_type: str = "user") -> Dict:
+        """List entitlements for a specific principal (user or group)"""
+        url = f"{self.base_url}/api/v1/governance/principals/{principal_id}/entitlements"
+        params = {"limit": 200}
+
+        response = self._make_request("GET", url, params=params)
+        return response.json()
+
+    def export_all_entitlements(self) -> Dict:
+        """Export all entitlements with their details"""
+        entitlements_data = []
+
+        print("Exporting entitlements...")
+        entitlements = self.list_entitlements()
+
+        for ent in entitlements.get("entitlements", []):
+            entitlement_id = ent.get("id")
+            if entitlement_id:
+                # Get full entitlement details
+                full_ent = self.get_entitlement(entitlement_id)
+                if full_ent:
+                    entitlements_data.append(full_ent)
+                    print(f"  Exported entitlement: {entitlement_id}")
+
+        print(f"✅ Exported {len(entitlements_data)} entitlements")
+        return {"entitlements": entitlements_data}
+
     # ==================== Helper Methods ====================
-    
+
     def build_user_orn(self, user_id: str) -> str:
         """Build ORN for a user"""
         return f"orn:okta:directory:{self.org_name}:users:{user_id}"
-    
+
     def build_group_orn(self, group_id: str) -> str:
         """Build ORN for a group"""
         return f"orn:okta:directory:{self.org_name}:groups:{group_id}"
-    
+
     def build_app_orn(self, app_id: str, app_type: str = "oauth2") -> str:
         """Build ORN for an application"""
         return f"orn:okta:idp:{self.org_name}:apps:{app_type}:{app_id}"
-    
+
     def build_entitlement_bundle_orn(self, bundle_id: str) -> str:
         """Build ORN for an entitlement bundle"""
         return f"orn:okta:governance:{self.org_name}:entitlement-bundles:{bundle_id}"
@@ -334,20 +383,72 @@ def destroy_configuration(manager: OktaAPIManager, config: Dict):
     print("\n✅ Configuration destroyed successfully!")
 
 
+def export_all_oig_resources(manager: OktaAPIManager, output_file: str):
+    """Export all OIG resources to a JSON file"""
+    print("\n=== Exporting All OIG Resources ===\n")
+
+    export_data = {
+        "export_date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "okta_org": manager.org_name,
+        "okta_base_url": manager.base_url.replace(f"https://{manager.org_name}.", ""),
+    }
+
+    # Export labels
+    print("Exporting labels...")
+    labels_response = manager.list_labels()
+    labels_data = []
+    for label in labels_response.get("data", []):
+        label_name = label.get("name")
+        # Get resources for this label
+        resources = manager.list_resources_by_label(label_name)
+        labels_data.append({
+            "name": label_name,
+            "description": label.get("description", ""),
+            "resources": resources.get("data", [])
+        })
+        print(f"  ✅ {label_name}: {len(resources.get('data', []))} resources")
+    export_data["labels"] = labels_data
+
+    # Export resource owners
+    print("\nExporting resource owners...")
+    # Note: This is a simplified export. Full export would need to query all resources.
+    print("  ℹ️  Resource owners export requires specific parent resource ORNs")
+    print("  ℹ️  Use --query-resources flag to specify resources to query")
+    export_data["resource_owners"] = []
+
+    # Export entitlements
+    print("\nExporting entitlements...")
+    entitlements_export = manager.export_all_entitlements()
+    export_data["entitlements"] = entitlements_export.get("entitlements", [])
+
+    # Write to file
+    with open(output_file, 'w') as f:
+        json.dump(export_data, f, indent=2)
+
+    print(f"\n✅ Export completed successfully!")
+    print(f"📄 Output file: {output_file}")
+    print(f"\n📊 Export Summary:")
+    print(f"  - Labels: {len(labels_data)}")
+    print(f"  - Entitlements: {len(export_data['entitlements'])}")
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Manage Okta OIG Resource Owners and Labels"
+        description="Manage Okta OIG Resource Owners, Labels, and Entitlements"
     )
     parser.add_argument(
         "--action",
-        choices=["apply", "destroy", "query"],
+        choices=["apply", "destroy", "query", "export"],
         required=True,
         help="Action to perform"
     )
     parser.add_argument(
         "--config",
-        required=True,
-        help="Path to configuration JSON file"
+        help="Path to configuration JSON file (required for apply/destroy)"
+    )
+    parser.add_argument(
+        "--output",
+        help="Output file for export action"
     )
     parser.add_argument(
         "--org-name",
@@ -362,39 +463,55 @@ def main():
         "--api-token",
         help="Okta API token (overrides config)"
     )
-    
+
     args = parser.parse_args()
-    
-    # Load configuration
-    config = load_config(args.config)
-    
+
     # Get credentials
-    org_name = args.org_name or config.get("okta_org_name")
-    api_token = args.api_token or config.get("okta_api_token")
-    
+    if args.config:
+        config = load_config(args.config)
+        org_name = args.org_name or config.get("okta_org_name")
+        api_token = args.api_token or config.get("okta_api_token")
+    else:
+        config = {}
+        org_name = args.org_name
+        api_token = args.api_token
+
     if not org_name or not api_token:
         print("Error: Okta org name and API token required")
         sys.exit(1)
-    
+
     # Initialize manager
     manager = OktaAPIManager(org_name, args.base_url, api_token)
-    
+
     # Perform action
     if args.action == "apply":
+        if not args.config:
+            print("Error: --config required for apply action")
+            sys.exit(1)
         apply_configuration(manager, config)
     elif args.action == "destroy":
+        if not args.config:
+            print("Error: --config required for destroy action")
+            sys.exit(1)
         destroy_configuration(manager, config)
+    elif args.action == "export":
+        output_file = args.output or f"oig_export_{manager.org_name}_{int(time.time())}.json"
+        export_all_oig_resources(manager, output_file)
     elif args.action == "query":
         # Query current state
         print("\n=== Current State ===\n")
-        
+
         print("Labels:")
         labels = manager.list_labels()
         for label in labels.get("data", []):
             print(f"  - {label.get('name')}: {label.get('description')}")
-        
+
+        print("\nEntitlements:")
+        entitlements = manager.list_entitlements()
+        print(f"  Total: {len(entitlements.get('entitlements', []))}")
+
         print("\nResource Owners:")
-        if "query_resources" in config:
+        if config.get("query_resources"):
             for resource in config["query_resources"]:
                 owners = manager.list_resource_owners(resource)
                 print(f"  Resource: {resource}")

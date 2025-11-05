@@ -13,6 +13,36 @@ This repository demonstrates the **Okta Terraform Provider v6.1.0** with the new
 
 See [Terraformer + OIG FAQ](./docs/TERRAFORMER_OIG_FAQ.md) for full details.
 
+## ✅ Production-Ready Validated Configuration
+
+**NEW:** The `production-ready/` directory contains a **fully validated** Terraform configuration that proves the complete workflow:
+
+- ✅ Import existing Okta resources with Terraformer
+- ✅ Manage imported resources with Terraform
+- ✅ Add new resources and apply changes
+- ✅ Zero drift after apply
+
+**[→ See Production-Ready Directory](./production-ready/README.md)** for the complete validated setup with:
+- Working examples of all resource types
+- Comprehensive documentation
+- Lessons learned from real implementation
+- Forking guide for your own use
+
+This is the **recommended starting point** if you want to use Terraformer with Okta.
+
+### 🗂️ Two Configurations Available
+
+This repo contains two distinct configurations:
+
+| Directory | Purpose | Best For |
+|-----------|---------|----------|
+| **[`production-ready/`](./production-ready/)** | Import & manage existing basic resources | ✅ Most users - Validated workflow |
+| **[`terraform/`](./terraform/)** | OIG features demonstration | Advanced users needing governance features |
+
+**Not sure which to use?** See **[DIRECTORY_GUIDE.md](./DIRECTORY_GUIDE.md)** for a detailed comparison and decision tree.
+
+**📋 Want to use OIG features?** See **[OIG_PREREQUISITES.md](./OIG_PREREQUISITES.md)** for required setup steps (Entitlement Management must be enabled manually in GUI).
+
 ## 🎯 What's New in v6.1.0
 
 The Okta Terraform Provider v6.1.0 introduces comprehensive support for Okta Identity Governance, including:

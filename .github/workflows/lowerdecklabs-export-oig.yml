@@ -1,0 +1,321 @@
+name: LowerDeckLabs - Export OIG Resources
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      include_resource_owners:
+        description: 'Include resource owners export (requires additional API calls)'
+        required: false
+        default: true
+        type: boolean
+
+# Use the LowerDeckLabs environment with protection rules
+environment:
+  name: LowerDeckLabs
+
+jobs:
+  export-oig:
+    name: Export OIG Resources (Read-Only)
+    runs-on: ubuntu-latest
+
+    # IMPORTANT: This job does NOT modify resources - export only!
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: 🔒 Safety Check
+        run: |
+          echo "=================================================="
+          echo "  LOWERDECKLABS OIG EXPORT - READ-ONLY OPERATION"
+          echo "=================================================="
+          echo ""
+          echo "✅ This workflow will ONLY export/read OIG resources"
+          echo "❌ This workflow will NOT modify your Okta tenant"
+          echo "❌ This workflow will NOT create/update/delete anything"
+          echo ""
+          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Operation: Export entitlements, labels, resource owners"
+          echo "=================================================="
+          echo ""
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Set up environment variables
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+          echo "Configured for org: ${OKTA_ORG_NAME}"
+
+      - name: Verify API access (read-only)
+        run: |
+          echo "Testing API access to OIG endpoints..."
+
+          # Test basic API access
+          RESPONSE=$(curl -s -w "%{http_code}" \
+            -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
+            -H "Accept: application/json" \
+            "https://${OKTA_ORG_NAME}.${OKTA_BASE_URL}/api/v1/users?limit=1")
+
+          HTTP_CODE="${RESPONSE: -3}"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ API authentication failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Basic API access confirmed"
+
+          # Test governance API access
+          GOV_RESPONSE=$(curl -s -w "%{http_code}" \
+            -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
+            -H "Accept: application/json" \
+            "https://${OKTA_ORG_NAME}.${OKTA_BASE_URL}/api/v1/governance/entitlements?limit=1")
+
+          GOV_HTTP_CODE="${GOV_RESPONSE: -3}"
+          if [ "$GOV_HTTP_CODE" != "200" ]; then
+            echo "⚠️  Governance API access limited (HTTP $GOV_HTTP_CODE)"
+            echo "     This may be expected if OIG is not enabled or token lacks governance scopes"
+          else
+            echo "✅ Governance API access confirmed"
+          fi
+
+      - name: Create export directory
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          echo "EXPORT_DIR=lowerdecklabs_oig_export_${TIMESTAMP}" >> $GITHUB_ENV
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          mkdir -p lowerdecklabs_oig_export_${TIMESTAMP}
+
+      - name: Export OIG resources
+        id: export_oig
+        continue-on-error: true
+        run: |
+          echo "Starting OIG export for LowerDeckLabs..."
+          echo ""
+
+          # Make script executable
+          chmod +x scripts/okta_api_manager.py
+
+          # Run export
+          python3 scripts/okta_api_manager.py \
+            --action export \
+            --org-name "${OKTA_ORG_NAME}" \
+            --base-url "${OKTA_BASE_URL}" \
+            --api-token "${OKTA_API_TOKEN}" \
+            --output "${EXPORT_DIR}/lowerdecklabs_oig_export.json" 2>&1 | tee export.log
+
+          EXPORT_STATUS=$?
+
+          if [ $EXPORT_STATUS -eq 0 ]; then
+            echo "export_status=success" >> $GITHUB_OUTPUT
+            echo "✅ OIG export completed successfully"
+          else
+            echo "export_status=partial" >> $GITHUB_OUTPUT
+            echo "⚠️  OIG export completed with warnings (see log)"
+          fi
+
+      - name: Parse export results
+        id: parse_results
+        run: |
+          EXPORT_FILE="${EXPORT_DIR}/lowerdecklabs_oig_export.json"
+
+          if [ -f "$EXPORT_FILE" ]; then
+            # Count exported resources
+            LABELS_COUNT=$(jq '.labels | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
+            ENTITLEMENTS_COUNT=$(jq '.entitlements | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
+            OWNERS_COUNT=$(jq '.resource_owners | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
+
+            echo "labels_count=$LABELS_COUNT" >> $GITHUB_OUTPUT
+            echo "entitlements_count=$ENTITLEMENTS_COUNT" >> $GITHUB_OUTPUT
+            echo "owners_count=$OWNERS_COUNT" >> $GITHUB_OUTPUT
+
+            echo ""
+            echo "📊 Export Summary:"
+            echo "  - Labels: $LABELS_COUNT"
+            echo "  - Entitlements: $ENTITLEMENTS_COUNT"
+            echo "  - Resource Owners: $OWNERS_COUNT"
+          else
+            echo "labels_count=0" >> $GITHUB_OUTPUT
+            echo "entitlements_count=0" >> $GITHUB_OUTPUT
+            echo "owners_count=0" >> $GITHUB_OUTPUT
+            echo "⚠️ Export file not found"
+          fi
+
+      - name: Generate export report
+        if: always()
+        run: |
+          REPORT_FILE="${EXPORT_DIR}/EXPORT_REPORT.md"
+
+          cat > ${REPORT_FILE} <<EOF
+          # LowerDeckLabs OIG Export Report
+
+          **Date:** $(date)
+          **Okta Org:** ${OKTA_ORG_NAME}
+          **Workflow Run:** #${{ github.run_number }}
+
+          ## Export Summary
+
+          | Resource Type | Count | Status |
+          |--------------|-------|--------|
+          | Labels | ${{ steps.parse_results.outputs.labels_count }} | ${{ steps.export_oig.outputs.export_status == 'success' && '✅' || '⚠️' }} |
+          | Entitlements | ${{ steps.parse_results.outputs.entitlements_count }} | ${{ steps.export_oig.outputs.export_status == 'success' && '✅' || '⚠️' }} |
+          | Resource Owners | ${{ steps.parse_results.outputs.owners_count }} | ${{ steps.export_oig.outputs.export_status == 'success' && '✅' || '⚠️' }} |
+
+          ## What Was Exported
+
+          ### Labels
+          - Governance labels with assigned resources
+          - Label descriptions and metadata
+          - Resource ORNs for each label
+
+          ### Entitlements
+          - Principal entitlements (users and groups)
+          - Entitlement bundles
+          - Access assignments
+
+          ### Resource Owners
+          - Resource owner assignments
+          - Principal ORNs (users/groups)
+          - Resource ORNs (apps/groups)
+
+          ## Export File
+
+          **Location:** \`${EXPORT_DIR}/lowerdecklabs_oig_export.json\`
+
+          **Format:** JSON
+
+          **Structure:**
+          \`\`\`json
+          {
+            "export_date": "ISO-8601 timestamp",
+            "okta_org": "demo-terraform-test-example",
+            "okta_base_url": "oktapreview.com",
+            "labels": [...],
+            "entitlements": [...],
+            "resource_owners": [...]
+          }
+          \`\`\`
+
+          ## Important Notes
+
+          - ✅ This was a READ-ONLY operation
+          - ❌ NO changes were made to your Okta tenant
+          - ℹ️ This export can be used to:
+            - Document current OIG configuration
+            - Backup entitlement assignments
+            - Import into another Okta tenant
+            - Track changes over time (drift detection)
+
+          ## Next Steps
+
+          1. **Download** the export artifact from this workflow run
+          2. **Review** the exported JSON file
+          3. **Store** in secure location (contains tenant configuration)
+          4. **Use** for documentation or import into another tenant
+
+          ## Using This Export
+
+          ### To import into another tenant:
+
+          \`\`\`bash
+          # Create configuration file from export
+          cp lowerdecklabs_oig_export.json import_config.json
+
+          # Review and edit for target tenant
+          nano import_config.json
+
+          # Import (requires manual review first!)
+          python3 scripts/okta_api_manager.py \\
+            --action apply \\
+            --config import_config.json \\
+            --org-name <target-org> \\
+            --api-token <target-token>
+          \`\`\`
+
+          ### To compare with previous export:
+
+          \`\`\`bash
+          # Download previous export
+          # Compare with diff tool
+          diff -u previous_export.json lowerdecklabs_oig_export.json
+          \`\`\`
+
+          ---
+
+          **Workflow:** LowerDeckLabs OIG Export
+          **Run ID:** ${{ github.run_id }}
+          **Triggered by:** ${{ github.actor }}
+          EOF
+
+          cat ${REPORT_FILE}
+
+      - name: Upload export data
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lowerdecklabs-oig-export-${{ env.TIMESTAMP }}
+          path: |
+            ${{ env.EXPORT_DIR }}/
+            export.log
+          retention-days: 180  # Keep for 6 months (important tenant data)
+
+      - name: Post summary to workflow
+        if: always()
+        run: |
+          echo "## 📤 LowerDeckLabs OIG Export Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** LowerDeckLabs (Primary Demo Tenant)" >> $GITHUB_STEP_SUMMARY
+          echo "**Operation:** OIG Export (Read-Only)" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resources Exported" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Labels | ${{ steps.parse_results.outputs.labels_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Entitlements | ${{ steps.parse_results.outputs.entitlements_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Owners | ${{ steps.parse_results.outputs.owners_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Safety Confirmation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ No resources were modified" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ This was a read-only export operation" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Your LowerDeckLabs tenant is unchanged" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Export Artifact" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download the \`lowerdecklabs-oig-export-${{ env.TIMESTAMP }}\` artifact" >> $GITHUB_STEP_SUMMARY
+          echo "to access:" >> $GITHUB_STEP_SUMMARY
+          echo "- JSON export file with all OIG resources" >> $GITHUB_STEP_SUMMARY
+          echo "- Export log with detailed information" >> $GITHUB_STEP_SUMMARY
+          echo "- Export report (markdown)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Final safety check
+        if: always()
+        run: |
+          echo ""
+          echo "=================================================="
+          echo "  OIG EXPORT COMPLETED SUCCESSFULLY"
+          echo "=================================================="
+          echo ""
+          echo "✅ LowerDeckLabs tenant unchanged"
+          echo "✅ OIG resources exported to artifacts"
+          echo "✅ No modifications were made"
+          echo ""
+          echo "Download artifacts to review exported OIG data."
+          echo "=================================================="

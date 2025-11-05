@@ -27,82 +27,9 @@ resource "okta_app_oauth" "tfer--oarf0wpg7nsfsace1d7-oidc-client" {
   status                     = "ACTIVE"
   token_endpoint_auth_method = "private_key_jwt"
   type                       = "service"
-  user_name_template         = "${source.login}"
+  user_name_template         = "$${source.login}"
   user_name_template_type    = "BUILT_IN"
   wildcard_redirect          = "DISABLED"
-}
-
-resource "okta_app_oauth" "tfer--oarf1km0tncsdlwh1d7-okta-iga-reviewer" {
-  accessibility_self_service = "false"
-  app_links_json             = "{\"login\":true}"
-  app_settings_json          = "{}"
-  authentication_policy      = "rstrf0wlwjAEOO9IS1d7"
-  auto_submit_toolbar        = "false"
-  hide_ios                   = "false"
-  hide_web                   = "false"
-  implicit_assignment        = "false"
-  label                      = "Okta Access Certification Reviews"
-  status                     = "ACTIVE"
-  user_name_template         = "${source.login}"
-  user_name_template_type    = "BUILT_IN"
-}
-
-resource "okta_app_oauth" "tfer--oarf1kr5tks4wmlh1d7-okta-flow-sso" {
-  accessibility_self_service = "false"
-  app_links_json             = "{\"workflow_login\":true}"
-  app_settings_json          = "{\"initiateLoginURI\":\"https://demo-terraform-test-example.workflows.oktapreview.com/oidc/0oarf1kr5tKS4wmlh1d7/login\",\"redirectURI\":\"https://demo-terraform-test-example.workflows.oktapreview.com/oidc/0oarf1kr5tKS4wmlh1d7/cb\"}"
-  authentication_policy      = "rstrf0wlwjAEOO9IS1d7"
-  auto_submit_toolbar        = "false"
-  hide_ios                   = "false"
-  hide_web                   = "false"
-  implicit_assignment        = "false"
-  label                      = "Okta Workflows"
-  status                     = "ACTIVE"
-  user_name_template         = "${source.login}"
-  user_name_template_type    = "BUILT_IN"
-}
-
-resource "okta_app_oauth" "tfer--oarf1kr9kflpyfzg1d7-okta-access-requests-resource-catalog" {
-  accessibility_self_service = "false"
-  app_settings_json          = "{}"
-  authentication_policy      = "rstrf0wlwjAEOO9IS1d7"
-  auto_submit_toolbar        = "false"
-  hide_ios                   = "false"
-  hide_web                   = "false"
-  implicit_assignment        = "true"
-  label                      = "Okta Identity Governance"
-  status                     = "ACTIVE"
-  user_name_template         = "${source.login}"
-  user_name_template_type    = "BUILT_IN"
-}
-
-resource "okta_app_oauth" "tfer--oarf1krcc6rgayyr1d7-flow" {
-  accessibility_self_service = "false"
-  app_settings_json          = "{\"redirectURI\":\"https://oauth.workflows.oktapreview.com/oauth/okta/cb\",\"serviceDomain\":\"https://oauth.workflows.oktapreview.com\"}"
-  authentication_policy      = "rstrf0wlwjAEOO9IS1d7"
-  auto_submit_toolbar        = "false"
-  hide_ios                   = "true"
-  hide_web                   = "true"
-  implicit_assignment        = "false"
-  label                      = "Okta Workflows OAuth"
-  status                     = "ACTIVE"
-  user_name_template         = "${source.login}"
-  user_name_template_type    = "BUILT_IN"
-}
-
-resource "okta_app_oauth" "tfer--oarf1tnyf8rtprw91d7-okta-atspoke-sso" {
-  accessibility_self_service = "false"
-  app_links_json             = "{\"login\":true}"
-  app_settings_json          = "{\"initiateLoginURI\":\"https://demo-terraform-test-example.at.oktapreview.com/oidc/0oarf1tnyf8RtPrw91d7/login\",\"redirectURI\":\"https://demo-terraform-test-example.at.oktapreview.com/oidc/0oarf1tnyf8RtPrw91d7/cb\"}"
-  authentication_policy      = "rstrf0wlwjAEOO9IS1d7"
-  auto_submit_toolbar        = "false"
-  hide_ios                   = "false"
-  hide_web                   = "false"
-  implicit_assignment        = "false"
-  label                      = "Okta Access Requests"
-  status                     = "ACTIVE"
-  user_name_template         = "${source.login}"
-  user_name_template_type    = "BUILT_IN"
 }
 
 resource "okta_app_oauth" "tfer--oarfddbqbmyn6avt1d7-oidc-client" {
@@ -130,7 +57,7 @@ resource "okta_app_oauth" "tfer--oarfddbqbmyn6avt1d7-oidc-client" {
   status                     = "ACTIVE"
   token_endpoint_auth_method = "client_secret_basic"
   type                       = "web"
-  user_name_template         = "${source.login}"
+  user_name_template         = "$${source.login}"
   user_name_template_type    = "BUILT_IN"
   wildcard_redirect          = "DISABLED"
 }
@@ -160,7 +87,7 @@ resource "okta_app_oauth" "tfer--oarfdfd50fkbr9vl1d7-oidc-client" {
   status                     = "ACTIVE"
   token_endpoint_auth_method = "client_secret_basic"
   type                       = "web"
-  user_name_template         = "${source.login}"
+  user_name_template         = "$${source.login}"
   user_name_template_type    = "BUILT_IN"
   wildcard_redirect          = "DISABLED"
 }
@@ -175,21 +102,21 @@ resource "okta_app_oauth" "team_collaboration_tool" {
   client_uri                 = "https://collaboration.example.com"
   consent_method             = "REQUIRED"
   grant_types                = ["authorization_code", "refresh_token"]
-  hide_ios                   = "false"
-  hide_web                   = "false"
+  hide_ios                   = "true"
+  hide_web                   = "true"
   implicit_assignment        = "false"
   issuer_mode                = "ORG_URL"
   label                      = "Team Collaboration Tool"
-  login_mode                 = "SPEC"
+  login_mode                 = "DISABLED"
   pkce_required              = "true"
   post_logout_redirect_uris  = ["https://collaboration.example.com/logout"]
   redirect_uris              = ["https://collaboration.example.com/callback"]
-  refresh_token_rotation     = "ROTATE_ON_USE"
+  refresh_token_rotation     = "STATIC"
   response_types             = ["code"]
   status                     = "ACTIVE"
   token_endpoint_auth_method = "client_secret_post"
   type                       = "web"
-  user_name_template         = "${source.login}"
+  user_name_template         = "$${source.login}"
   user_name_template_type    = "BUILT_IN"
   wildcard_redirect          = "DISABLED"
 }

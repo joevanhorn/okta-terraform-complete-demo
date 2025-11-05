@@ -1,6 +1,28 @@
-# Example Terraform variables
-# Copy this file to terraform.tfvars and fill in your values
+# Okta Terraform Configuration Variables
+#
+# Copy this file to terraform.tfvars and fill in your actual values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# IMPORTANT: Never commit terraform.tfvars to git! It contains secrets.
 
-okta_org_name  = "demo-terraform-test-example"
-okta_base_url  = "oktapreview.com"
+# Your Okta organization name
+# Example: If your Okta domain is "dev-12345678.oktapreview.com"
+# then your org_name is "dev-12345678"
+okta_org_name = "your-org-name"
+
+# Your Okta base URL (without the org name)
+# Options:
+#   - "okta.com" (for production orgs)
+#   - "oktapreview.com" (for preview orgs)
+#   - "okta-emea.com" (for EMEA orgs)
+okta_base_url = "oktapreview.com"
+
+# Your Okta API token
+# Create one at: Security → API → Tokens → Create Token
+# Required scopes:
+#   - okta.users.manage
+#   - okta.groups.manage
+#   - okta.apps.manage
+#   - okta.authorizationServers.manage
+#   - okta.policies.manage
 okta_api_token = "YOUR_API_TOKEN_HERE"
