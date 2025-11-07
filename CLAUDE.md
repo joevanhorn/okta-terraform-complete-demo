@@ -123,11 +123,20 @@ production-ready/       # Production Terraform configurations
 
 scripts/               # Automation scripts
   okta_api_manager.py         # Python API manager for Owners & Labels
+  apply_admin_labels.py       # Auto-label admin entitlements
+  sync_label_mappings.py      # Sync label mappings from Okta
+  validate_labels_api.py      # Validate Labels API integration
   import_okta_resources.sh    # Terraformer import wrapper
   cleanup_terraform.py        # Cleans imported Terraform code
   build_test_org.sh          # Creates test resources
   cleanup_test_org.sh        # Removes test resources
   test_complete_workflow.sh   # E2E testing
+  archive/                    # Investigation scripts (reference only)
+
+config/                # Configuration files
+  api_config.json            # Legacy label config
+  label_mappings.json        # Label ID mappings (source of truth)
+  README.md                  # Label management guide
 
 docs/                  # Comprehensive documentation
   COMPLETE_SOLUTION.md       # Full solution overview
@@ -214,6 +223,55 @@ When modifying `okta_api_manager.py`:
 - Use the `_make_request()` helper for consistent retry/rate-limit handling
 - Test idempotency - script should be safe to run multiple times
 - Update docs/API_MANAGEMENT.md when adding new capabilities
+
+### Working with Label Management
+
+**New PR-based workflow for managing label assignments:**
+
+#### Syncing Labels from Okta
+```bash
+# Sync current label mappings from Okta
+python3 scripts/sync_label_mappings.py
+
+# This updates config/label_mappings.json with:
+# - Label IDs and label value IDs
+# - Current assignments by resource type
+# - Metadata (colors, descriptions)
+```
+
+#### Adding Label Assignments
+```bash
+# 1. Edit config/label_mappings.json
+# Add ORN to appropriate label array under assignments
+
+# 2. Commit and create PR
+git add config/label_mappings.json
+git commit -m "feat: Add Privileged label to new admin role"
+git push
+
+# 3. After PR merge, apply via GitHub Actions workflow
+```
+
+#### Auto-Labeling Admin Entitlements
+```bash
+# Find and label all entitlements with "admin" in name
+python3 scripts/apply_admin_labels.py
+
+# Dry run mode (preview changes)
+python3 scripts/apply_admin_labels.py --dry-run
+```
+
+#### Key Files
+- `config/label_mappings.json` - Source of truth for label IDs and assignments
+- `scripts/sync_label_mappings.py` - Sync mappings from Okta
+- `scripts/apply_admin_labels.py` - Auto-label admin entitlements
+- `scripts/validate_labels_api.py` - Validate API integration
+
+#### Important Notes
+- Always sync before making changes to get latest labelIds
+- Label operations use `/resource-labels/assign` endpoint
+- Batch requests in groups of 10 (API limit)
+- Use `labelValueId` not `labelId` for filtering
 
 ### State Management
 

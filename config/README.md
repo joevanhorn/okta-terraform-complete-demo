@@ -9,6 +9,62 @@ Labels are used to categorize and govern access to resources in Okta. This confi
 - **Label Assignments** - Apply labels to specific resources (entitlements, apps, groups)
 - **Auto-Labeling Rules** - Automatically apply labels based on resource name patterns
 
+## 📁 Files in This Directory
+
+- **`api_config.json`** - Legacy label configuration (deprecated, use label_mappings.json)
+- **`label_mappings.json`** - **Source of truth** for label IDs and assignments (synced from Okta)
+
+## 🆕 PR-Based Label Management (Recommended)
+
+**New workflow:** Manage label assignments via pull requests using `label_mappings.json`
+
+### How It Works
+
+1. **Sync from Okta** - Run `sync_label_mappings.py` to update local mappings
+2. **Make Changes** - Edit `config/label_mappings.json` to add/remove assignments
+3. **Submit PR** - Create pull request for review
+4. **Apply** - After merge, run workflow to apply changes to Okta
+
+### Quick Start
+
+```bash
+# Sync current state from Okta
+python3 scripts/sync_label_mappings.py
+
+# Edit label_mappings.json to add a new assignment
+# Add ORN to the appropriate array under assignments
+
+# Commit and push
+git add config/label_mappings.json
+git commit -m "feat: Add Privileged label to new admin entitlement"
+git push
+
+# After PR merge, labels are applied automatically via GitHub Actions
+```
+
+### label_mappings.json Structure
+
+```json
+{
+  "labels": {
+    "Privileged": {
+      "labelId": "lbc11keklyNa6KhMi1d7",
+      "labelValueId": "lbl11keklzHO41LJ11d7",
+      "description": "High-privilege access",
+      "color": "red"
+    }
+  },
+  "assignments": {
+    "entitlement_bundles": {
+      "Privileged": [
+        "orn:okta:governance:org:entitlement-bundles:id1",
+        "orn:okta:governance:org:entitlement-bundles:id2"
+      ]
+    }
+  }
+}
+```
+
 ## 🏷️ Label Definitions
 
 ### Privileged

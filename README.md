@@ -83,6 +83,9 @@ This demo creates a complete OIG workflow with support for importing existing co
 ### API Management (Python)
 - ✅ Resource Owners assignment
 - ✅ Governance Labels creation and assignment
+- ✅ Automated admin entitlement labeling
+- ✅ Label mapping sync from Okta
+- ✅ PR-based label management workflow
 - ✅ Bulk operations with rate limiting
 - ✅ Idempotent operations
 
@@ -93,6 +96,15 @@ This demo creates a complete OIG workflow with support for importing existing co
 - ✅ Weekly sync workflows
 - ✅ Resource inventory tracking
 - ⚠️ **Note:** OIG resources NOT supported by Terraformer (create fresh instead)
+
+### Label Management (NEW)
+- ✅ Automatic discovery and labeling of admin entitlements
+- ✅ Label mapping file synced from Okta (`config/label_mappings.json`)
+- ✅ PR-based workflow for label assignments
+- ✅ GitHub Actions workflows for automated labeling
+- ✅ Currently managing 16 admin entitlements with Privileged label
+
+See **[config/README.md](./config/README.md)** and **[config/label_mappings.json](./config/label_mappings.json)** for details.
 
 ## 📋 Prerequisites
 
