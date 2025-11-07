@@ -67,9 +67,8 @@ class LabelsAPIValidator:
 
         try:
             url = f"{self.governance_base}/labels"
-            params = {"limit": 200}
 
-            response = self.session.get(url, params=params)
+            response = self.session.get(url)
             print(f"Status Code: {response.status_code}")
 
             if response.status_code == 200:
@@ -143,9 +142,8 @@ class LabelsAPIValidator:
 
         try:
             url = f"{self.governance_base}/labels/{label_name}/resources"
-            params = {"limit": 200}
 
-            response = self.session.get(url, params=params)
+            response = self.session.get(url)
             print(f"Status Code: {response.status_code}")
 
             if response.status_code == 200:

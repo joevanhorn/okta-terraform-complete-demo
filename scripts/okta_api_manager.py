@@ -167,9 +167,8 @@ class OktaAPIManager:
     def list_labels(self) -> Dict:
         """List all governance labels"""
         url = f"{self.base_url}/governance/api/v1/labels"
-        params = {"limit": 200}
-        
-        response = self._make_request("GET", url, params=params)
+
+        response = self._make_request("GET", url)
         return response.json()
     
     def get_label(self, label_name: str) -> Optional[Dict]:
@@ -196,9 +195,8 @@ class OktaAPIManager:
     def list_resources_by_label(self, label_name: str) -> Dict:
         """List all resources with a specific label"""
         url = f"{self.base_url}/governance/api/v1/labels/{label_name}/resources"
-        params = {"limit": 200}
-        
-        response = self._make_request("GET", url, params=params)
+
+        response = self._make_request("GET", url)
         return response.json()
     
     def remove_label_from_resources(self, label_name: str, resource_orns: List[str]) -> Dict:
