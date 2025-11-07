@@ -1,0 +1,176 @@
+name: LowerDeckLabs - Validate Labels API
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-labels:
+    name: Validate Labels API Integration
+    runs-on: ubuntu-latest
+
+    environment:
+      name: LowerDeckLabs
+
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Safety Check
+        run: |
+          echo "=================================================="
+          echo "  LOWERDECKLABS - VALIDATE LABELS API"
+          echo "=================================================="
+          echo ""
+          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Operation: Validate Labels API integration"
+          echo "Expected: 2 existing labels, 0 resource assignments"
+          echo "=================================================="
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Set up environment variables
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+
+      - name: Run Labels API Validation
+        id: validate
+        continue-on-error: true
+        run: |
+          chmod +x scripts/validate_labels_api.py
+          python3 scripts/validate_labels_api.py --validate-imports 2>&1 | tee validation.log
+          VALIDATION_STATUS=$?
+          echo "validation_status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Parse validation results
+        id: parse
+        run: |
+          if [ -f "labels_validation_results.json" ]; then
+            LABELS_FOUND=$(jq '.labels_found // 0' labels_validation_results.json)
+            CONNECTION_OK=$(jq '.connection // false' labels_validation_results.json)
+            LIST_OK=$(jq '.list_labels // false' labels_validation_results.json)
+
+            echo "labels_found=$LABELS_FOUND" >> $GITHUB_OUTPUT
+            echo "connection_ok=$CONNECTION_OK" >> $GITHUB_OUTPUT
+            echo "list_ok=$LIST_OK" >> $GITHUB_OUTPUT
+
+            echo "Labels Found: $LABELS_FOUND"
+            echo "Connection OK: $CONNECTION_OK"
+            echo "List Labels OK: $LIST_OK"
+          else
+            echo "labels_found=0" >> $GITHUB_OUTPUT
+            echo "connection_ok=false" >> $GITHUB_OUTPUT
+            echo "list_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test export functionality
+        id: export_test
+        continue-on-error: true
+        run: |
+          echo "Testing export functionality..."
+          python3 scripts/okta_api_manager.py \
+            --action export \
+            --export-labels \
+            --org-name "${OKTA_ORG_NAME}" \
+            --base-url "${OKTA_BASE_URL}" \
+            --api-token "${OKTA_API_TOKEN}" \
+            --output test_export.json 2>&1 | tee export_test.log
+
+          if [ -f "test_export.json" ]; then
+            echo "export_success=true" >> $GITHUB_OUTPUT
+            EXPORT_LABELS=$(jq '.labels | length // 0' test_export.json)
+            EXPORT_STATUS=$(jq -r '.export_status.labels // "unknown"' test_export.json)
+            echo "export_labels_count=$EXPORT_LABELS" >> $GITHUB_OUTPUT
+            echo "export_status=$EXPORT_STATUS" >> $GITHUB_OUTPUT
+            echo "Export Labels: $EXPORT_LABELS"
+            echo "Export Status: $EXPORT_STATUS"
+          else
+            echo "export_success=false" >> $GITHUB_OUTPUT
+            echo "export_labels_count=0" >> $GITHUB_OUTPUT
+            echo "export_status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compare validation vs export
+        run: |
+          echo "Comparing validation and export results..."
+          echo ""
+          echo "Validation API Test:"
+          echo "  Labels Found: ${{ steps.parse.outputs.labels_found }}"
+          echo ""
+          echo "Export Test:"
+          echo "  Labels Exported: ${{ steps.export_test.outputs.export_labels_count }}"
+          echo "  Export Status: ${{ steps.export_test.outputs.export_status }}"
+          echo ""
+
+          if [ "${{ steps.parse.outputs.labels_found }}" == "${{ steps.export_test.outputs.export_labels_count }}" ]; then
+            echo "✅ Results match! Both found ${{ steps.parse.outputs.labels_found }} label(s)"
+          else
+            echo "⚠️  Results differ:"
+            echo "   Validation: ${{ steps.parse.outputs.labels_found }}"
+            echo "   Export: ${{ steps.export_test.outputs.export_labels_count }}"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: labels-validation-${{ github.run_number }}
+          path: |
+            validation.log
+            export_test.log
+            labels_validation_results.json
+            test_export.json
+          retention-days: 90
+
+      - name: Post summary
+        if: always()
+        run: |
+          echo "## Labels API Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** LowerDeckLabs" >> $GITHUB_STEP_SUMMARY
+          echo "**Expected:** 2 existing labels with 0 resource assignments" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API Connection | ${{ steps.parse.outputs.connection_ok }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| List Labels API | ${{ steps.parse.outputs.list_ok }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Labels Found | ${{ steps.parse.outputs.labels_found }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Export Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Export Success | ${{ steps.export_test.outputs.export_success }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Labels Exported | ${{ steps.export_test.outputs.export_labels_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Export Status | ${{ steps.export_test.outputs.export_status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Validation Logs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -50 validation.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No validation log available"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "Download artifacts for complete logs and JSON results." >> $GITHUB_STEP_SUMMARY
