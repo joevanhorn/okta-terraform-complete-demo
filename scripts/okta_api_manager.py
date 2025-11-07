@@ -383,53 +383,154 @@ def destroy_configuration(manager: OktaAPIManager, config: Dict):
     print("\n✅ Configuration destroyed successfully!")
 
 
-def export_all_oig_resources(manager: OktaAPIManager, output_file: str):
-    """Export all OIG resources to a JSON file"""
-    print("\n=== Exporting All OIG Resources ===\n")
+def export_labels_only(manager: OktaAPIManager) -> Dict:
+    """Export only governance labels"""
+    print("Exporting labels...")
+    labels_data = []
+
+    try:
+        labels_response = manager.list_labels()
+        for label in labels_response.get("data", []):
+            label_name = label.get("name")
+            try:
+                # Get resources for this label
+                resources = manager.list_resources_by_label(label_name)
+                labels_data.append({
+                    "name": label_name,
+                    "description": label.get("description", ""),
+                    "resources": resources.get("data", [])
+                })
+                print(f"  ✅ {label_name}: {len(resources.get('data', []))} resources")
+            except Exception as e:
+                print(f"  ⚠️  Could not get resources for label '{label_name}': {e}")
+
+        print(f"✅ Exported {len(labels_data)} labels")
+        return {"labels": labels_data, "status": "success"}
+
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code in [400, 404]:
+            print("  ℹ️  Labels not available (OIG may not be enabled or no labels exist)")
+            return {"labels": [], "status": "not_available", "reason": str(e)}
+        print(f"  ❌ Labels export failed: {e}")
+        return {"labels": [], "status": "error", "reason": str(e)}
+    except Exception as e:
+        print(f"  ❌ Labels export failed: {e}")
+        return {"labels": [], "status": "error", "reason": str(e)}
+
+
+def export_entitlements_only(manager: OktaAPIManager) -> Dict:
+    """Export only entitlements"""
+    print("Exporting entitlements...")
+
+    try:
+        entitlements_export = manager.export_all_entitlements()
+        return {"entitlements": entitlements_export.get("entitlements", []), "status": "success"}
+
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code in [400, 404]:
+            print("  ℹ️  Entitlements not available (Entitlement Management may not be enabled)")
+            return {"entitlements": [], "status": "not_available", "reason": str(e)}
+        print(f"  ❌ Entitlements export failed: {e}")
+        return {"entitlements": [], "status": "error", "reason": str(e)}
+    except Exception as e:
+        print(f"  ❌ Entitlements export failed: {e}")
+        return {"entitlements": [], "status": "error", "reason": str(e)}
+
+
+def export_resource_owners_only(manager: OktaAPIManager, resource_orns: List[str] = None) -> Dict:
+    """Export only resource owners for specified resources"""
+    print("Exporting resource owners...")
+    resource_owners_data = []
+
+    if not resource_orns:
+        print("  ℹ️  No resource ORNs specified - skipping resource owners export")
+        print("  ℹ️  Provide resource ORNs to export their owners")
+        return {"resource_owners": [], "status": "skipped", "reason": "no_resources_specified"}
+
+    try:
+        for resource_orn in resource_orns:
+            try:
+                owners = manager.list_resource_owners(resource_orn)
+                if owners.get("data"):
+                    resource_owners_data.append({
+                        "resource_orn": resource_orn,
+                        "owners": owners.get("data", [])
+                    })
+                    print(f"  ✅ {resource_orn}: {len(owners.get('data', []))} owners")
+            except Exception as e:
+                print(f"  ⚠️  Could not get owners for {resource_orn}: {e}")
+
+        print(f"✅ Exported owners for {len(resource_owners_data)} resources")
+        return {"resource_owners": resource_owners_data, "status": "success"}
+
+    except Exception as e:
+        print(f"  ❌ Resource owners export failed: {e}")
+        return {"resource_owners": [], "status": "error", "reason": str(e)}
+
+
+def export_all_oig_resources(manager: OktaAPIManager, output_file: str,
+                            export_labels: bool = True,
+                            export_entitlements: bool = True,
+                            export_owners: bool = False,
+                            resource_orns: List[str] = None):
+    """Export OIG resources to a JSON file with modular options"""
+    print("\n=== Exporting OIG Resources ===\n")
 
     export_data = {
         "export_date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "okta_org": manager.org_name,
         "okta_base_url": manager.base_url.replace(f"https://{manager.org_name}.", ""),
+        "export_status": {}
     }
 
-    # Export labels
-    print("Exporting labels...")
-    labels_response = manager.list_labels()
-    labels_data = []
-    for label in labels_response.get("data", []):
-        label_name = label.get("name")
-        # Get resources for this label
-        resources = manager.list_resources_by_label(label_name)
-        labels_data.append({
-            "name": label_name,
-            "description": label.get("description", ""),
-            "resources": resources.get("data", [])
-        })
-        print(f"  ✅ {label_name}: {len(resources.get('data', []))} resources")
-    export_data["labels"] = labels_data
+    # Export labels (optional)
+    if export_labels:
+        labels_result = export_labels_only(manager)
+        export_data["labels"] = labels_result.get("labels", [])
+        export_data["export_status"]["labels"] = labels_result.get("status")
+        print()
 
-    # Export resource owners
-    print("\nExporting resource owners...")
-    # Note: This is a simplified export. Full export would need to query all resources.
-    print("  ℹ️  Resource owners export requires specific parent resource ORNs")
-    print("  ℹ️  Use --query-resources flag to specify resources to query")
-    export_data["resource_owners"] = []
+    # Export entitlements (optional)
+    if export_entitlements:
+        entitlements_result = export_entitlements_only(manager)
+        export_data["entitlements"] = entitlements_result.get("entitlements", [])
+        export_data["export_status"]["entitlements"] = entitlements_result.get("status")
+        print()
 
-    # Export entitlements
-    print("\nExporting entitlements...")
-    entitlements_export = manager.export_all_entitlements()
-    export_data["entitlements"] = entitlements_export.get("entitlements", [])
+    # Export resource owners (optional)
+    if export_owners:
+        owners_result = export_resource_owners_only(manager, resource_orns)
+        export_data["resource_owners"] = owners_result.get("resource_owners", [])
+        export_data["export_status"]["resource_owners"] = owners_result.get("status")
+        print()
 
     # Write to file
     with open(output_file, 'w') as f:
         json.dump(export_data, f, indent=2)
 
-    print(f"\n✅ Export completed successfully!")
-    print(f"📄 Output file: {output_file}")
+    # Summary
+    print(f"\n{'='*50}")
+    print(f"📄 Export saved to: {output_file}")
     print(f"\n📊 Export Summary:")
-    print(f"  - Labels: {len(labels_data)}")
-    print(f"  - Entitlements: {len(export_data['entitlements'])}")
+    if export_labels:
+        status = export_data["export_status"].get("labels", "unknown")
+        count = len(export_data.get("labels", []))
+        emoji = "✅" if status == "success" else "⚠️" if status == "not_available" else "❌"
+        print(f"  {emoji} Labels: {count} ({status})")
+
+    if export_entitlements:
+        status = export_data["export_status"].get("entitlements", "unknown")
+        count = len(export_data.get("entitlements", []))
+        emoji = "✅" if status == "success" else "⚠️" if status == "not_available" else "❌"
+        print(f"  {emoji} Entitlements: {count} ({status})")
+
+    if export_owners:
+        status = export_data["export_status"].get("resource_owners", "unknown")
+        count = len(export_data.get("resource_owners", []))
+        emoji = "✅" if status == "success" else "⚠️" if status == "skipped" else "❌"
+        print(f"  {emoji} Resource Owners: {count} ({status})")
+
+    print(f"{'='*50}\n")
 
 
 def main():
@@ -462,6 +563,28 @@ def main():
     parser.add_argument(
         "--api-token",
         help="Okta API token (overrides config)"
+    )
+    parser.add_argument(
+        "--export-labels",
+        action="store_true",
+        default=True,
+        help="Export governance labels (default: True)"
+    )
+    parser.add_argument(
+        "--export-entitlements",
+        action="store_true",
+        default=True,
+        help="Export entitlements (default: True)"
+    )
+    parser.add_argument(
+        "--export-owners",
+        action="store_true",
+        help="Export resource owners (default: False, requires --resource-orns)"
+    )
+    parser.add_argument(
+        "--resource-orns",
+        nargs='+',
+        help="List of resource ORNs to export owners for"
     )
 
     args = parser.parse_args()
@@ -496,7 +619,14 @@ def main():
         destroy_configuration(manager, config)
     elif args.action == "export":
         output_file = args.output or f"oig_export_{manager.org_name}_{int(time.time())}.json"
-        export_all_oig_resources(manager, output_file)
+        export_all_oig_resources(
+            manager,
+            output_file,
+            export_labels=args.export_labels,
+            export_entitlements=args.export_entitlements,
+            export_owners=args.export_owners,
+            resource_orns=args.resource_orns
+        )
     elif args.action == "query":
         # Query current state
         print("\n=== Current State ===\n")
