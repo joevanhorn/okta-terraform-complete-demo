@@ -1,0 +1,21 @@
+name: Test - Export OIG Labels
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test mode'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  test-export:
+    name: Test Export (No Environment)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Test step
+        run: |
+          echo "Testing workflow_dispatch trigger"
+          echo "This is a test workflow without environment protection"
