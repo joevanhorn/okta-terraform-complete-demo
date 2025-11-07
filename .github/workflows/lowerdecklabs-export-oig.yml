@@ -1,4 +1,4 @@
-name: LowerDeckLabs - Export OIG Resources
+name: LowerDeckLabs - Export OIG API-Only Resources
 
 on:
   workflow_dispatch:  # Manual trigger only
