@@ -35,7 +35,7 @@ jobs:
           echo "❌ This workflow will NOT create/update/delete anything"
           echo ""
           echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
-          echo "Operation: Export entitlements, labels, resource owners"
+          echo "Operation: Export labels and resource owners (API-only)"
           echo "=================================================="
           echo ""
 
@@ -80,18 +80,18 @@ jobs:
           fi
           echo "✅ Basic API access confirmed"
 
-          # Test governance API access
-          GOV_RESPONSE=$(curl -s -w "%{http_code}" \
+          # Test governance labels API access
+          LABELS_RESPONSE=$(curl -s -w "%{http_code}" \
             -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
             -H "Accept: application/json" \
-            "https://${OKTA_ORG_NAME}.${OKTA_BASE_URL}/api/v1/governance/entitlements?limit=1")
+            "https://${OKTA_ORG_NAME}.${OKTA_BASE_URL}/governance/api/v1/labels?limit=1")
 
-          GOV_HTTP_CODE="${GOV_RESPONSE: -3}"
-          if [ "$GOV_HTTP_CODE" != "200" ]; then
-            echo "⚠️  Governance API access limited (HTTP $GOV_HTTP_CODE)"
+          LABELS_HTTP_CODE="${LABELS_RESPONSE: -3}"
+          if [ "$LABELS_HTTP_CODE" != "200" ]; then
+            echo "⚠️  Governance Labels API access limited (HTTP $LABELS_HTTP_CODE)"
             echo "     This may be expected if OIG is not enabled or token lacks governance scopes"
           else
-            echo "✅ Governance API access confirmed"
+            echo "✅ Governance Labels API access confirmed"
           fi
 
       - name: Create export directory
@@ -105,24 +105,25 @@ jobs:
         id: export_oig
         continue-on-error: true
         run: |
-          echo "Starting OIG export for LowerDeckLabs..."
+          echo "Starting OIG API-only export for LowerDeckLabs..."
+          echo "Exporting: Labels and Resource Owners"
           echo ""
 
           # Make script executable
           chmod +x scripts/okta_api_manager.py
 
-          # Run export (with explicit flags for labels, entitlements, and owners)
+          # Run export (API-only resources: labels and resource owners)
           python3 scripts/okta_api_manager.py \
             --action export \
             --org-name "${OKTA_ORG_NAME}" \
             --base-url "${OKTA_BASE_URL}" \
             --api-token "${OKTA_API_TOKEN}" \
             --output "${EXPORT_DIR}/lowerdecklabs_oig_export.json" \
-            --export-labels \
-            --export-entitlements 2>&1 | tee export.log
+            --export-labels 2>&1 | tee export.log
 
-          # Note: --export-owners is not included as it requires --resource-orns
-          # Resource owners can be added in future iterations if needed
+          # Note: --export-owners not included as it requires --resource-orns
+          # Resource owners can be added by providing specific ORNs if needed
+          # Entitlements should be managed via Terraform (okta_principal_entitlements)
 
           EXPORT_STATUS=$?
 
@@ -140,23 +141,19 @@ jobs:
           EXPORT_FILE="${EXPORT_DIR}/lowerdecklabs_oig_export.json"
 
           if [ -f "$EXPORT_FILE" ]; then
-            # Count exported resources
+            # Count exported resources (API-only: labels and resource owners)
             LABELS_COUNT=$(jq '.labels | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
-            ENTITLEMENTS_COUNT=$(jq '.entitlements | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
             OWNERS_COUNT=$(jq '.resource_owners | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
 
             echo "labels_count=$LABELS_COUNT" >> $GITHUB_OUTPUT
-            echo "entitlements_count=$ENTITLEMENTS_COUNT" >> $GITHUB_OUTPUT
             echo "owners_count=$OWNERS_COUNT" >> $GITHUB_OUTPUT
 
             echo ""
-            echo "📊 Export Summary:"
+            echo "📊 Export Summary (API-only resources):"
             echo "  - Labels: $LABELS_COUNT"
-            echo "  - Entitlements: $ENTITLEMENTS_COUNT"
             echo "  - Resource Owners: $OWNERS_COUNT"
           else
             echo "labels_count=0" >> $GITHUB_OUTPUT
-            echo "entitlements_count=0" >> $GITHUB_OUTPUT
             echo "owners_count=0" >> $GITHUB_OUTPUT
             echo "⚠️ Export file not found"
           fi
@@ -167,19 +164,20 @@ jobs:
           REPORT_FILE="${EXPORT_DIR}/EXPORT_REPORT.md"
 
           cat > ${REPORT_FILE} <<EOF
-          # LowerDeckLabs OIG Export Report
+          # LowerDeckLabs OIG API-Only Export Report
 
           **Date:** $(date)
           **Okta Org:** ${OKTA_ORG_NAME}
           **Workflow Run:** #${{ github.run_number }}
 
-          ## Export Summary
+          ## Export Summary (API-Only Resources)
 
           | Resource Type | Count | Status |
           |--------------|-------|--------|
           | Labels | ${{ steps.parse_results.outputs.labels_count }} | ${{ steps.export_oig.outputs.export_status == 'success' && '✅' || '⚠️' }} |
-          | Entitlements | ${{ steps.parse_results.outputs.entitlements_count }} | ${{ steps.export_oig.outputs.export_status == 'success' && '✅' || '⚠️' }} |
           | Resource Owners | ${{ steps.parse_results.outputs.owners_count }} | ${{ steps.export_oig.outputs.export_status == 'success' && '✅' || '⚠️' }} |
+
+          **Note:** Entitlements should be managed via Terraform using \`okta_principal_entitlements\` resource.
 
           ## What Was Exported
 
@@ -187,11 +185,6 @@ jobs:
           - Governance labels with assigned resources
           - Label descriptions and metadata
           - Resource ORNs for each label
-
-          ### Entitlements
-          - Principal entitlements (users and groups)
-          - Entitlement bundles
-          - Access assignments
 
           ### Resource Owners
           - Resource owner assignments
@@ -211,7 +204,6 @@ jobs:
             "okta_org": "demo-terraform-test-example",
             "okta_base_url": "oktapreview.com",
             "labels": [...],
-            "entitlements": [...],
             "resource_owners": [...]
           }
           \`\`\`
@@ -220,9 +212,10 @@ jobs:
 
           - ✅ This was a READ-ONLY operation
           - ❌ NO changes were made to your Okta tenant
+          - ℹ️ This export only includes API-only resources (Labels and Resource Owners)
+          - ℹ️ Entitlements should be managed via Terraform (\`okta_principal_entitlements\`)
           - ℹ️ This export can be used to:
-            - Document current OIG configuration
-            - Backup entitlement assignments
+            - Document current labels and resource ownership
             - Import into another Okta tenant
             - Track changes over time (drift detection)
 
@@ -308,36 +301,21 @@ jobs:
           if git diff --staged --quiet; then
             echo "ℹ️  No changes detected - export is identical to previous"
           else
-            # Create commit message with export summary including categorization
+            # Create commit message with export summary (API-only resources)
             LABELS_COUNT=$(jq '.labels | length // 0' "${EXPORT_FILE}")
-            ENTITLEMENTS_COUNT=$(jq '.entitlements | length // 0' "${EXPORT_FILE}")
+            OWNERS_COUNT=$(jq '.resource_owners | length // 0' "${EXPORT_FILE}")
             LABELS_STATUS=$(jq -r '.export_status.labels // "unknown"' "${EXPORT_FILE}")
-            ENTITLEMENTS_STATUS=$(jq -r '.export_status.entitlements // "unknown"' "${EXPORT_FILE}")
+            OWNERS_STATUS=$(jq -r '.export_status.resource_owners // "unknown"' "${EXPORT_FILE}")
 
-            # Get entitlement categorization if available
-            APP_MANAGED=$(jq -r '.entitlement_categories.app_managed_count // 0' "${EXPORT_FILE}")
-            MANUAL=$(jq -r '.entitlement_categories.manual_count // 0' "${EXPORT_FILE}")
-            UNKNOWN=$(jq -r '.entitlement_categories.unknown_count // 0' "${EXPORT_FILE}")
+            git commit -m "feat(oig): Export OIG API-only resources for lowerdecklabs
 
-            # Build category details if categorization was performed
-            CATEGORY_DETAILS=""
-            if [ "${APP_MANAGED}" != "0" ] || [ "${MANUAL}" != "0" ]; then
-              CATEGORY_DETAILS="
-  - App-managed (synced): ${APP_MANAGED}
-  - Manual/Custom (BYO): ${MANUAL}"
-              if [ "${UNKNOWN}" != "0" ]; then
-                CATEGORY_DETAILS="${CATEGORY_DETAILS}
-  - Unknown: ${UNKNOWN}"
-              fi
-            fi
-
-            git commit -m "feat(oig): Export OIG resources for lowerdecklabs
-
-- Entitlements: ${ENTITLEMENTS_COUNT} (${ENTITLEMENTS_STATUS})${CATEGORY_DETAILS}
 - Labels: ${LABELS_COUNT} (${LABELS_STATUS})
+- Resource Owners: ${OWNERS_COUNT} (${OWNERS_STATUS})
 
 Export date: ${EXPORT_DATE}
 Workflow run: ${{ github.run_number }}
+
+Note: Entitlements should be managed via Terraform
 
 🤖 Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>"
@@ -353,19 +331,20 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       - name: Post summary to workflow
         if: always()
         run: |
-          echo "## 📤 LowerDeckLabs OIG Export Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📤 LowerDeckLabs OIG API-Only Export Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** LowerDeckLabs (Primary Demo Tenant)" >> $GITHUB_STEP_SUMMARY
-          echo "**Operation:** OIG Export (Read-Only)" >> $GITHUB_STEP_SUMMARY
+          echo "**Operation:** OIG API-Only Export (Read-Only)" >> $GITHUB_STEP_SUMMARY
           echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Resources Exported" >> $GITHUB_STEP_SUMMARY
+          echo "### API-Only Resources Exported" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Type | Count |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Labels | ${{ steps.parse_results.outputs.labels_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Entitlements | ${{ steps.parse_results.outputs.entitlements_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Resource Owners | ${{ steps.parse_results.outputs.owners_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Entitlements should be managed via Terraform (\`okta_principal_entitlements\`)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Safety Confirmation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
