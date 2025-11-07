@@ -147,14 +147,14 @@ class AdminLabelApplier:
             print("  ℹ️  No entitlements to label")
             return {"applied": 0, "failed": 0, "skipped": 0}
 
-        label_id = label_info.get("labelId")
+        label_value_id = label_info.get("labelValueId")
         resource_orns = [bundle.get("orn") for bundle in bundles if bundle.get("orn")]
 
         if not resource_orns:
             print("  ⚠️  No valid ORNs found for entitlements")
             return {"applied": 0, "failed": 0, "skipped": len(bundles)}
 
-        print(f"\nLabel: Privileged (ID: {label_id})")
+        print(f"\nLabel: Privileged (labelValueId: {label_value_id})")
         print(f"Resources: {len(resource_orns)}")
         print()
 
@@ -167,15 +167,20 @@ class AdminLabelApplier:
             return {"applied": 0, "failed": 0, "skipped": len(resource_orns), "dry_run": True}
 
         try:
-            # Apply label using PUT /labels/{labelId}/resources
-            url = f"{self.governance_base}/labels/{label_id}/resources"
-            payload = {"resourceOrns": resource_orns}
+            # Apply label using POST /resource-labels/assign
+            url = f"{self.governance_base}/resource-labels/assign"
+            payload = {
+                "resourceOrns": resource_orns,
+                "labelValueIds": [label_value_id]
+            }
 
-            response = self.session.put(url, json=payload)
+            response = self.session.post(url, json=payload)
             print(f"Status Code: {response.status_code}")
 
             if response.status_code in [200, 201, 204]:
                 print(f"✅ Successfully applied Privileged label to {len(resource_orns)} entitlements")
+                if response.text:
+                    print(f"Response: {response.text[:500]}")
                 return {"applied": len(resource_orns), "failed": 0, "skipped": 0}
             else:
                 print(f"⚠️  API returned status {response.status_code}")
