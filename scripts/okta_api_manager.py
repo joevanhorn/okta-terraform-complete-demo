@@ -179,6 +179,17 @@ class OktaAPIManager:
                 return label.get("labelId")
         return None
 
+    def get_label_value_id_from_name(self, label_name: str) -> Optional[str]:
+        """Get labelValueId from label name by listing all labels"""
+        labels_response = self.list_labels()
+        for label in labels_response.get("data", []):
+            if label.get("name") == label_name:
+                # Get the first labelValueId from values array
+                values = label.get("values", [])
+                if values:
+                    return values[0].get("labelValueId")
+        return None
+
     def get_label(self, label_name: str) -> Optional[Dict]:
         """Get a specific label by name (looks up labelId first)"""
         label_id = self.get_label_id_from_name(label_name)
@@ -209,15 +220,30 @@ class OktaAPIManager:
         print(f"Applied label '{label_name}' to {len(resource_orns)} resources")
         return response.json()
 
+    def list_all_resource_labels(self, limit: int = 200) -> Dict:
+        """List all resource-label assignments"""
+        url = f"{self.base_url}/governance/api/v1/resource-labels"
+        params = {"limit": limit}
+
+        response = self._make_request("GET", url, params=params)
+        return response.json()
+
     def list_resources_by_label(self, label_name: str) -> Dict:
-        """List all resources with a specific label (looks up labelId first)"""
-        label_id = self.get_label_id_from_name(label_name)
-        if not label_id:
+        """List all resources with a specific label using filter parameter"""
+        # Get labelValueId for the label name
+        label_value_id = self.get_label_value_id_from_name(label_name)
+        if not label_value_id:
             raise ValueError(f"Label '{label_name}' not found")
 
-        url = f"{self.base_url}/governance/api/v1/labels/{label_id}/resources"
+        # Use filter parameter to query resources with this label
+        url = f"{self.base_url}/governance/api/v1/resource-labels"
+        filter_expr = f'labelValueId eq "{label_value_id}"'
+        params = {
+            "filter": filter_expr,
+            "limit": 200
+        }
 
-        response = self._make_request("GET", url)
+        response = self._make_request("GET", url, params=params)
         return response.json()
 
     def remove_label_from_resources(self, label_name: str, resource_orns: List[str]) -> Dict:

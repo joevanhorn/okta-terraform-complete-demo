@@ -133,38 +133,86 @@ class LabelsAPIValidator:
             print(f"❌ Error: {e}")
             return None
 
-    def get_label_resources(self, label_name: str, label_id: str) -> Dict:
-        """Test GET /governance/api/v1/labels/{labelId}/resources"""
+    def list_all_resource_labels(self) -> Dict:
+        """Test GET /governance/api/v1/resource-labels"""
         print("\n" + "="*80)
-        print(f"TEST: Get Resources for Label - '{label_name}' (ID: {label_id})")
+        print(f"TEST: List All Resource-Label Assignments")
         print("="*80)
-        print(f"Endpoint: GET {self.governance_base}/labels/{label_id}/resources")
+        print(f"Endpoint: GET {self.governance_base}/resource-labels")
 
         try:
-            url = f"{self.governance_base}/labels/{label_id}/resources"
+            url = f"{self.governance_base}/resource-labels"
+            params = {"limit": 200}
 
-            response = self.session.get(url)
+            response = self.session.get(url, params=params)
             print(f"Status Code: {response.status_code}")
 
             if response.status_code == 200:
                 data = response.json()
-                resources = data.get("data", [])
-                print(f"✅ SUCCESS: Retrieved {len(resources)} resources with label '{label_name}'")
+                assignments = data.get("data", [])
+                print(f"✅ SUCCESS: Retrieved {len(assignments)} resource-label assignments")
 
-                if resources:
-                    print("\nResources:")
-                    for resource in resources[:5]:  # Show first 5
-                        print(f"  • ORN: {resource.get('orn', 'N/A')}")
-                        print(f"    Type: {resource.get('type', 'N/A')}")
-                        print(f"    Name: {resource.get('name', 'N/A')}")
+                if assignments:
+                    print("\nSample assignments:")
+                    for assignment in assignments[:3]:  # Show first 3
+                        print(f"  • Resource: {assignment.get('resource', {}).get('name', 'N/A')}")
+                        print(f"    ORN: {assignment.get('resource', {}).get('orn', 'N/A')}")
+                        labels = assignment.get('labels', [])
+                        print(f"    Labels: {[l.get('name') for l in labels]}")
                         print()
 
-                    if len(resources) > 5:
-                        print(f"  ... and {len(resources) - 5} more resources")
+                    if len(assignments) > 3:
+                        print(f"  ... and {len(assignments) - 3} more assignments")
+                else:
+                    print("  ℹ️  No resource-label assignments found")
+
+                return {"success": True, "assignments": assignments, "count": len(assignments)}
+            else:
+                response.raise_for_status()
+
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return {"success": False, "assignments": [], "count": 0}
+
+    def get_label_resources(self, label_name: str, label_id: str, label_value_id: str) -> Dict:
+        """Get resources for a specific label using filter parameter"""
+        print("\n" + "="*80)
+        print(f"TEST: Get Resources for Label - '{label_name}' (using filter)")
+        print("="*80)
+        print(f"Endpoint: GET {self.governance_base}/resource-labels")
+        print(f"Filter: labelValueId eq \"{label_value_id}\"")
+
+        try:
+            url = f"{self.governance_base}/resource-labels"
+            filter_expr = f'labelValueId eq "{label_value_id}"'
+            params = {
+                "filter": filter_expr,
+                "limit": 200
+            }
+
+            response = self.session.get(url, params=params)
+            print(f"Status Code: {response.status_code}")
+
+            if response.status_code == 200:
+                data = response.json()
+                assignments = data.get("data", [])
+                print(f"✅ SUCCESS: Found {len(assignments)} resources with label '{label_name}'")
+
+                if assignments:
+                    print("\nResources:")
+                    for assignment in assignments[:5]:  # Show first 5
+                        resource = assignment.get("resource", {})
+                        print(f"  • Name: {resource.get('name', 'N/A')}")
+                        print(f"    ORN: {resource.get('orn', 'N/A')}")
+                        print(f"    Type: {resource.get('type', 'N/A')}")
+                        print()
+
+                    if len(assignments) > 5:
+                        print(f"  ... and {len(assignments) - 5} more resources")
                 else:
                     print("  ℹ️  No resources assigned to this label")
 
-                return {"success": True, "resources": resources, "count": len(resources)}
+                return {"success": True, "resources": assignments, "count": len(assignments)}
             else:
                 response.raise_for_status()
 
@@ -313,13 +361,29 @@ class LabelsAPIValidator:
                     "valid_structure": structure_validation.get("valid", False)
                 })
 
-            # Get assigned resources
-            resources_result = self.get_label_resources(label_name, label_id)
-            results["resource_assignment_tests"].append({
-                "label": label_name,
-                "label_id": label_id,
-                "resources_count": resources_result.get("count", 0)
-            })
+            # Get labelValueId from label values
+            label_value_id = None
+            values = label.get("values", [])
+            if values:
+                label_value_id = values[0].get("labelValueId")
+
+            # Get assigned resources (using labelValueId if available)
+            if label_value_id:
+                resources_result = self.get_label_resources(label_name, label_id, label_value_id)
+                results["resource_assignment_tests"].append({
+                    "label": label_name,
+                    "label_id": label_id,
+                    "label_value_id": label_value_id,
+                    "resources_count": resources_result.get("count", 0)
+                })
+            else:
+                print(f"⚠️  Label '{label_name}' has no labelValueId, skipping resource query...")
+                results["resource_assignment_tests"].append({
+                    "label": label_name,
+                    "label_id": label_id,
+                    "label_value_id": None,
+                    "resources_count": 0
+                })
 
         # Test 4: Compare with previous export (if requested)
         if validate_imports:
