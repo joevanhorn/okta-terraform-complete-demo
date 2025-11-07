@@ -1,0 +1,61 @@
+{
+  "description": "Label ID mappings synced from Okta OIG",
+  "last_synced": "2025-11-07T23:26:00Z",
+  "labels": {
+    "Privileged": {
+      "labelId": "lbc11keklyNa6KhMi1d7",
+      "labelValueId": "lbl11keklzHO41LJ11d7",
+      "description": "High-privilege access requiring enhanced monitoring and approval",
+      "color": "red",
+      "metadata": {
+        "backgroundColor": "red"
+      }
+    },
+    "Crown Jewel": {
+      "labelId": "lbc11keklwxBrRatm1d7",
+      "labelValueId": "lbl11keklx0TEYCmp1d7",
+      "description": "Critical business resources requiring maximum protection",
+      "color": "green",
+      "metadata": {
+        "backgroundColor": "green"
+      }
+    }
+  },
+  "assignments": {
+    "entitlement_bundles": {
+      "Privileged": [
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zcvwl8qvb6Xv1d7",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob80LpIChdk1d7",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce5beI4h4ZpiL1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr791zEltKnNM1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jiPAyBUe3T1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr78nCPHASTg51d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jeB4KymizN1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2javo5dcN4G1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j6FAUy9Jis1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j2WdriUP8L1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74kotubjqR01d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2iwvQtKgHK51d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr7845qDAUdXb1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ehIJFA41L1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ap1j9m6Qc1d6",
+        "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr746NrVQrM1E1d6"
+      ],
+      "Crown Jewel": []
+    },
+    "apps": {
+      "Privileged": [],
+      "Crown Jewel": []
+    },
+    "groups": {
+      "Privileged": [],
+      "Crown Jewel": []
+    }
+  },
+  "notes": [
+    "This file is the source of truth for label assignments",
+    "To add a new label assignment, submit a PR adding the ORN to the appropriate array",
+    "Run 'make sync-labels' or the GitHub Actions workflow to apply changes to Okta",
+    "Run 'make import-labels' to sync this file from Okta"
+  ]
+}
