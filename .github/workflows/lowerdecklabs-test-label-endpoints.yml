@@ -1,0 +1,44 @@
+name: LowerDeckLabs - Test Label Application Endpoints
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-endpoints:
+    name: Test Label Application API Endpoints
+    runs-on: ubuntu-latest
+
+    environment:
+      name: LowerDeckLabs
+
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run endpoint tests
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          python3 scripts/test_apply_labels_endpoint.py 2>&1 | tee test_results.log
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: endpoint-test-results-${{ github.run_number }}
+          path: test_results.log
+          retention-days: 30
