@@ -1,15 +1,129 @@
 # Okta OIG API Management Guide
 
-This guide explains how to manage **Resource Owners** and **Labels** using the Okta API, complementing the Terraform provider.
+This guide explains how to manage **Entitlements**, **Resource Owners**, and **Labels** using the Okta API, complementing the Terraform provider.
 
 ## 📋 Overview
 
 While the Okta Terraform Provider v6.1.0 adds support for many OIG features, some capabilities are only available via REST API:
 
+- **Entitlements API** - Export principal entitlements and bundles (modular export with graceful error handling)
 - **Resource Owners API** - Assign owners to apps, groups, and entitlements
 - **Labels API** - Create and assign governance labels to resources
 
-This implementation uses a Python script integrated with Terraform to manage these resources.
+This implementation uses the `okta_api_manager.py` script with **modular export functionality** that gracefully handles partial OIG availability.
+
+## 🆕 Modular OIG Export
+
+### Overview
+
+The modular export approach allows you to export OIG resources independently with graceful error handling:
+
+**Key Features:**
+- **Independent exports**: Labels, entitlements, and resource owners export separately
+- **Graceful degradation**: HTTP 400/404 treated as "not_available" instead of errors
+- **Status tracking**: Each export type reports its own status (success/not_available/error/skipped)
+- **Partial availability**: Works when "not every app has entitlement management enabled"
+
+### Export Status Codes
+
+| Status | Description | Example Scenario |
+|--------|-------------|------------------|
+| `success` | Export completed successfully | 789 entitlements exported |
+| `not_available` | Resource type not available (HTTP 400/404) | Labels endpoint not enabled |
+| `error` | Export failed with an error | API authentication failed |
+| `skipped` | Export was not requested | Resource owners without --resource-orns |
+
+### Usage
+
+**Via GitHub Actions (Recommended):**
+
+The `lowerdecklabs-export-oig.yml` workflow uses the modular export:
+
+```yaml
+# .github/workflows/lowerdecklabs-export-oig.yml
+python3 scripts/okta_api_manager.py \
+  --action export_oig \
+  --org-name $OKTA_ORG_NAME \
+  --base-url $OKTA_BASE_URL \
+  --api-token $OKTA_API_TOKEN \
+  --output ${EXPORT_DIR}/lowerdecklabs_oig_export.json \
+  --export-labels \
+  --export-entitlements
+```
+
+**Via Command Line:**
+
+```bash
+# Export all OIG resources with modular approach
+python3 scripts/okta_api_manager.py \
+  --action export_oig \
+  --org-name demo-lowerdecklabs \
+  --base-url oktapreview.com \
+  --api-token $OKTA_API_TOKEN \
+  --output oig_export.json \
+  --export-labels \
+  --export-entitlements \
+  --export-owners \
+  --resource-orns "orn:okta:idp:demo:apps:oauth2:0oa123"
+```
+
+**CLI Arguments:**
+- `--export-labels` - Export governance labels (default: false)
+- `--export-entitlements` - Export entitlements (default: false)
+- `--export-owners` - Export resource owners (default: false, requires --resource-orns)
+- `--resource-orns` - List of resource ORNs to export owners for
+
+### Export Output Example
+
+```json
+{
+  "export_date": "2025-11-07T01:59:19Z",
+  "okta_org": "demo-lowerdecklabs",
+  "okta_base_url": "oktapreview.com",
+  "export_status": {
+    "labels": "not_available",
+    "entitlements": "success"
+  },
+  "labels": [],
+  "entitlements": [
+    {
+      "id": "ent12pva5bAyGUBBv1d7",
+      "name": "Entitlement Name",
+      "description": "Entitlement description",
+      "principals": [...],
+      "resources": [...]
+    }
+  ]
+}
+```
+
+### Implementation Details
+
+The modular export is implemented in `okta_api_manager.py` with these key functions:
+
+```python
+def export_labels_only(manager: OktaAPIManager) -> Dict:
+    """Export only governance labels with graceful error handling"""
+    try:
+        labels_response = manager.list_labels()
+        # ... process labels
+        return {"labels": labels_data, "status": "success"}
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code in [400, 404]:
+            return {"labels": [], "status": "not_available", "reason": str(e)}
+        return {"labels": [], "status": "error", "reason": str(e)}
+
+def export_entitlements_only(manager: OktaAPIManager) -> Dict:
+    """Export only entitlements with graceful error handling"""
+    # Handles both list and dict API responses
+    # Includes rate limiting with exponential backoff
+
+def export_resource_owners_only(manager: OktaAPIManager, resource_orns: List[str]) -> Dict:
+    """Export only resource owners for specified resources"""
+    # Requires resource ORNs to be provided
+```
+
+---
 
 ## 🏗️ Architecture
 
@@ -570,8 +684,8 @@ ls -la scripts/okta_api_manager.py
 # Ensure execute permissions
 chmod +x scripts/okta_api_manager.py
 
-# Check path in Terraform
-cat integrated-api-management.tf | grep okta_api_manager.py
+# Test the script
+python3 scripts/okta_api_manager.py --help
 ```
 
 ## 📊 Monitoring and Reporting

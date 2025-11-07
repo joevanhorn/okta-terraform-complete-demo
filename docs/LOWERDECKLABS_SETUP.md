@@ -73,9 +73,9 @@ Add these secrets specifically to the **LowerDeckLabs** environment:
 
 | Secret Name | Value | Description |
 |-------------|-------|-------------|
-| `OKTA_ORG_NAME` | `demo-terraform-test-example` | Your Okta org subdomain |
+| `OKTA_ORG_NAME` | `demo-lowerdecklabs` | Your Okta org subdomain |
 | `OKTA_BASE_URL` | `oktapreview.com` | Your Okta base URL |
-| `OKTA_API_TOKEN` | `00KSc7lwIHIrJO8nHGacIu9Q3cA_C-OAa3BBD3Shdg` | API token with governance scopes |
+| `OKTA_API_TOKEN` | `<your-api-token>` | API token with governance scopes |
 
 ### API Token Permissions Required
 
@@ -112,14 +112,13 @@ Environment: LowerDeckLabs
 │   └── Deployment Branches: main only
 │
 ├── Secrets:
-│   ├── OKTA_ORG_NAME: demo-terraform-test-example
+│   ├── OKTA_ORG_NAME: demo-lowerdecklabs
 │   ├── OKTA_BASE_URL: oktapreview.com
 │   └── OKTA_API_TOKEN: <redacted>
 │
 └── Workflows Allowed:
-    ├── lowerdecklabs-import.yml (import-only)
-    ├── lowerdecklabs-export-oig.yml (export OIG resources)
-    └── lowerdecklabs-plan.yml (read-only plan)
+    ├── lowerdecklabs-import.yml (import standard resources)
+    └── lowerdecklabs-export-oig.yml (export OIG resources with modular approach)
 ```
 
 ### What Gets Protected
@@ -167,17 +166,26 @@ Environment: LowerDeckLabs
 ```
 
 **What it does:**
-- Exports entitlements, resource owners, and labels
-- Creates JSON files with current state
+- **Modular export** of labels, entitlements, and resource owners
+- Gracefully handles partial OIG availability (not every app has entitlement management enabled)
+- Treats HTTP 400/404 as "not_available" instead of errors
+- Creates JSON files with current state and export report
 - Uploads as artifacts
 - **Does NOT modify anything** - export-only
 
 **How to run:**
-1. Go to **Actions** → **LowerDeckLabs - Export OIG**
+1. Go to **Actions** → **LowerDeckLabs OIG Export**
 2. Click **Run workflow**
-3. Download artifacts after completion
+3. **Approve** the deployment (required for environment protection)
+4. Review the export commit in the repository
 
-**No approval needed** - this is read-only
+**Note:** While read-only, approval is required due to environment protection rules
+
+**What happens:**
+- Export runs and collects OIG resources
+- Results are committed to `oig-exports/lowerdecklabs/`
+- Files created: `latest.json` and `YYYY-MM-DD.json`
+- Also uploaded as artifact for backup (180 days retention)
 
 #### 3. **Plan Changes** (Safe - Read-only)
 
@@ -240,72 +248,98 @@ LowerDeckLabs includes **Okta Integration Network** apps and other complex resou
 
 ```bash
 # Trigger the export workflow
-Actions → LowerDeckLabs - Export OIG → Run workflow
+Actions → LowerDeckLabs OIG Export → Run workflow
 ```
+
+The workflow uses the modular `okta_api_manager.py` script with the following features:
+- **Modular exports**: Labels, entitlements, and resource owners are exported independently
+- **Graceful error handling**: If labels aren't available (HTTP 400/404), export continues with "not_available" status
+- **Status tracking**: Each export type reports its own status (success/not_available/error)
+- **Rate limiting**: Automatic handling with exponential backoff
 
 **Method 2: Local Export**
 
 ```bash
 # Set environment variables
-export OKTA_ORG_NAME="demo-terraform-test-example"
+export OKTA_ORG_NAME="demo-lowerdecklabs"
 export OKTA_BASE_URL="oktapreview.com"
-export OKTA_API_TOKEN="00KSc7lwIHIrJO8nHGacIu9Q3cA_C-OAa3BBD3Shdg"
+export OKTA_API_TOKEN="<your-api-token>"
 
-# Run export script
-python3 scripts/export_oig_resources.py \
+# Run modular export script
+python3 scripts/okta_api_manager.py \
+  --action export_oig \
   --org-name $OKTA_ORG_NAME \
   --base-url $OKTA_BASE_URL \
   --api-token $OKTA_API_TOKEN \
-  --output lowerdecklabs_oig_export.json
+  --output lowerdecklabs_oig_export.json \
+  --export-labels \
+  --export-entitlements
+  # Add --export-owners --resource-orns <orns> to export resource owners
 ```
 
 **Output:**
 
 ```json
 {
-  "export_date": "2025-11-04T10:30:00Z",
-  "okta_org": "demo-terraform-test-example",
+  "export_date": "2025-11-07T01:59:19Z",
+  "okta_org": "demo-lowerdecklabs",
+  "okta_base_url": "oktapreview.com",
+  "export_status": {
+    "labels": "not_available",
+    "entitlements": "success"
+  },
+  "labels": [],
   "entitlements": [
     {
-      "id": "ent123",
-      "principals": ["usr_abc", "grp_xyz"],
-      "resources": ["app_oauth_123"]
-    }
-  ],
-  "resource_owners": [
-    {
-      "resource_orn": "orn:okta:idp:demo:apps:oauth2:app123",
-      "owners": ["usr_owner1", "usr_owner2"]
-    }
-  ],
-  "labels": [
-    {
-      "name": "Critical",
-      "description": "Critical business applications",
-      "resources": ["app_123", "app_456"]
+      "id": "ent123...",
+      "name": "Entitlement Name",
+      "description": "Description",
+      "principals": [
+        {
+          "orn": "orn:okta:directory:demo-lowerdecklabs:users:00u123",
+          "email": "user@example.com"
+        }
+      ],
+      "resources": [
+        {
+          "orn": "orn:okta:idp:demo-lowerdecklabs:apps:oauth2:0oa456",
+          "name": "App Name"
+        }
+      ]
     }
   ]
 }
 ```
+
+**Export Status Codes:**
+- `success` - Export completed successfully
+- `not_available` - Resource type not available (HTTP 400/404) - OIG may not be fully enabled
+- `error` - Export failed with an error
+- `skipped` - Export was not requested (e.g., resource owners without --resource-orns)
 
 ### Importing Exported Data
 
 **To import the exported OIG data into a new environment:**
 
 ```bash
-# Import entitlements, owners, and labels
-python3 scripts/import_oig_resources.py \
-  --input lowerdecklabs_oig_export.json \
-  --target-org <new-org-name> \
-  --target-token <new-api-token> \
-  --dry-run  # Preview changes first
+# View export data to understand what will be imported
+cat lowerdecklabs_oig_export.json | jq '.export_status'
 
-# After reviewing, run without --dry-run
-python3 scripts/import_oig_resources.py \
-  --input lowerdecklabs_oig_export.json \
-  --target-org <new-org-name> \
-  --target-token <new-api-token>
+# Import using okta_api_manager.py
+# Note: This is a placeholder - full import functionality may require custom implementation
+# For now, exported data can be used for documentation, drift detection, and manual recreation
+python3 scripts/okta_api_manager.py \
+  --action apply \
+  --config lowerdecklabs_oig_export.json \
+  --org-name <new-org-name> \
+  --api-token <new-api-token>
 ```
+
+**Important:** The export is primarily designed for:
+1. **Documentation** - Capturing current OIG configuration state
+2. **Drift detection** - Comparing exports over time
+3. **Manual recreation** - Reference for setting up OIG in new tenants
+4. **Backup** - Record of entitlement assignments and labels
 
 ---
 
@@ -370,10 +404,27 @@ python3 scripts/import_oig_resources.py \
 1. Verify token has governance scopes:
    ```bash
    curl -H "Authorization: SSWS $OKTA_API_TOKEN" \
-     https://demo-terraform-test-example.oktapreview.com/api/v1/governance/entitlements
+     https://demo-lowerdecklabs.oktapreview.com/api/v1/governance/entitlements
    ```
 2. Token may have expired - generate new token
 3. Update GitHub secret with new token
+
+### Issue: Labels export shows "not_available" status
+
+**This is expected** when:
+- Labels endpoint is not fully enabled in your org
+- No labels exist yet
+- API token lacks label management scopes
+
+**This is NOT an error** - the export continues gracefully:
+```json
+{
+  "export_status": {
+    "labels": "not_available",
+    "entitlements": "success"
+  }
+}
+```
 
 ### Issue: Some resources not imported
 
@@ -405,12 +456,16 @@ python3 scripts/import_oig_resources.py \
 
 ```
 scripts/
-├── import_okta_resources.sh      # Standard Terraformer import
-├── export_oig_resources.py       # Export entitlements/owners/labels (NEW)
-├── import_oig_resources.py       # Import OIG data to new tenant (NEW)
-├── export_oin_apps.py            # Export OIN app configs (NEW)
-└── okta_api_manager.py           # Updated with entitlements support
+├── okta_api_manager.py           # Modular OIG export/import with graceful error handling
+└── protect_admin_users.py       # Filter admin users from imports
 ```
+
+**Key Script Features:**
+- **Modular architecture**: Separate functions for labels, entitlements, resource owners
+- **Graceful error handling**: Continues on partial OIG availability
+- **Status tracking**: Reports success/not_available/error for each export type
+- **Rate limiting**: Automatic retry with exponential backoff
+- **CLI arguments**: `--export-labels`, `--export-entitlements`, `--export-owners`
 
 ---
 
@@ -439,8 +494,15 @@ Actions → LowerDeckLabs - Apply → Run → WAIT FOR APPROVAL → Approves
 ### Local Operations
 
 ```bash
-# Export OIG locally
-python3 scripts/export_oig_resources.py --org-name demo-terraform-test-example
+# Export OIG locally with modular options
+python3 scripts/okta_api_manager.py \
+  --action export_oig \
+  --org-name demo-lowerdecklabs \
+  --base-url oktapreview.com \
+  --api-token $OKTA_API_TOKEN \
+  --output oig_export.json \
+  --export-labels \
+  --export-entitlements
 
 # View current state
 terraform plan  # Safe - read-only
@@ -474,4 +536,4 @@ terraform apply  # Dangerous - modifies tenant
 
 ---
 
-Last updated: 2025-11-04
+Last updated: 2025-11-07

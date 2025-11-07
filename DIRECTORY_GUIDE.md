@@ -1,22 +1,21 @@
-# Directory Guide: Which Configuration Should I Use?
+# Repository Guide: Okta Infrastructure as Code
 
-This repository contains two distinct Terraform configurations for different use cases. This guide helps you choose the right one.
-
----
-
-## Quick Comparison
-
-| Feature | `production-ready/` | `terraform/` |
-|---------|-------------------|--------------|
-| **Purpose** | Import & manage existing basic resources | Demonstrate new OIG features |
-| **Status** | ✅ Fully validated & tested | 🎯 Feature demonstration |
-| **Terraformer Compatible** | ✅ Yes - designed for imports | ❌ No - OIG not supported |
-| **Production Ready** | ✅ Yes - proven workflow | ⚠️ Demo/reference only |
-| **Best For** | Existing Okta orgs | New OIG implementations |
+This repository provides a complete solution for managing Okta infrastructure as code, including both standard resources and OIG (Okta Identity Governance) features.
 
 ---
 
-## Directory 1: `production-ready/`
+## Overview
+
+This repository contains:
+
+1. **production-ready/** - Terraform configurations for standard Okta resources
+2. **oig-exports/** - Exported OIG resources committed for version control
+3. **GitHub Actions workflows** - Automation for imports and OIG exports
+4. **scripts/** - Python tools for OIG resource management
+
+---
+
+## `production-ready/` Directory
 
 ### 📋 What It Contains
 
@@ -67,11 +66,23 @@ This repository contains two distinct Terraform configurations for different use
 
 ---
 
-## Directory 2: `terraform/`
+## OIG (Identity Governance) Features
+
+### Overview
+
+OIG features (entitlements, labels, resource owners) are managed via:
+- **GitHub Actions workflows** (`lowerdecklabs-export-oig.yml`)
+- **Python scripts** (`scripts/okta_api_manager.py`)
+
+This approach provides:
+- ✅ Modular export functionality
+- ✅ Graceful error handling
+- ✅ Support for partial OIG availability
+- ✅ Export to JSON for documentation and drift detection
 
 ### 🚨 Prerequisites for OIG Features
 
-Before using the `terraform/` directory, you **MUST** enable Entitlement Management in your Okta Admin Console:
+Before exporting OIG resources, you **MUST** enable Entitlement Management in your Okta Admin Console:
 
 #### Step 1: Enable Entitlement Management (GUI Required)
 
@@ -106,99 +117,166 @@ Ensure your Okta organization has:
 
 **📖 Detailed Setup Guide:** See **[OIG_PREREQUISITES.md](./OIG_PREREQUISITES.md)** for complete step-by-step instructions, common errors, and troubleshooting.
 
-### 📋 What It Contains
+### 📋 What Can Be Exported
 
-**OIG (Okta Identity Governance) Resources:**
-- ✅ Entitlements (`okta_principal_entitlements`)
-- ✅ Access Reviews (`okta_reviews`)
-- ✅ Access Request Settings (`okta_request_settings`)
-- ✅ Access Request Conditions (`okta_request_conditions`)
-- ✅ Approval Workflows (`okta_request_sequences`)
-- ✅ Access Requests (`okta_request_v2`)
-- ✅ Catalog Management (`okta_catalog_entry_*`)
-- ✅ Resource Owners (API-managed via Python)
-- ✅ Governance Labels (API-managed via Python)
+**OIG Resources (via API):**
+- ✅ Entitlements - Principal entitlements and bundles
+- ✅ Resource Owners - Owners assigned to apps/groups/entitlements
+- ✅ Governance Labels - Labels and their resource assignments
 
-**Plus Basic Resources:**
-- Users and groups (for demonstration)
-- OAuth apps (for catalog entries)
+**Export Features:**
+- Modular export (export only what you need)
+- Graceful error handling (continues if some features unavailable)
+- Status tracking (success/not_available/error per resource type)
+- JSON output for documentation and drift detection
 
 ### 🎯 Use This When You Want To:
 
-1. **Implement Okta Identity Governance** features
-2. **Learn about OIG capabilities** in Terraform Provider v6.1.0
-3. **Set up access review campaigns**
-4. **Configure approval workflows** for access requests
-5. **Understand API-managed resources** (owners, labels)
+1. **Export existing OIG configurations** for documentation
+2. **Detect drift** in OIG resource assignments
+3. **Backup** entitlements, owners, and labels
+4. **Document** current governance state
+5. **Prepare for migration** to another tenant
 
 ### ⚠️ Important Notes
 
-- **Not Terraformer-compatible** - OIG resources cannot be imported
-- **Demonstration/reference** - Not a validated production workflow
-- **Requires OIG license** - These features need Okta Identity Governance
-- **Fresh creation** - Resources must be created new, not imported
-- **🚨 Manual Enablement Required** - Entitlement Management (formerly "Governance Engine") **MUST be enabled manually** in the Okta Admin Console **before** you can manage entitlements via API/Terraform. This cannot currently be enabled via API.
+- **Read-only operations** - Exports do not modify your tenant
+- **Requires approval** - Even read-only operations use GitHub environment protection
+- **Modular approach** - Works even if only some apps have entitlement management enabled
+- **Not Terraformer-compatible** - OIG resources cannot be imported via Terraformer
+- **🚨 Manual Enablement Required** - Entitlement Management must be enabled manually in the Okta Admin Console before entitlements will appear in exports
 
 ### 📚 Documentation
 
-- **[terraform/README.md](./terraform/)** - OIG feature overview
-- Examples for each OIG resource type
-- API integration patterns
+- **[docs/LOWERDECKLABS_SETUP.md](./docs/LOWERDECKLABS_SETUP.md)** - Complete setup guide
+- **[docs/API_MANAGEMENT.md](./docs/API_MANAGEMENT.md)** - API manager documentation
+- **[OIG_PREREQUISITES.md](./OIG_PREREQUISITES.md)** - Prerequisites and setup
 
 ### 💡 Example Use Cases
 
-- "I want to set up quarterly access certification reviews"
-- "I need multi-stage approval workflows for sensitive app access"
-- "I want to understand what OIG features are available in Terraform"
-- "I need to assign resource owners to applications"
+- "Export all entitlements from my production tenant for documentation"
+- "Compare OIG configurations between environments"
+- "Backup resource owner assignments before making changes"
+- "Document which apps have governance labels applied"
 
 ---
 
-## Decision Tree
+## Workflow Guide
 
 ### Start Here: What's Your Goal?
 
 ```
-Do you have an EXISTING Okta org you want to manage?
-├─ YES → Use `production-ready/`
-│         Follow the Terraformer import workflow
+What do you want to do?
+
+├─ Import existing Okta resources into Terraform
+│  → Use production-ready/ directory
+│  → Follow Terraformer import workflow
+│  → See docs/TERRAFORMER.md
 │
-└─ NO → Are you implementing OIG features?
-         ├─ YES → Use `terraform/`
-         │         Reference for OIG resources
-         │
-         └─ NO → Use `production-ready/`
-                  Start with basic resources
+├─ Export OIG resources (entitlements, labels, owners)
+│  → Use GitHub Actions workflow: lowerdecklabs-export-oig.yml
+│  → See docs/LOWERDECKLABS_SETUP.md
+│  → Download artifacts with exported JSON
+│
+└─ Manage Okta resources with Terraform
+   → Use production-ready/ directory
+   → Standard Okta resources only (users, groups, apps, policies)
+   → OIG resources are exported via API, not managed by Terraform
 ```
 
-### More Specific Scenarios
+### Common Scenarios
 
-**Scenario 1: "I have 1000 users in Okta already"**
-→ Use `production-ready/`
-- Import with Terraformer
-- Manage going forward
+**Scenario 1: "I have an existing Okta org with 1000 users"**
+1. Use production-ready/ with Terraformer to import
+2. Review imported configuration
+3. Apply to verify zero drift
+4. Manage going forward with Terraform
 
-**Scenario 2: "I want to set up access reviews"**
-→ Use `terraform/`
-- OIG features demonstration
-- Cannot import existing reviews (if any)
+**Scenario 2: "I need to export entitlements for documentation"**
+1. Set up LowerDeckLabs GitHub environment (or your environment)
+2. Run lowerdecklabs-export-oig.yml workflow
+3. Download JSON artifact
+4. Review export status and exported resources
 
-**Scenario 3: "I'm starting a new Okta org"**
-→ Use `production-ready/`
-- Create basic resources
-- Add OIG later from `terraform/` examples
-
-**Scenario 4: "I want both basic resources AND OIG"**
-→ Use both!
-1. Start with `production-ready/` for basic resources
-2. Add OIG resources from `terraform/` examples
-3. Keep them in separate state files or merge carefully
+**Scenario 3: "I want both standard resources AND OIG"**
+1. Import standard resources with production-ready/ + Terraformer
+2. Export OIG resources with GitHub Actions workflow
+3. Use both for complete infrastructure documentation
 
 ---
 
-## Combining Both Approaches
+## Quick Reference
 
-You can use both directories together:
+### Standard Resources (Terraform)
+
+| Resource Type | Location | Import Method |
+|--------------|----------|---------------|
+| Users | production-ready/ | Terraformer |
+| Groups | production-ready/ | Terraformer |
+| OAuth Apps | production-ready/ | Terraformer |
+| SAML Apps | production-ready/ | Terraformer |
+| Auth Servers | production-ready/ | Terraformer |
+| Policies | production-ready/ | Terraformer |
+
+### OIG Resources (API Export)
+
+| Resource Type | Export Method | Status Tracking |
+|--------------|---------------|-----------------|
+| Entitlements | GitHub Actions workflow | ✅ Yes |
+| Resource Owners | GitHub Actions workflow | ✅ Yes |
+| Labels | GitHub Actions workflow | ✅ Yes |
+
+---
+
+## Getting Started
+
+### For Standard Resource Management
+
+```bash
+# Clone the repo
+git clone <repo-url>
+
+# Navigate to production-ready
+cd production-ready/
+
+# Read the documentation
+cat README.md
+cat FORKING_GUIDE.md
+
+# Initialize and validate
+terraform init
+terraform plan
+```
+
+### For OIG Export
+
+```bash
+# Set up GitHub environment
+# See docs/LOWERDECKLABS_SETUP.md for complete guide
+
+# Run the workflow
+Actions → LowerDeckLabs OIG Export → Run workflow
+
+# Download artifacts
+# JSON export with status tracking
+```
+
+---
+
+## Summary
+
+| Task | Solution |
+|------|----------|
+| Import existing Okta resources | production-ready/ + Terraformer |
+| Manage users/groups/apps with Terraform | production-ready/ |
+| Export OIG entitlements | GitHub Actions workflow |
+| Export resource owners | GitHub Actions workflow |
+| Export governance labels | GitHub Actions workflow |
+| Complete documentation | Combine Terraform IaC + OIG exports |
+
+---
+
+Last updated: 2025-11-07
 
 ### Option 1: Separate State Files (Recommended)
 
@@ -455,4 +533,4 @@ cat advanced-oig-examples.tf
 
 ---
 
-Last updated: 2025-11-04
+Last updated: 2025-11-07

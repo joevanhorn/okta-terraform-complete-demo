@@ -2,13 +2,32 @@
 """
 okta_api_manager.py
 
-Manages Okta OIG resources not yet available in Terraform provider:
-- Resource Owners
-- Labels
+Manages Okta OIG resources that must be handled via API:
+
+API-ONLY Resources (No Terraform Support):
+- Labels - Governance labels for resources
+- Resource Owners - Assign owners to resources
+
+READ-ONLY Exports (Documentation):
+- App-Managed Entitlements - Synced from apps (Salesforce, Workday, etc.)
+
+TERRAFORM-MANAGED Resources (NOT in this script):
+- Manual Entitlements - Use okta_principal_entitlements
+- Access Reviews - Use okta_reviews
+- Request Workflows - Use okta_request_*
+- Resource Catalog - Use okta_catalog_*
+- Resource Sets - Use okta_resource_set
 
 Usage:
-  python okta_api_manager.py --action apply --config terraform_outputs.json
-  python okta_api_manager.py --action destroy --config terraform_outputs.json
+  # Export API-only resources + app-managed entitlements (read-only)
+  python okta_api_manager.py --action export --output export.json \
+    --export-labels --export-entitlements
+
+  # Apply labels and resource owners
+  python okta_api_manager.py --action apply --config config.json
+
+  # Query specific resources
+  python okta_api_manager.py --action query --resource-type labels
 """
 
 import argparse
@@ -426,13 +445,138 @@ def export_labels_only(manager: OktaAPIManager) -> Dict:
         return {"labels": [], "status": "error", "reason": str(e)}
 
 
-def export_entitlements_only(manager: OktaAPIManager) -> Dict:
-    """Export only entitlements"""
+def categorize_entitlement(entitlement: Dict) -> str:
+    """
+    Categorize an entitlement as app-managed or manual/custom.
+
+    Returns:
+        - "app-managed": Entitlement synced from an application (e.g., Salesforce)
+        - "manual": Manually created/custom entitlement (BYO)
+        - "unknown": Cannot determine category
+    """
+    # Check if entitlement has resource field
+    resource = entitlement.get("resource", {})
+
+    if isinstance(resource, dict):
+        # Check resource ORN
+        resource_orn = resource.get("orn", "")
+
+        # App-managed entitlements have resource ORNs pointing to apps
+        # Format: orn:okta:idp:<org>:apps:<type>:<app-id>
+        if ":apps:" in resource_orn:
+            return "app-managed"
+
+        # Check resource type
+        resource_type = resource.get("type", "")
+        if resource_type and "app" in resource_type.lower():
+            return "app-managed"
+
+    # Check if there's a source or origin field (may not exist in all versions)
+    if "source" in entitlement:
+        source = entitlement.get("source", "")
+        if source == "app" or source == "application":
+            return "app-managed"
+        elif source == "manual" or source == "custom":
+            return "manual"
+
+    # If resource doesn't point to an app, likely manual/custom
+    if resource:
+        return "manual"
+
+    return "unknown"
+
+
+def export_entitlements_only(manager: OktaAPIManager, categorize: bool = True,
+                             app_managed_only: bool = True) -> Dict:
+    """
+    Export only app-managed entitlements for documentation purposes.
+
+    Manual/custom entitlements should be managed in Terraform using
+    okta_principal_entitlements resource.
+
+    Args:
+        manager: OktaAPIManager instance
+        categorize: If True, adds category field to each entitlement
+        app_managed_only: If True, only exports app-managed entitlements (default)
+
+    Returns:
+        Dict with entitlements, status, and category summary
+    """
     print("Exporting entitlements...")
+
+    if app_managed_only:
+        print("  ℹ️  Filtering: App-managed entitlements only (for documentation)")
+        print("  ℹ️  Manual entitlements should be managed in Terraform")
 
     try:
         entitlements_export = manager.export_all_entitlements()
-        return {"entitlements": entitlements_export.get("entitlements", []), "status": "success"}
+        all_entitlements = entitlements_export.get("entitlements", [])
+
+        if categorize and all_entitlements:
+            print("  Categorizing entitlements...")
+
+            categories = {
+                "app-managed": [],
+                "manual": [],
+                "unknown": []
+            }
+
+            for ent in all_entitlements:
+                category = categorize_entitlement(ent)
+                ent["_category"] = category  # Add category field
+                categories[category].append(ent)
+
+            # Print full summary
+            total_count = len(all_entitlements)
+            print(f"  📊 Found {total_count} total entitlements:")
+            print(f"     - App-managed (synced from apps): {len(categories['app-managed'])}")
+            print(f"     - Manual/Custom (BYO): {len(categories['manual'])}")
+            if categories['unknown']:
+                print(f"     - Unknown category: {len(categories['unknown'])}")
+
+            # Filter to app-managed only if requested
+            if app_managed_only:
+                filtered_entitlements = categories['app-managed']
+                manual_count = len(categories['manual'])
+                unknown_count = len(categories['unknown'])
+
+                print(f"\n  🔧 Filtered out:")
+                if manual_count > 0:
+                    print(f"     - {manual_count} manual entitlements (manage in Terraform)")
+                if unknown_count > 0:
+                    print(f"     - {unknown_count} unknown entitlements")
+
+                print(f"\n  ✅ Exporting {len(filtered_entitlements)} app-managed entitlements (read-only)")
+
+                return {
+                    "entitlements": filtered_entitlements,
+                    "status": "success",
+                    "total_count": total_count,
+                    "exported_count": len(filtered_entitlements),
+                    "filtered_count": manual_count + unknown_count,
+                    "category_summary": {
+                        "app_managed_count": len(categories['app-managed']),
+                        "manual_count": manual_count,
+                        "unknown_count": unknown_count,
+                        "manual_managed_in_terraform": True
+                    }
+                }
+            else:
+                # Export all entitlements (legacy behavior)
+                print(f"\n  ✅ Exporting all {total_count} entitlements")
+                return {
+                    "entitlements": all_entitlements,
+                    "status": "success",
+                    "category_summary": {
+                        "app_managed_count": len(categories['app-managed']),
+                        "manual_count": len(categories['manual']),
+                        "unknown_count": len(categories['unknown'])
+                    }
+                }
+
+        # No categorization
+        print(f"  ✅ Exported {len(all_entitlements)} entitlements (no categorization)")
+        return {"entitlements": all_entitlements, "status": "success"}
 
     except requests.exceptions.HTTPError as e:
         if e.response.status_code in [400, 404]:
@@ -498,11 +642,27 @@ def export_all_oig_resources(manager: OktaAPIManager, output_file: str,
         export_data["export_status"]["labels"] = labels_result.get("status")
         print()
 
-    # Export entitlements (optional)
+    # Export entitlements (optional) with categorization
+    # NOTE: Only exports app-managed entitlements by default
+    # Manual entitlements should be managed in Terraform
     if export_entitlements:
-        entitlements_result = export_entitlements_only(manager)
+        entitlements_result = export_entitlements_only(manager, categorize=True,
+                                                       app_managed_only=True)
         export_data["entitlements"] = entitlements_result.get("entitlements", [])
         export_data["export_status"]["entitlements"] = entitlements_result.get("status")
+
+        # Include category summary and filtering info
+        if "category_summary" in entitlements_result:
+            export_data["entitlement_categories"] = entitlements_result["category_summary"]
+
+        # Add metadata about filtering
+        if entitlements_result.get("filtered_count", 0) > 0:
+            export_data["entitlement_notes"] = {
+                "app_managed_only": True,
+                "manual_filtered_count": entitlements_result.get("filtered_count", 0),
+                "manual_management": "Manual entitlements should be managed in Terraform using okta_principal_entitlements"
+            }
+
         print()
 
     # Export resource owners (optional)

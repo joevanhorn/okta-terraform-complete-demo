@@ -18,7 +18,7 @@ This repository demonstrates Okta Identity Governance (OIG) management using Ter
 
 ### Terraform Operations
 ```bash
-# Initialize Terraform (from root or terraform/ directory)
+# Initialize Terraform (from production-ready/ directory)
 make init
 # OR
 cd terraform && terraform init
@@ -112,13 +112,14 @@ pytest tests/test_okta_api_manager.py -v
 
 ### Directory Structure
 ```
-terraform/              # Terraform configurations
-  main.tf              # Core OIG resources and provider setup
+production-ready/       # Production Terraform configurations
+  apps/                # OAuth and SAML applications
+  groups/              # Okta groups
+  users/               # Okta users
+  policies/            # Access policies
+  auth_servers/        # Authorization servers
+  provider.tf          # Okta provider setup
   variables.tf         # Input variables
-  api-managed-resources.tf     # Integration with Python API manager
-  integrated-api-management.tf # Terraform integration layer
-  advanced-oig-examples.tf     # Advanced OIG patterns
-  terraform.tfvars.example     # Example configuration
 
 scripts/               # Automation scripts
   okta_api_manager.py         # Python API manager for Owners & Labels
@@ -176,15 +177,15 @@ The `okta_api_manager.py` script uses the OktaAPIManager class with these main c
 - Bulk operations support
 - ORN (Okta Resource Name) builders for proper resource references
 
-### Integration with Terraform
+### Integration with GitHub Actions
 
-The Terraform configuration in `integrated-api-management.tf` uses `local-exec` provisioners to call the Python script:
+The OIG export functionality is integrated with GitHub Actions workflows:
 
-1. Terraform creates core OIG resources
-2. Terraform outputs resource IDs to `api_config.json`
-3. `local-exec` provisioner runs Python script with config
-4. Python script applies Resource Owners and Labels via API
-5. Destroy provisioner cleans up API-managed resources
+1. GitHub Actions workflow triggers OIG export
+2. Workflow calls `okta_api_manager.py` with appropriate arguments
+3. Python script exports labels, entitlements, and resource owners
+4. Script generates JSON export with status tracking
+5. Artifacts uploaded for download and review
 
 ## Important Development Guidelines
 
@@ -216,7 +217,7 @@ When modifying `okta_api_manager.py`:
 
 ### State Management
 
-- Backend is configured in `terraform/main.tf` (default: S3)
+- Backend is configured in `production-ready/backend.tf` (comment out for local development)
 - Update backend configuration for your environment before first use
 - State files from Terraformer imports are stored in `generated/okta/*/terraform.tfstate`
 - After cleanup, state should be consolidated into main state file
@@ -282,7 +283,7 @@ python3 scripts/cleanup_terraform.py --input generated/okta --output cleaned
 
 # 3. Add OIG configuration (create fresh, not imported)
 cd cleaned
-cp ../terraform/main.tf ./main-oig.tf
+cp ../production-ready/apps/okta_app_oauth.tf ./
 terraform init
 terraform plan
 terraform apply
@@ -291,7 +292,7 @@ terraform apply
 ### Scenario 3: Adding New OIG Resource Type
 
 When adding support for a new OIG resource:
-1. Add resource definition to appropriate `.tf` file in `terraform/`
+1. Add resource definition to appropriate `.tf` file in `production-ready/`
 2. Update `variables.tf` if new variables needed
 3. Update `api_config.json` structure if API integration needed
 4. Update `okta_api_manager.py` if new API endpoints needed

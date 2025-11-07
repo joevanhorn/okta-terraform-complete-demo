@@ -111,13 +111,18 @@ jobs:
           # Make script executable
           chmod +x scripts/okta_api_manager.py
 
-          # Run export
+          # Run export (with explicit flags for labels, entitlements, and owners)
           python3 scripts/okta_api_manager.py \
             --action export \
             --org-name "${OKTA_ORG_NAME}" \
             --base-url "${OKTA_BASE_URL}" \
             --api-token "${OKTA_API_TOKEN}" \
-            --output "${EXPORT_DIR}/lowerdecklabs_oig_export.json" 2>&1 | tee export.log
+            --output "${EXPORT_DIR}/lowerdecklabs_oig_export.json" \
+            --export-labels \
+            --export-entitlements 2>&1 | tee export.log
+
+          # Note: --export-owners is not included as it requires --resource-orns
+          # Resource owners can be added in future iterations if needed
 
           EXPORT_STATUS=$?
 
@@ -274,6 +279,77 @@ jobs:
             export.log
           retention-days: 180  # Keep for 6 months (important tenant data)
 
+      - name: Commit export to repository
+        if: success()
+        run: |
+          # Get date for filename
+          EXPORT_DATE=$(date +%Y-%m-%d)
+          EXPORT_FILE="${EXPORT_DIR}/lowerdecklabs_oig_export.json"
+
+          # Create oig-exports directory if it doesn't exist
+          mkdir -p oig-exports/lowerdecklabs
+
+          # Copy export to repository (JSON only, logs stay in artifacts)
+          cp "${EXPORT_FILE}" "oig-exports/lowerdecklabs/${EXPORT_DATE}.json"
+          cp "${EXPORT_FILE}" "oig-exports/lowerdecklabs/latest.json"
+
+          echo "✅ Export files copied to oig-exports/lowerdecklabs/"
+          echo "   - ${EXPORT_DATE}.json"
+          echo "   - latest.json"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add files
+          git add oig-exports/lowerdecklabs/
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "ℹ️  No changes detected - export is identical to previous"
+          else
+            # Create commit message with export summary including categorization
+            LABELS_COUNT=$(jq '.labels | length // 0' "${EXPORT_FILE}")
+            ENTITLEMENTS_COUNT=$(jq '.entitlements | length // 0' "${EXPORT_FILE}")
+            LABELS_STATUS=$(jq -r '.export_status.labels // "unknown"' "${EXPORT_FILE}")
+            ENTITLEMENTS_STATUS=$(jq -r '.export_status.entitlements // "unknown"' "${EXPORT_FILE}")
+
+            # Get entitlement categorization if available
+            APP_MANAGED=$(jq -r '.entitlement_categories.app_managed_count // 0' "${EXPORT_FILE}")
+            MANUAL=$(jq -r '.entitlement_categories.manual_count // 0' "${EXPORT_FILE}")
+            UNKNOWN=$(jq -r '.entitlement_categories.unknown_count // 0' "${EXPORT_FILE}")
+
+            # Build category details if categorization was performed
+            CATEGORY_DETAILS=""
+            if [ "${APP_MANAGED}" != "0" ] || [ "${MANUAL}" != "0" ]; then
+              CATEGORY_DETAILS="
+  - App-managed (synced): ${APP_MANAGED}
+  - Manual/Custom (BYO): ${MANUAL}"
+              if [ "${UNKNOWN}" != "0" ]; then
+                CATEGORY_DETAILS="${CATEGORY_DETAILS}
+  - Unknown: ${UNKNOWN}"
+              fi
+            fi
+
+            git commit -m "feat(oig): Export OIG resources for lowerdecklabs
+
+- Entitlements: ${ENTITLEMENTS_COUNT} (${ENTITLEMENTS_STATUS})${CATEGORY_DETAILS}
+- Labels: ${LABELS_COUNT} (${LABELS_STATUS})
+
+Export date: ${EXPORT_DATE}
+Workflow run: ${{ github.run_number }}
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+            # Push changes
+            git push
+
+            echo "✅ Export committed to repository"
+            echo "📁 Files: oig-exports/lowerdecklabs/${EXPORT_DATE}.json"
+            echo "📁 Files: oig-exports/lowerdecklabs/latest.json"
+          fi
+
       - name: Post summary to workflow
         if: always()
         run: |
@@ -297,13 +373,19 @@ jobs:
           echo "- ✅ This was a read-only export operation" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Your LowerDeckLabs tenant is unchanged" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Export Artifact" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Export Locations" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download the \`lowerdecklabs-oig-export-${{ env.TIMESTAMP }}\` artifact" >> $GITHUB_STEP_SUMMARY
-          echo "to access:" >> $GITHUB_STEP_SUMMARY
-          echo "- JSON export file with all OIG resources" >> $GITHUB_STEP_SUMMARY
-          echo "- Export log with detailed information" >> $GITHUB_STEP_SUMMARY
-          echo "- Export report (markdown)" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository (committed):**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`oig-exports/lowerdecklabs/latest.json\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`oig-exports/lowerdecklabs/$(date +%Y-%m-%d).json\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifact (backup):**" >> $GITHUB_STEP_SUMMARY
+          echo "- Download \`lowerdecklabs-oig-export-${{ env.TIMESTAMP }}\` artifact" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The export has been committed to the repository for:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Version control" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Drift detection" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Historical tracking" >> $GITHUB_STEP_SUMMARY
 
       - name: Final safety check
         if: always()

@@ -17,33 +17,56 @@ This configuration successfully demonstrates:
 ✅ **No drift** - `terraform plan` shows "No changes" after apply
 ✅ **Production patterns** - Proper state management, resource organization
 
-## ⚠️ What This Directory Does NOT Include
+## 📦 Complete Terraform Provider Support
 
-This `production-ready/` directory focuses on **basic Okta resources** that Terraformer can import. It does **NOT** include:
+This directory now supports **ALL ~100 Okta Terraform resources** available in provider v6.1.0+:
 
-- ❌ **Entitlements** (`okta_principal_entitlements`)
-- ❌ **Governance Labels** (API-managed)
-- ❌ **Resource Owners** (API-managed)
-- ❌ **Access Reviews** (`okta_reviews`)
-- ❌ **Access Request Workflows** (`okta_request_*`)
-- ❌ **Catalog Management** (`okta_catalog_*`)
+### ✅ Terraformer Auto-Import (~90 resources)
+- Users, Groups, Apps, Policies
+- Authorization Servers
+- Identity Providers
+- Network Zones, Trusted Origins
+- Hooks, Templates
 
-**Why?** Terraformer does not import OIG (Okta Identity Governance) resources because they are new in Provider v6.1.0.
+### ✅ Manual Terraform Creation (~100 resources total)
+- All basic resources PLUS:
+- **OIG Governance Resources** (9 new in v6.1.0):
+  - `okta_reviews` - Access certification campaigns
+  - `okta_principal_entitlements` - Manual entitlements ONLY
+  - `okta_request_*` - Access request workflows
+  - `okta_catalog_*` - Resource catalog management
+- **Device Assurance Policies** (Windows, macOS, iOS, Android, ChromeOS)
+- **Brands & Themes** (5 resources)
+- **Custom Admin Roles** (5 resources)
+- **Linking & Profile Mappings** (3 resources)
 
-**Want OIG features?** See the **[`../terraform/`](../terraform/)** directory for a complete OIG demonstration including entitlements, reviews, and workflows.
+### ⚠️ API-Only Resources (2 resources)
+These are NOT supported by Terraform and must use API scripts:
+- ❌ **Governance Labels** - Use `scripts/okta_api_manager.py`
+- ❌ **Resource Owners** - Use `scripts/okta_api_manager.py`
+- ✅ **App-Managed Entitlements** - Read-only (exported for documentation)
 
-**⚠️ Important:** To use entitlements, you must first manually enable "Entitlement Management" (formerly "Governance Engine") for each application in the Okta Admin Console GUI (Applications → [Application] → General tab). **Provisioning must be disabled before enabling Entitlement Management**, but can be re-enabled after activation. This cannot currently be enabled via API or Terraform. See **[OIG_PREREQUISITES.md](../OIG_PREREQUISITES.md)** for detailed setup instructions.
+## 📚 Quick Reference Files
 
-**Not sure which directory to use?** See **[DIRECTORY_GUIDE.md](../DIRECTORY_GUIDE.md)** for a detailed comparison.
+- **[RESOURCE_EXAMPLES.tf](./RESOURCE_EXAMPLES.tf)** - Commented examples for ALL ~100 resources
+- **[TERRAFORM_RESOURCE_SUPPORT.md](./TERRAFORM_RESOURCE_SUPPORT.md)** - Complete support matrix (Terraformer vs Manual vs API)
+- **[OIG_PREREQUISITES.md](../OIG_PREREQUISITES.md)** - Prerequisites for OIG features
+- **[oig-exports/README.md](../oig-exports/README.md)** - API-managed resource documentation
+
+**⚠️ Important Entitlement Distinction:**
+- ✅ **Manual/Custom Entitlements** - Can be managed in Terraform (`okta_principal_entitlements`)
+- ❌ **App-Managed Entitlements** - READ-ONLY (Salesforce, Workday, etc.) - exported via API for documentation
 
 ## 📁 Current Structure
 
 ```
 production-ready/
-├── provider.tf                      # Terraform & Okta provider config
+├── provider.tf                      # Terraform & Okta provider config (v6.1.0+)
 ├── variables.tf                     # Input variables
 ├── terraform.tfvars                 # Actual credentials (gitignored)
 ├── terraform.tfstate                # Root state file (consolidated)
+├── RESOURCE_EXAMPLES.tf             # ⭐ Commented examples for ALL ~100 resources
+├── TERRAFORM_RESOURCE_SUPPORT.md    # ⭐ Complete support matrix
 ├── app_oauth.tf                     # OAuth applications (3 existing + 1 new)
 ├── user.tf                          # Users (3 existing + 3 new)
 ├── group.tf                         # Groups (4 total)
@@ -314,9 +337,18 @@ terraform plan
 
 ## 📚 Additional Documentation
 
+### Resource References
+- **[RESOURCE_EXAMPLES.tf](./RESOURCE_EXAMPLES.tf)** - ⭐ Commented examples for ALL ~100 Terraform resources
+- **[TERRAFORM_RESOURCE_SUPPORT.md](./TERRAFORM_RESOURCE_SUPPORT.md)** - ⭐ Complete support matrix (Terraformer/Manual/API)
+- **[RESOURCE_REFERENCE.md](./RESOURCE_REFERENCE.md)** - Comprehensive attribute reference
+
+### Setup & Usage Guides
 - **[FORKING_GUIDE.md](./FORKING_GUIDE.md)** - Complete guide for users forking this repo
 - **[LESSONS_LEARNED.md](./LESSONS_LEARNED.md)** - Detailed issues and solutions encountered
-- **[RESOURCE_REFERENCE.md](./RESOURCE_REFERENCE.md)** - Comprehensive reference for all Okta resource attributes
+- **[../OIG_PREREQUISITES.md](../OIG_PREREQUISITES.md)** - Prerequisites for OIG governance features
+- **[../oig-exports/README.md](../oig-exports/README.md)** - API-managed resources (Labels, Resource Owners)
+
+### External Documentation
 - **[Parent README](../README.md)** - Overall project documentation
 - **[Okta Provider Docs](https://registry.terraform.io/providers/okta/okta/latest/docs)** - Official provider documentation
 
