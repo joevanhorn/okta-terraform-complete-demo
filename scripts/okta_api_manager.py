@@ -229,9 +229,17 @@ class OktaAPIManager:
         entitlements_data = []
 
         print("Exporting entitlements...")
-        entitlements = self.list_entitlements()
+        entitlements_response = self.list_entitlements()
 
-        for ent in entitlements.get("entitlements", []):
+        # Handle both dict with "entitlements" key and direct list response
+        if isinstance(entitlements_response, list):
+            entitlements_list = entitlements_response
+        elif isinstance(entitlements_response, dict):
+            entitlements_list = entitlements_response.get("entitlements", entitlements_response.get("data", []))
+        else:
+            entitlements_list = []
+
+        for ent in entitlements_list:
             entitlement_id = ent.get("id")
             if entitlement_id:
                 # Get full entitlement details
