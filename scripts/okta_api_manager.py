@@ -170,11 +170,24 @@ class OktaAPIManager:
 
         response = self._make_request("GET", url)
         return response.json()
-    
+
+    def get_label_id_from_name(self, label_name: str) -> Optional[str]:
+        """Get labelId from label name by listing all labels"""
+        labels_response = self.list_labels()
+        for label in labels_response.get("data", []):
+            if label.get("name") == label_name:
+                return label.get("labelId")
+        return None
+
     def get_label(self, label_name: str) -> Optional[Dict]:
-        """Get a specific label by name"""
-        url = f"{self.base_url}/governance/api/v1/labels/{label_name}"
-        
+        """Get a specific label by name (looks up labelId first)"""
+        label_id = self.get_label_id_from_name(label_name)
+        if not label_id:
+            print(f"Label '{label_name}' not found")
+            return None
+
+        url = f"{self.base_url}/governance/api/v1/labels/{label_id}"
+
         try:
             response = self._make_request("GET", url)
             return response.json()
@@ -182,28 +195,40 @@ class OktaAPIManager:
             if e.response.status_code == 404:
                 return None
             raise
-    
+
     def apply_labels_to_resources(self, label_name: str, resource_orns: List[str]) -> Dict:
-        """Apply a label to one or more resources"""
-        url = f"{self.base_url}/governance/api/v1/labels/{label_name}/resources"
+        """Apply a label to one or more resources (looks up labelId first)"""
+        label_id = self.get_label_id_from_name(label_name)
+        if not label_id:
+            raise ValueError(f"Label '{label_name}' not found")
+
+        url = f"{self.base_url}/governance/api/v1/labels/{label_id}/resources"
         payload = {"resourceOrns": resource_orns}
-        
+
         response = self._make_request("PUT", url, json=payload)
         print(f"Applied label '{label_name}' to {len(resource_orns)} resources")
         return response.json()
-    
+
     def list_resources_by_label(self, label_name: str) -> Dict:
-        """List all resources with a specific label"""
-        url = f"{self.base_url}/governance/api/v1/labels/{label_name}/resources"
+        """List all resources with a specific label (looks up labelId first)"""
+        label_id = self.get_label_id_from_name(label_name)
+        if not label_id:
+            raise ValueError(f"Label '{label_name}' not found")
+
+        url = f"{self.base_url}/governance/api/v1/labels/{label_id}/resources"
 
         response = self._make_request("GET", url)
         return response.json()
-    
+
     def remove_label_from_resources(self, label_name: str, resource_orns: List[str]) -> Dict:
-        """Remove a label from resources"""
-        url = f"{self.base_url}/governance/api/v1/labels/{label_name}/resources"
+        """Remove a label from resources (looks up labelId first)"""
+        label_id = self.get_label_id_from_name(label_name)
+        if not label_id:
+            raise ValueError(f"Label '{label_name}' not found")
+
+        url = f"{self.base_url}/governance/api/v1/labels/{label_id}/resources"
         payload = {"resourceOrns": resource_orns}
-        
+
         response = self._make_request("DELETE", url, json=payload)
         print(f"Removed label '{label_name}' from {len(resource_orns)} resources")
         return response.json()

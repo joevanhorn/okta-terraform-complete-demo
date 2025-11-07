@@ -105,15 +105,15 @@ class LabelsAPIValidator:
             print(f"❌ Error: {e}")
             return {"success": False, "error": str(e), "labels": []}
 
-    def get_label_by_name(self, label_name: str) -> Optional[Dict]:
-        """Test GET /governance/api/v1/labels/{labelName}"""
+    def get_label_by_id(self, label_name: str, label_id: str) -> Optional[Dict]:
+        """Test GET /governance/api/v1/labels/{labelId}"""
         print("\n" + "="*80)
-        print(f"TEST: Get Label by Name - '{label_name}'")
+        print(f"TEST: Get Label by ID - '{label_name}' (ID: {label_id})")
         print("="*80)
-        print(f"Endpoint: GET {self.governance_base}/labels/{label_name}")
+        print(f"Endpoint: GET {self.governance_base}/labels/{label_id}")
 
         try:
-            url = f"{self.governance_base}/labels/{label_name}"
+            url = f"{self.governance_base}/labels/{label_id}"
             response = self.session.get(url)
             print(f"Status Code: {response.status_code}")
 
@@ -133,15 +133,15 @@ class LabelsAPIValidator:
             print(f"❌ Error: {e}")
             return None
 
-    def get_label_resources(self, label_name: str) -> Dict:
-        """Test GET /governance/api/v1/labels/{labelName}/resources"""
+    def get_label_resources(self, label_name: str, label_id: str) -> Dict:
+        """Test GET /governance/api/v1/labels/{labelId}/resources"""
         print("\n" + "="*80)
-        print(f"TEST: Get Resources for Label - '{label_name}'")
+        print(f"TEST: Get Resources for Label - '{label_name}' (ID: {label_id})")
         print("="*80)
-        print(f"Endpoint: GET {self.governance_base}/labels/{label_name}/resources")
+        print(f"Endpoint: GET {self.governance_base}/labels/{label_id}/resources")
 
         try:
-            url = f"{self.governance_base}/labels/{label_name}/resources"
+            url = f"{self.governance_base}/labels/{label_id}/resources"
 
             response = self.session.get(url)
             print(f"Status Code: {response.status_code}")
@@ -294,23 +294,30 @@ class LabelsAPIValidator:
         # Test 3: Validate each label
         for label in labels:
             label_name = label.get("name")
+            label_id = label.get("labelId")
+
+            if not label_id:
+                print(f"⚠️  Label '{label_name}' has no labelId, skipping...")
+                continue
 
             # Get label details
-            label_details = self.get_label_by_name(label_name)
+            label_details = self.get_label_by_id(label_name, label_id)
 
             # Validate structure
             if label_details:
                 structure_validation = self.validate_label_structure(label_details)
                 results["individual_label_tests"].append({
                     "name": label_name,
+                    "label_id": label_id,
                     "retrieved": True,
                     "valid_structure": structure_validation.get("valid", False)
                 })
 
             # Get assigned resources
-            resources_result = self.get_label_resources(label_name)
+            resources_result = self.get_label_resources(label_name, label_id)
             results["resource_assignment_tests"].append({
                 "label": label_name,
+                "label_id": label_id,
                 "resources_count": resources_result.get("count", 0)
             })
 
