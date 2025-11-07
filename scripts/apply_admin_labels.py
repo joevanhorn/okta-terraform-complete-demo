@@ -167,25 +167,45 @@ class AdminLabelApplier:
             return {"applied": 0, "failed": 0, "skipped": len(resource_orns), "dry_run": True}
 
         try:
-            # Apply label using POST /resource-labels/assign
+            # Apply labels in batches of 10 (API limit)
             url = f"{self.governance_base}/resource-labels/assign"
-            payload = {
-                "resourceOrns": resource_orns,
-                "labelValueIds": [label_value_id]
-            }
+            batch_size = 10
+            total_applied = 0
+            total_failed = 0
 
-            response = self.session.post(url, json=payload)
-            print(f"Status Code: {response.status_code}")
+            for i in range(0, len(resource_orns), batch_size):
+                batch = resource_orns[i:i + batch_size]
+                batch_num = (i // batch_size) + 1
+                total_batches = (len(resource_orns) + batch_size - 1) // batch_size
 
-            if response.status_code in [200, 201, 204]:
-                print(f"✅ Successfully applied Privileged label to {len(resource_orns)} entitlements")
-                if response.text:
-                    print(f"Response: {response.text[:500]}")
-                return {"applied": len(resource_orns), "failed": 0, "skipped": 0}
-            else:
-                print(f"⚠️  API returned status {response.status_code}")
-                print(f"Response: {response.text}")
-                return {"applied": 0, "failed": len(resource_orns), "skipped": 0}
+                print(f"Batch {batch_num}/{total_batches}: {len(batch)} resources")
+
+                payload = {
+                    "resourceOrns": batch,
+                    "labelValueIds": [label_value_id]
+                }
+
+                response = self.session.post(url, json=payload)
+                print(f"  Status Code: {response.status_code}")
+
+                if response.status_code in [200, 201, 204]:
+                    print(f"  ✅ Success")
+                    total_applied += len(batch)
+                    if response.text:
+                        print(f"  Response: {response.text[:300]}")
+                else:
+                    print(f"  ❌ Failed")
+                    print(f"  Response: {response.text[:300]}")
+                    total_failed += len(batch)
+
+                print()
+
+            if total_applied > 0:
+                print(f"✅ Successfully applied Privileged label to {total_applied} entitlements")
+            if total_failed > 0:
+                print(f"❌ Failed to apply labels to {total_failed} entitlements")
+
+            return {"applied": total_applied, "failed": total_failed, "skipped": 0}
 
         except Exception as e:
             print(f"❌ Error applying labels: {e}")
