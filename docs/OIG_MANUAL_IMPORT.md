@@ -4,6 +4,122 @@
 
 **Terraformer does NOT support OIG resources.** The new OIG resources introduced in Terraform Provider v6.1.0 must be imported manually or created fresh.
 
+## ⚡ Automated Import (NEW!)
+
+We now provide an **automated import script** that generates Terraform configurations and import commands for you!
+
+### Quick Start
+
+```bash
+# Set your Okta credentials
+export OKTA_ORG_NAME="your-org"
+export OKTA_API_TOKEN="your-token"
+export OKTA_BASE_URL="okta.com"  # or oktapreview.com
+
+# Run the import script
+python3 scripts/import_oig_resources.py --output-dir imported_oig
+
+# Review generated files
+ls imported_oig/
+
+# Complete TODOs in generated .tf files, then:
+cd imported_oig
+terraform init
+./import.sh
+terraform plan  # Should show no changes
+```
+
+### What Gets Imported
+
+The script automatically imports:
+
+- ✅ **Entitlements** (`okta_principal_entitlements`) - Manual/custom entitlements only
+- ✅ **Access Review Campaigns** (`okta_reviews`)
+- ✅ **Approval Workflows** (`okta_request_sequences`)
+- ✅ **Catalog Entries** (`okta_catalog_entry_default`)
+- ✅ **Request Settings** (`okta_request_settings`)
+
+### Generated Files
+
+```
+imported_oig/
+├── entitlements.tf          # Terraform config for entitlements
+├── entitlements.json        # Raw API data (reference)
+├── reviews.tf               # Terraform config for access reviews
+├── reviews.json             # Raw API data
+├── request_sequences.tf     # Terraform config for approval workflows
+├── request_sequences.json   # Raw API data
+├── catalog_entries.tf       # Terraform config for catalog
+├── catalog_entries.json     # Raw API data
+├── request_settings.tf      # Terraform config for settings
+├── request_settings.json    # Raw API data
+└── import.sh                # Terraform import commands (executable)
+```
+
+### Workflow
+
+1. **Generate configurations**
+   ```bash
+   python3 scripts/import_oig_resources.py --output-dir imported_oig
+   ```
+
+2. **Review and complete TODOs**
+   - Open each `.tf` file
+   - Complete the TODO comments with proper configuration
+   - Reference the `.json` files for attribute values
+
+3. **Import into Terraform state**
+   ```bash
+   cd imported_oig
+   terraform init
+   ./import.sh
+   ```
+
+4. **Verify**
+   ```bash
+   terraform plan  # Should show no changes
+   ```
+
+### Example: Completing TODOs
+
+**Generated entitlements.tf:**
+```hcl
+resource "okta_principal_entitlements" "salesforce_admin" {
+  # ID: ent12pva5bAyGUBBv1d7
+  # Original name: Salesforce Admin Access
+
+  # TODO: Add required configuration
+  # Review the API response and add principals, resources, etc.
+  # See: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+}
+```
+
+**After completing TODOs (reference entitlements.json for values):**
+```hcl
+resource "okta_principal_entitlements" "salesforce_admin" {
+  # ID: ent12pva5bAyGUBBv1d7
+
+  principal {
+    id   = "00u1234567890abcdef"
+    type = "USER"
+  }
+
+  entitlement {
+    id   = "ent12pva5bAyGUBBv1d7"
+    name = "Salesforce Admin Access"
+  }
+}
+```
+
+### Smart Filtering
+
+The import script automatically:
+- **Skips app-managed entitlements** (synced from Salesforce, Workday, etc.)
+- **Only imports manual entitlements** that can be managed via Terraform
+- **Provides warnings** when resources can't be fetched
+
+---
+
 ## 🎯 Recommended Approach
 
 ### Scenario 1: No Existing OIG Configuration (Most Common)
