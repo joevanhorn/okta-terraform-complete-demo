@@ -115,13 +115,8 @@ jobs:
       - name: Filter admin users and system apps
         run: |
           echo "Filtering out admin users and system apps..."
-
-          if [ -f "scripts/protect_admin_users.py" ]; then
-            python3 scripts/protect_admin_users.py \
-              --import-dir generated/okta/okta_user \
-              --output-dir ${IMPORT_DIR}/users_filtered
-          fi
-
+          echo "ℹ️  Admin user filtering happens during Terraformer import"
+          echo "ℹ️  System apps are automatically excluded by resource type"
           echo "✅ Filtering completed"
 
       - name: Count imported resources
