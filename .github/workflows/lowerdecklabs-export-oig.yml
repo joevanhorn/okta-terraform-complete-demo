@@ -1,7 +1,28 @@
-name: LowerDeckLabs - Export OIG Labels
+name: LowerDeckLabs - Export OIG Resources
 
 on:
   workflow_dispatch:
+    inputs:
+      export_labels:
+        description: 'Export governance labels'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      export_owners:
+        description: 'Export resource owners'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      resource_orns:
+        description: 'Resource ORNs for owner export (space-separated, optional)'
+        required: false
+        type: string
 
 jobs:
   export-oig:
@@ -23,7 +44,10 @@ jobs:
           echo "=================================================="
           echo ""
           echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
-          echo "Operation: Export labels and resource owners (API-only)"
+          echo "Operation: Export OIG API-only resources"
+          echo "Export Labels: ${{ inputs.export_labels }}"
+          echo "Export Owners: ${{ inputs.export_owners }}"
+          echo "Resource ORNs: ${{ inputs.resource_orns || 'N/A' }}"
           echo "=================================================="
 
       - name: Checkout code
@@ -74,8 +98,33 @@ jobs:
         run: |
           echo "Starting OIG API-only export..."
           chmod +x scripts/okta_api_manager.py
-          python3 scripts/okta_api_manager.py --action export --org-name "${OKTA_ORG_NAME}" --base-url "${OKTA_BASE_URL}" --api-token "${OKTA_API_TOKEN}" --output "${EXPORT_DIR}/lowerdecklabs_oig_export.json" --export-labels 2>&1 | tee export.log
+
+          # Build command with conditional flags
+          CMD="python3 scripts/okta_api_manager.py --action export --org-name \"${OKTA_ORG_NAME}\" --base-url \"${OKTA_BASE_URL}\" --api-token \"${OKTA_API_TOKEN}\" --output \"${EXPORT_DIR}/lowerdecklabs_oig_export.json\""
+
+          # Add export-labels flag if enabled
+          if [ "${{ inputs.export_labels }}" = "true" ]; then
+            CMD="$CMD --export-labels"
+            echo "Labels export enabled"
+          fi
+
+          # Add export-owners flag if enabled
+          if [ "${{ inputs.export_owners }}" = "true" ]; then
+            CMD="$CMD --export-owners"
+            echo "Resource owners export enabled"
+
+            # Add resource ORNs if provided
+            if [ -n "${{ inputs.resource_orns }}" ]; then
+              CMD="$CMD --resource-orns ${{ inputs.resource_orns }}"
+              echo "Resource ORNs: ${{ inputs.resource_orns }}"
+            fi
+          fi
+
+          # Execute command
+          echo "Running: $CMD"
+          eval "$CMD 2>&1" | tee export.log
           EXPORT_STATUS=$?
+
           if [ $EXPORT_STATUS -eq 0 ]; then
             echo "export_status=success" >> $GITHUB_OUTPUT
             echo "Export completed successfully"

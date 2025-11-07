@@ -273,6 +273,74 @@ python3 scripts/apply_admin_labels.py --dry-run
 - Batch requests in groups of 10 (API limit)
 - Use `labelValueId` not `labelId` for filtering
 
+### Working with Resource Owner Management
+
+**New PR-based workflow for managing resource owner assignments:**
+
+#### Syncing Resource Owners from Okta
+```bash
+# Sync current owner assignments from Okta (all resources)
+python3 scripts/sync_owner_mappings.py
+
+# Sync specific resources only
+python3 scripts/sync_owner_mappings.py --resource-orns \
+  "orn:okta:idp:org:apps:oauth2:0oa123" \
+  "orn:okta:directory:org:groups:00g456"
+
+# This updates config/owner_mappings.json with:
+# - Current owner assignments by resource type
+# - Principal ORNs and names
+# - Resource metadata
+```
+
+#### Adding/Modifying Owner Assignments
+```bash
+# 1. Edit config/owner_mappings.json
+# Add or modify owners for resources
+
+# 2. Commit and create PR
+git add config/owner_mappings.json
+git commit -m "feat: Assign owners to production applications"
+git push
+
+# 3. After PR merge, apply via GitHub Actions workflow
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+```
+
+#### Applying Resource Owners
+```bash
+# Preview changes (dry-run)
+python3 scripts/apply_resource_owners.py --dry-run
+
+# Apply owner assignments
+python3 scripts/apply_resource_owners.py
+
+# Via GitHub Actions
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=true
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+```
+
+#### Key Files
+- `config/owner_mappings.json` - Source of truth for resource owner assignments
+- `scripts/sync_owner_mappings.py` - Sync owner mappings from Okta
+- `scripts/apply_resource_owners.py` - Apply owner assignments to Okta
+- `.github/workflows/lowerdecklabs-apply-owners.yml` - Apply owners workflow
+- `.github/workflows/lowerdecklabs-export-oig.yml` - Export owners workflow
+
+#### Owner ORN Formats
+- **User owners**: `orn:okta:directory:<org>:users:<user-id>`
+- **Group owners**: `orn:okta:directory:<org>:groups:<group-id>`
+- **App resources**: `orn:okta:idp:<org>:apps:<type>:<app-id>`
+- **Group resources**: `orn:okta:directory:<org>:groups:<group-id>`
+- **Entitlement bundles**: `orn:okta:governance:<org>:entitlement-bundles:<bundle-id>`
+
+#### Important Notes
+- Always sync before making changes to get current state
+- Owner operations use `PUT /governance/api/v1/resource-owners` endpoint
+- Owners are critical for access reviews and approval workflows
+- Both user and group ownership are supported
+- Multiple owners can be assigned to a single resource
+
 ### State Management
 
 - Backend is configured in `production-ready/backend.tf` (comment out for local development)

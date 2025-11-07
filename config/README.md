@@ -1,18 +1,19 @@
-# OIG Label Management Configuration
+# OIG Configuration - Labels & Resource Owners
 
-This directory contains configuration for managing Okta Identity Governance (OIG) labels via the Okta API.
+This directory contains configuration for managing Okta Identity Governance (OIG) labels and resource owners via the Okta API.
 
 ## 📋 Overview
 
-Labels are used to categorize and govern access to resources in Okta. This configuration defines:
-- **Label Definitions** - Create governance labels (Privileged, Standard, Sensitive-Data, Compliance-Required)
-- **Label Assignments** - Apply labels to specific resources (entitlements, apps, groups)
+This configuration enables GitOps-style management of:
+- **Labels** - Categorize and govern access to resources (Privileged, Standard, Sensitive-Data, Compliance-Required)
+- **Resource Owners** - Assign ownership to apps, groups, and entitlement bundles for governance and access reviews
 - **Auto-Labeling Rules** - Automatically apply labels based on resource name patterns
 
 ## 📁 Files in This Directory
 
 - **`api_config.json`** - Legacy label configuration (deprecated, use label_mappings.json)
 - **`label_mappings.json`** - **Source of truth** for label IDs and assignments (synced from Okta)
+- **`owner_mappings.json`** - **Source of truth** for resource owner assignments (synced from Okta)
 
 ## 🆕 PR-Based Label Management (Recommended)
 
@@ -64,6 +65,120 @@ git push
   }
 }
 ```
+
+---
+
+## 👥 PR-Based Resource Owner Management (Recommended)
+
+**New workflow:** Manage resource owner assignments via pull requests using `owner_mappings.json`
+
+### How It Works
+
+1. **Sync from Okta** - Run `sync_owner_mappings.py` to update local mappings
+2. **Make Changes** - Edit `config/owner_mappings.json` to add/remove owner assignments
+3. **Submit PR** - Create pull request for review
+4. **Apply** - After merge, run workflow to apply changes to Okta
+
+### Quick Start
+
+```bash
+# Sync current state from Okta
+python3 scripts/sync_owner_mappings.py
+
+# Edit owner_mappings.json to add/modify owner assignments
+# Add new owner to a resource or create new resource entry
+
+# Commit and push
+git add config/owner_mappings.json
+git commit -m "feat: Assign ownership for new applications"
+git push
+
+# After PR merge, run the apply workflow
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+```
+
+### owner_mappings.json Structure
+
+```json
+{
+  "assignments": {
+    "apps": [
+      {
+        "resource_orn": "orn:okta:idp:org:apps:oauth2:0oa123",
+        "resource_name": "Production App",
+        "resource_type": "oauth2",
+        "owners": [
+          {
+            "principal_orn": "orn:okta:directory:org:users:00u456",
+            "principal_type": "user",
+            "principal_name": "john.doe@example.com"
+          }
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "resource_orn": "orn:okta:directory:org:groups:00g789",
+        "resource_name": "Engineering Team",
+        "owners": [
+          {
+            "principal_orn": "orn:okta:directory:org:users:00u456",
+            "principal_type": "user",
+            "principal_name": "team.lead@example.com"
+          }
+        ]
+      }
+    ],
+    "entitlement_bundles": [
+      {
+        "resource_orn": "orn:okta:governance:org:entitlement-bundles:enb012",
+        "resource_name": "Admin Access Bundle",
+        "owners": [
+          {
+            "principal_orn": "orn:okta:directory:org:users:00u456",
+            "principal_type": "user",
+            "principal_name": "security.admin@example.com"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Owner Types
+
+- **User Ownership** - Individual users as resource owners
+  - Format: `orn:okta:directory:<org>:users:<user-id>`
+  - Use for: Direct ownership, small teams, personal responsibility
+
+- **Group Ownership** - Delegated ownership to a group
+  - Format: `orn:okta:directory:<org>:groups:<group-id>`
+  - Use for: Team-based ownership, shared responsibility
+
+### Workflows
+
+```bash
+# Sync owners from Okta (updates owner_mappings.json)
+python3 scripts/sync_owner_mappings.py
+
+# Sync specific resources only
+python3 scripts/sync_owner_mappings.py --resource-orns \
+  "orn:okta:idp:org:apps:oauth2:0oa123" \
+  "orn:okta:directory:org:groups:00g456"
+
+# Apply owners (dry-run first)
+python3 scripts/apply_resource_owners.py --dry-run
+
+# Apply owners (actual changes)
+python3 scripts/apply_resource_owners.py
+
+# Via GitHub Actions
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=true
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+```
+
+---
 
 ## 🏷️ Label Definitions
 

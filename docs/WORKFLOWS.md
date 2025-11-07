@@ -72,24 +72,72 @@ gh workflow run lowerdecklabs-validate-labels.yml
 **Parameters:**
 - `export_labels` - Export governance labels (default: `true`)
 - `export_owners` - Export resource owners (default: `false`)
+- `resource_orns` - Space-separated list of resource ORNs for owner export (optional)
 
 **What It Does:**
 1. Exports current labels and their assignments
-2. Optionally exports resource owner assignments
+2. Optionally exports resource owner assignments for specified resources
 3. Saves to `oig-exports/{environment}/latest.json`
 4. Creates timestamped backup
 5. Commits to repository
 
 **Usage:**
 ```bash
-# Export labels only
+# Export labels only (default)
 gh workflow run lowerdecklabs-export-oig.yml
 
-# Export labels and owners
-gh workflow run lowerdecklabs-export-oig.yml -f export_owners=true
+# Export labels only (explicit)
+gh workflow run lowerdecklabs-export-oig.yml -f export_labels=true -f export_owners=false
+
+# Export both labels and owners (requires resource ORNs)
+gh workflow run lowerdecklabs-export-oig.yml \
+  -f export_labels=true \
+  -f export_owners=true \
+  -f resource_orns="orn:okta:idp:org:apps:oauth2:0oa123 orn:okta:directory:org:groups:00g456"
+
+# Export owners only for specific resources
+gh workflow run lowerdecklabs-export-oig.yml \
+  -f export_labels=false \
+  -f export_owners=true \
+  -f resource_orns="orn:okta:governance:org:entitlement-bundles:enb789"
 ```
 
 **Output:** JSON file in `oig-exports/lowerdecklabs/`
+
+**Note:** Resource owners export requires specific resource ORNs to be provided via the `resource_orns` parameter.
+
+---
+
+### LowerDeckLabs - Apply Resource Owners
+**File:** `.github/workflows/lowerdecklabs-apply-owners.yml`
+
+**Purpose:** Applies resource owner assignments from `config/owner_mappings.json` to Okta
+
+**Trigger:** Manual (`workflow_dispatch`)
+
+**Parameters:**
+- `dry_run` - Preview changes without applying (default: `true`)
+
+**What It Does:**
+1. Loads owner assignments from `config/owner_mappings.json`
+2. Assigns owners to apps, groups, and entitlement bundles
+3. Reports success/failure for each resource
+4. Supports dry-run mode for safe previewing
+
+**Usage:**
+```bash
+# Dry run (preview changes)
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=true
+
+# Apply owners
+gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+```
+
+**Prerequisites:**
+- `config/owner_mappings.json` must exist (run sync workflow or create manually)
+- Owner mappings should follow the structure defined in the config template
+
+**Results:** Creates artifact with full log and owner assignment results
 
 ---
 

@@ -1,0 +1,60 @@
+{
+  "description": "Resource Owner mappings synced from Okta OIG",
+  "last_synced": "2025-11-07T00:00:00Z",
+  "version": "1.0",
+  "assignments": {
+    "apps": [
+      {
+        "resource_orn": "orn:okta:idp:<org>:apps:oauth2:<app-id>",
+        "resource_name": "Example OAuth App",
+        "resource_type": "oauth2",
+        "owners": [
+          {
+            "principal_orn": "orn:okta:directory:<org>:users:<user-id>",
+            "principal_type": "user",
+            "principal_name": "john.doe@example.com"
+          }
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "resource_orn": "orn:okta:directory:<org>:groups:<group-id>",
+        "resource_name": "Example Group",
+        "owners": [
+          {
+            "principal_orn": "orn:okta:directory:<org>:users:<user-id>",
+            "principal_type": "user",
+            "principal_name": "jane.smith@example.com"
+          }
+        ]
+      }
+    ],
+    "entitlement_bundles": [
+      {
+        "resource_orn": "orn:okta:governance:<org>:entitlement-bundles:<bundle-id>",
+        "resource_name": "Example Entitlement",
+        "owners": [
+          {
+            "principal_orn": "orn:okta:directory:<org>:users:<user-id>",
+            "principal_type": "user",
+            "principal_name": "admin@example.com"
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "This file is the source of truth for resource owner assignments",
+    "To add a new owner assignment, submit a PR adding the owner to the appropriate resource",
+    "Run 'python3 scripts/apply_resource_owners.py' or the GitHub Actions workflow to apply changes to Okta",
+    "Run 'python3 scripts/sync_owner_mappings.py' to sync this file from Okta",
+    "Owner types:",
+    "  - user: Individual user ownership (orn:okta:directory:<org>:users:<id>)",
+    "  - group: Delegated group ownership (orn:okta:directory:<org>:groups:<id>)",
+    "Resource types:",
+    "  - apps: Applications (oauth2, saml2, etc.)",
+    "  - groups: Okta groups",
+    "  - entitlement_bundles: OIG entitlement bundles"
+  ]
+}
