@@ -1,0 +1,111 @@
+{
+  "description": "OIG API-Only Resources Configuration - Labels and Resource Owners",
+  "version": "1.0.0",
+  "labels": {
+    "definitions": [
+      {
+        "name": "Privileged",
+        "description": "High-privilege access requiring enhanced monitoring and approval",
+        "color": "#FF0000"
+      },
+      {
+        "name": "Standard",
+        "description": "Standard user access with normal approval workflows",
+        "color": "#00FF00"
+      },
+      {
+        "name": "Sensitive-Data",
+        "description": "Access to sensitive or regulated data (PII, PHI, financial)",
+        "color": "#FFA500"
+      },
+      {
+        "name": "Compliance-Required",
+        "description": "Access subject to compliance requirements (SOX, HIPAA, etc.)",
+        "color": "#0000FF"
+      }
+    ],
+    "assignments": {
+      "entitlements": {
+        "ent_salesforce_admin_001": [
+          "Privileged",
+          "Compliance-Required"
+        ],
+        "ent_workday_admin_002": [
+          "Privileged",
+          "Sensitive-Data"
+        ],
+        "ent_aws_admin_003": [
+          "Privileged"
+        ],
+        "ent_okta_superadmin_004": [
+          "Privileged",
+          "Compliance-Required"
+        ],
+        "ent_salesforce_user_005": [
+          "Standard"
+        ],
+        "ent_jira_user_006": [
+          "Standard"
+        ],
+        "salesforce_admin": [
+          "Privileged"
+        ],
+        "workday_admin": [
+          "Privileged"
+        ],
+        "aws_admin": [
+          "Privileged"
+        ],
+        "okta_super_admin": [
+          "Privileged",
+          "Compliance-Required"
+        ]
+      },
+      "apps": {},
+      "groups": {}
+    },
+    "auto_labeling_rules": {
+      "enabled": true,
+      "rules": [
+        {
+          "pattern": ".*admin.*",
+          "case_sensitive": false,
+          "resource_types": [
+            "entitlement",
+            "app",
+            "group"
+          ],
+          "labels": [
+            "Privileged"
+          ],
+          "description": "Auto-apply Privileged label to resources with 'admin' in the name"
+        },
+        {
+          "pattern": ".*super.*admin.*",
+          "case_sensitive": false,
+          "resource_types": [
+            "entitlement"
+          ],
+          "labels": [
+            "Privileged",
+            "Compliance-Required"
+          ],
+          "description": "Super admin access requires both Privileged and Compliance labels"
+        }
+      ]
+    }
+  },
+  "resource_owners": {
+    "assignments": []
+  },
+  "metadata": {
+    "last_updated": "2025-11-07",
+    "managed_by": "terraform_and_api",
+    "notes": [
+      "This configuration manages OIG resources that are API-only (not yet in Terraform provider)",
+      "Labels help categorize access for governance workflows, access reviews, and compliance",
+      "Entitlements are managed in Terraform (oig_entitlements.tf)",
+      "Labels and Resource Owners are managed via API (this config file)"
+    ]
+  }
+}
