@@ -11,14 +11,14 @@ on:
   schedule:
     - cron: '0 3 * * 1'  # Weekly on Monday at 3 AM (for drift detection)
 
-# Use the LowerDeckLabs environment with protection rules
-environment:
-  name: LowerDeckLabs
-
 jobs:
   import-resources:
     name: Import Okta Resources (Read-Only)
     runs-on: ubuntu-latest
+
+    # Use the LowerDeckLabs environment with protection rules
+    environment:
+      name: LowerDeckLabs
 
     # IMPORTANT: This job does NOT apply changes - import only!
     permissions:

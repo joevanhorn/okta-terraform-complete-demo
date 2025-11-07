@@ -9,14 +9,14 @@ on:
         default: true
         type: boolean
 
-# Use the LowerDeckLabs environment with protection rules
-environment:
-  name: LowerDeckLabs
-
 jobs:
   export-oig:
     name: Export OIG Resources (Read-Only)
     runs-on: ubuntu-latest
+
+    # Use the LowerDeckLabs environment with protection rules
+    environment:
+      name: LowerDeckLabs
 
     # IMPORTANT: This job does NOT modify resources - export only!
     permissions:
