@@ -1,0 +1,109 @@
+name: LowerDeckLabs - Test Import OIG
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode (test only)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  import-oig:
+    name: Import OIG Resources Test
+    runs-on: ubuntu-latest
+
+    environment:
+      name: LowerDeckLabs
+
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Workflow Overview
+        run: |
+          echo "=================================================="
+          echo "  APPLY RESOURCE OWNER ASSIGNMENTS"
+          echo "=================================================="
+          echo ""
+          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Operation: Apply resource owners from config"
+          echo "Dry Run: ${{ github.event.inputs.dry_run }}"
+          echo "=================================================="
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Set up environment variables
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+
+      - name: Run OIG import
+        id: import
+        run: |
+          chmod +x scripts/import_oig_resources.py
+          mkdir -p oig-imports
+
+          echo "Running OIG resource import..."
+          python3 scripts/import_oig_resources.py --output-dir oig-imports 2>&1 | tee import.log
+
+          IMPORT_STATUS=$?
+          echo "import_status=$IMPORT_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Parse results
+        id: results
+        run: |
+          if [ -f "oig-imports/entitlements.json" ]; then
+            BUNDLES=$(jq '. | length' oig-imports/entitlements.json 2>/dev/null || echo "0")
+          else
+            BUNDLES=0
+          fi
+
+          echo "bundles=$BUNDLES" >> $GITHUB_OUTPUT
+          echo "Imported $BUNDLES entitlement bundles"
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oig-import-results-${{ github.run_number }}
+          path: |
+            oig-imports/
+            import.log
+          retention-days: 90
+
+      - name: Post summary
+        if: always()
+        run: |
+          echo "## OIG Import Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** LowerDeckLabs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resources Imported" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Type | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Entitlement Bundles | ${{ steps.results.outputs.bundles }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Download artifacts to review imported resources" >> $GITHUB_STEP_SUMMARY
