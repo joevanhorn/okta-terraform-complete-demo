@@ -1,0 +1,187 @@
+name: Terraform Import - OIG Resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to import resources'
+        required: true
+        default: 'lowerdecklabs'
+        type: choice
+        options:
+          - lowerdecklabs
+
+permissions:
+  contents: write
+
+jobs:
+  terraform-import:
+    name: Import OIG Resources into Terraform State
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Configure Terraform variables
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          cat > terraform.tfvars << EOF
+          okta_org_name  = "${{ secrets.OKTA_ORG_NAME }}"
+          okta_base_url  = "${{ secrets.OKTA_BASE_URL }}"
+          okta_api_token = "${{ secrets.OKTA_API_TOKEN }}"
+          EOF
+
+      - name: Terraform Init
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: terraform init -upgrade
+
+      - name: Generate Import Commands
+        id: generate
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          # Extract resource names and IDs from oig_entitlements.tf
+          python3 <<'PYTHON'
+          import re
+
+          with open('oig_entitlements.tf', 'r') as f:
+              content = f.read()
+
+          pattern = r'resource "okta_entitlement_bundle" "([^"]+)"[^}]*?target_resource_orn\s*=\s*"orn:okta:governance:[^:]+:entitlement-bundles:([^"]+)"'
+          matches = re.findall(pattern, content, re.DOTALL)
+
+          with open('import_commands.sh', 'w') as f:
+              f.write('#!/bin/bash\n')
+              f.write('set -e\n\n')
+              f.write(f'echo "Importing {len(matches)} OIG entitlement bundles..."\n')
+              f.write('echo ""\n\n')
+
+              for i, (resource_name, bundle_id) in enumerate(matches, 1):
+                  f.write(f'echo "Importing {i}/{len(matches)}: okta_entitlement_bundle.{resource_name}"\n')
+                  f.write(f'terraform import okta_entitlement_bundle.{resource_name} {bundle_id} || echo "  Already imported or error - continuing..."\n')
+                  f.write('echo ""\n\n')
+
+          print(f'Generated import commands for {len(matches)} resources')
+          PYTHON
+
+          chmod +x import_commands.sh
+          echo "imports=$(grep -c 'terraform import' import_commands.sh)" >> $GITHUB_OUTPUT
+
+      - name: Execute Imports
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          echo "=========================================="
+          echo "IMPORTING OIG RESOURCES"
+          echo "=========================================="
+          echo ""
+
+          ./import_commands.sh 2>&1 | tee import.log
+
+          echo ""
+          echo "=========================================="
+          echo "IMPORT COMPLETE"
+          echo "=========================================="
+
+      - name: Verify Terraform State
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          echo "Checking terraform state..."
+          terraform state list | grep okta_entitlement_bundle | wc -l > /tmp/count.txt
+          IMPORTED=$(cat /tmp/count.txt)
+          echo "Imported $IMPORTED entitlement bundles into state"
+
+          if [ "$IMPORTED" -gt "0" ]; then
+            echo "✅ State file contains imported resources"
+          else
+            echo "❌ No resources found in state"
+            exit 1
+          fi
+
+      - name: Run Terraform Plan
+        id: plan
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          terraform plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
+
+          # Check if plan shows no changes
+          if grep -q "No changes" plan_output.txt || grep -q "0 to add, 0 to change, 0 to destroy" plan_output.txt; then
+            echo "✅ SUCCESS: Terraform plan shows no changes!"
+            echo "plan_clean=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  WARNING: Terraform plan shows changes after import"
+            grep "Plan:" plan_output.txt || true
+            echo "plan_clean=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Import Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: import-results-${{ inputs.environment }}-${{ github.run_number }}
+          path: |
+            environments/${{ inputs.environment }}/terraform/import.log
+            environments/${{ inputs.environment }}/terraform/plan_output.txt
+            environments/${{ inputs.environment }}/terraform/import_commands.sh
+          retention-days: 30
+
+      - name: Commit State File
+        if: steps.plan.outputs.plan_clean == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add environments/${{ inputs.environment }}/terraform/terraform.tfstate
+          git add environments/${{ inputs.environment }}/terraform/.terraform.lock.hcl
+
+          if git diff --staged --quiet; then
+            echo "No state changes to commit"
+          else
+            git commit -m "$(cat <<'EOF'
+          chore: Import OIG entitlement bundles into terraform state
+
+          Imported ${{ steps.generate.outputs.imports }} entitlement bundles from Okta.
+          Terraform plan now shows no changes - state matches infrastructure.
+
+          Environment: ${{ inputs.environment }}
+
+          🤖 Auto-generated by terraform-import workflow
+          EOF
+          )"
+            git push
+            echo "✅ State file committed and pushed"
+          fi
+
+      - name: Cleanup
+        if: always()
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          rm -f terraform.tfvars
+          rm -f tfplan
+          rm -f import_commands.sh
+          rm -f import.log
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Terraform Import Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Resources Imported:** ${{ steps.generate.outputs.imports }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.plan.outputs.plan_clean }}" == "true" ]; then
+            echo "✅ **Status:** Import successful - no changes in plan" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Terraform state now reflects existing Okta infrastructure." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  **Status:** Import completed with plan differences" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Review the plan output artifact to see what differences exist." >> $GITHUB_STEP_SUMMARY
+          fi
