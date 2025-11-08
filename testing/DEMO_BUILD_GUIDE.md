@@ -38,6 +38,7 @@ By the end of this guide, you will have:
 - ✅ Made changes and seen them apply instantly
 - ✅ Learned how to "undo" everything safely
 - ✅ (Advanced) Explored Identity Governance (OIG) features
+- ✅ (Optional) Used AI to generate Terraform code in seconds
 
 ### Why This Matters for Sales
 
@@ -1029,6 +1030,203 @@ OIG demo:
 - OIG requires Okta Identity Governance license
 - Some OIG features are API-only (can't be managed in Terraform)
 - This repo handles those with Python scripts in `scripts/`
+
+#### Level 6: AI-Assisted Demo Building (Optional - Speed Boost!)
+
+**What is AI-Assisted Generation?**
+
+Instead of writing Terraform code by hand, you can describe what you want in plain English, and an AI assistant (like Gemini, ChatGPT, or Claude) will write the code for you.
+
+**Think of it like:**
+- Manual way: You write every line of code yourself (slow, error-prone)
+- AI way: You tell the AI what you want, it writes the code (fast, accurate)
+
+**Real Example:**
+
+Instead of typing out this Terraform code:
+```hcl
+resource "okta_user" "john_doe" {
+  email      = "john.doe@example.com"
+  first_name = "John"
+  last_name  = "Doe"
+  login      = "john.doe@example.com"
+  status     = "ACTIVE"
+}
+# ... repeat 49 more times for 50 users
+```
+
+You simply tell the AI:
+```
+"Create 50 users across Engineering, Marketing, and Sales departments
+with realistic names and appropriate titles"
+```
+
+And the AI generates all 50 user resources in seconds!
+
+**Two Ways to Use AI:**
+
+1. **Beginner-Friendly (Manual Mode):**
+   - Open Gemini/ChatGPT/Claude in your browser
+   - Copy/paste prompt templates from this repo
+   - AI generates code
+   - You copy code to your Terraform files
+   - **Time:** ~5 minutes to create a full demo
+
+2. **Advanced (CLI Tool):**
+   - Install Python tool from this repo
+   - Run one command
+   - AI automatically generates and saves code
+   - **Time:** ~1-2 minutes to create a full demo
+
+**Step-by-Step: Beginner Mode**
+
+1. **Open the AI Assistant Tool:**
+   - Gemini: https://gemini.google.com/ (most users prefer this)
+   - ChatGPT: https://chat.openai.com/
+   - Claude: https://claude.ai/
+
+2. **Give the AI Context:**
+
+   Copy and paste these files into the AI chat:
+   - `ai-assisted/context/repository_structure.md`
+   - `ai-assisted/context/terraform_examples.md`
+   - `ai-assisted/context/okta_resource_guide.md`
+
+   **Why?** This teaches the AI how your repository works and what patterns to follow.
+
+3. **Use a Prompt Template:**
+
+   Open `ai-assisted/prompts/create_demo_environment.md` and fill in what you want:
+
+   Example:
+   ```
+   Create a demo for a SaaS company.
+
+   USERS:
+   - Jane Smith (Engineering Manager)
+   - 3 engineers
+   - Bob Jones (Marketing Manager)
+   - 2 marketing team members
+
+   GROUPS:
+   - Engineering Team
+   - Marketing Team
+
+   APPS:
+   - GitHub (for Engineering)
+   - Salesforce (for Marketing)
+   ```
+
+4. **Paste Your Prompt:**
+
+   Copy your filled-out prompt and paste it into the AI chat.
+
+5. **Get Your Code:**
+
+   The AI will generate complete, ready-to-use Terraform files:
+   - users.tf
+   - groups.tf
+   - apps.tf
+   - etc.
+
+6. **Copy to Your Environment:**
+
+   ```bash
+   cd environments/lowerdecklabs/terraform
+
+   # Paste generated users.tf content into users.tf
+   # Paste generated groups.tf content into groups.tf
+   # etc.
+   ```
+
+7. **Validate and Apply:**
+
+   ```bash
+   terraform fmt
+   terraform validate
+   terraform plan
+   terraform apply
+   ```
+
+**Real-World Time Savings:**
+
+| Task | Manual Coding | With AI | Time Saved |
+|------|---------------|---------|------------|
+| Create 5 users | 15 minutes | 2 minutes | 13 minutes (87%) |
+| Full demo (users + groups + apps) | 45 minutes | 5 minutes | 40 minutes (89%) |
+| Add OIG bundles | 20 minutes | 3 minutes | 17 minutes (85%) |
+
+**Available Prompt Templates:**
+
+This repository includes ready-to-use prompts:
+
+- **Complete Demo:** `ai-assisted/prompts/create_demo_environment.md`
+  - Full environment with users, groups, apps
+  - Perfect for customer demos
+
+- **Add Users:** `ai-assisted/prompts/add_users.md`
+  - Quickly add more users to existing setup
+  - Great for scaling demos
+
+- **Create App:** `ai-assisted/prompts/create_app.md`
+  - OAuth/OIDC applications
+  - SAML integrations
+
+- **OIG Setup:** `ai-assisted/prompts/oig_setup.md`
+  - Entitlement bundles
+  - Access reviews
+  - Governance features
+
+**Advanced: CLI Tool**
+
+If you're comfortable with command line:
+
+```bash
+# Install (one time)
+pip install google-generativeai
+
+# Set API key (get from https://aistudio.google.com/app/apikey)
+export GEMINI_API_KEY="your-key-here"
+
+# Generate interactively
+cd ai-assisted
+python generate.py --interactive --provider gemini
+
+# Or generate directly
+python generate.py \
+  --prompt "Create 10 marketing users and a Salesforce app" \
+  --provider gemini \
+  --output ../environments/lowerdecklabs/terraform/marketing.tf
+```
+
+**Why This Matters for Sales:**
+
+**Traditional Demo Prep:**
+- "I need 2 hours to build this demo environment"
+- "Let me manually type out all these users..."
+- Customer: "Can you add 5 more users?" → 15 more minutes
+
+**With AI-Assisted:**
+- "Give me 5 minutes, I'll have the complete demo ready"
+- Ask AI to generate everything
+- Customer: "Can you add 5 more users?" → 30 seconds with AI
+
+**This is a game-changer for:**
+- Last-minute customer requests
+- Quick POC environments
+- Scaling demos up/down
+- Testing different scenarios
+
+**Try It Now:**
+
+1. Go to https://gemini.google.com/
+2. Copy and paste the context files from `ai-assisted/context/`
+3. Try the prompt: "Create 3 users named Alice, Bob, and Charlie in Engineering department"
+4. See the magic happen!
+
+**Full Documentation:**
+- `ai-assisted/README.md` - Complete guide to AI-assisted generation
+- `ai-assisted/examples/example_session_gemini.md` - Real example session
 
 ### Resources for Learning More
 
