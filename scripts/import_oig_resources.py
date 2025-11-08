@@ -102,8 +102,9 @@ class OIGImporter:
         try:
             url = f"{self.base_url}/governance/api/v1/principal-entitlements"
             # Filter by entitlement bundle ID
+            # Note: This endpoint doesn't support limit parameter
             filter_expr = f'entitlementId eq "{bundle_id}"'
-            params = {"filter": filter_expr, "limit": 200}
+            params = {"filter": filter_expr}
             response = self._make_request("GET", url, params=params)
 
             data = response.json()
