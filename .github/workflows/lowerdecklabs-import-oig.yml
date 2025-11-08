@@ -28,12 +28,12 @@ jobs:
       - name: Workflow Overview
         run: |
           echo "=================================================="
-          echo "  APPLY RESOURCE OWNER ASSIGNMENTS"
+          echo "  IMPORT OIG RESOURCES"
           echo "=================================================="
           echo ""
           echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
-          echo "Operation: Apply resource owners from config"
-          echo "Dry Run: ${{ github.event.inputs.dry_run }}"
+          echo "Operation: Import entitlement bundles from Okta"
+          echo "Update Terraform: ${{ github.event.inputs.update_terraform }}"
           echo "=================================================="
 
       - name: Checkout code
