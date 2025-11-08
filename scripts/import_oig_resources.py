@@ -90,45 +90,88 @@ class OIGImporter:
             print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
             return []
 
-    def fetch_principal_entitlements_for_bundle(self, bundle_id: str) -> List[Dict]:
-        """Fetch principal entitlement assignments for a specific bundle
+    def fetch_principals_for_bundle(self, bundle_id: str, target_id: str, target_type: str) -> List[Dict]:
+        """Fetch principals assigned to a specific entitlement bundle
 
-        Uses the Principal Entitlements API to find which principals have been assigned
-        to this entitlement bundle.
-
-        Note: The API doesn't support filtering by entitlementId, so we fetch all
-        assignments and filter client-side.
+        Uses a two-step process:
+        1. Get all principals with grants to the target resource (Grants API)
+        2. For each principal, check if they have this specific bundle (Principal Entitlements API)
 
         Args:
             bundle_id: The entitlement bundle ID
+            target_id: The target resource ID (e.g., app ID)
+            target_type: The target resource type (e.g., "APPLICATION")
+
+        Returns:
+            List of dicts with principal information
         """
+        principals_with_bundle = []
+
         try:
-            url = f"{self.base_url}/governance/api/v1/principal-entitlements"
-            # API doesn't support filtering, fetch all and filter client-side
-            response = self._make_request("GET", url)
+            # Step 1: Get all principals with grants to this resource
+            grants_url = f"{self.base_url}/governance/api/v1/grants"
+            filter_expr = f'target.externalId eq "{target_id}" AND target.type eq "{target_type}"'
+            params = {"filter": filter_expr}
+            grants_response = self._make_request("GET", grants_url, params=params)
 
-            data = response.json()
-            if isinstance(data, list):
-                all_assignments = data
-            elif isinstance(data, dict):
-                all_assignments = data.get("data", data.get("principalEntitlements", data.get("items", [])))
+            grants_data = grants_response.json()
+            if isinstance(grants_data, list):
+                grants = grants_data
+            elif isinstance(grants_data, dict):
+                grants = grants_data.get("data", grants_data.get("grants", []))
             else:
-                all_assignments = []
+                grants = []
 
-            # Filter client-side for this specific bundle
-            bundle_assignments = []
-            for assignment in all_assignments:
-                # Check various possible field names for entitlement ID
-                entitlement = assignment.get("entitlement", {})
-                ent_id = (entitlement.get("id") or entitlement.get("externalId") or
-                         assignment.get("entitlementId") or assignment.get("bundleId"))
+            # Extract unique principals from grants
+            principals_seen = set()
+            for grant in grants:
+                target_principal = grant.get("targetPrincipal", {})
+                principal_id = target_principal.get("externalId")
+                principal_type = target_principal.get("type", "")
 
-                if ent_id == bundle_id:
-                    bundle_assignments.append(assignment)
+                if principal_id and principal_id not in principals_seen:
+                    principals_seen.add(principal_id)
 
-            return bundle_assignments
+                    # Step 2: Check if this principal has the specific bundle
+                    entitlements_url = f"{self.base_url}/governance/api/v1/principal-entitlements"
+                    filter_expr = (f'parent.externalId eq "{target_id}" AND '
+                                 f'parent.type eq "{target_type}" AND '
+                                 f'targetPrincipal.externalId eq "{principal_id}" AND '
+                                 f'targetPrincipal.type eq "{principal_type}"')
+                    params = {"filter": filter_expr}
+
+                    try:
+                        ent_response = self._make_request("GET", entitlements_url, params=params)
+                        ent_data = ent_response.json()
+
+                        if isinstance(ent_data, list):
+                            entitlements = ent_data
+                        elif isinstance(ent_data, dict):
+                            entitlements = ent_data.get("data", ent_data.get("entitlements", []))
+                        else:
+                            entitlements = []
+
+                        # Check if any entitlement matches our bundle
+                        for entitlement in entitlements:
+                            ent_id = entitlement.get("id") or entitlement.get("externalId")
+                            if ent_id == bundle_id:
+                                # Found a match! Add this principal
+                                principals_with_bundle.append({
+                                    "principalId": principal_id,
+                                    "principalType": principal_type.replace("OKTA_", ""),
+                                    "principalName": target_principal.get("name", "")
+                                })
+                                break
+
+                    except Exception as e:
+                        # Log but continue with other principals
+                        print(f"      ⚠️  Could not check entitlements for principal {principal_id}: {e}")
+                        continue
+
+            return principals_with_bundle
+
         except Exception as e:
-            print(f"    ⚠️  Could not fetch principal entitlements for bundle {bundle_id}: {e}")
+            print(f"    ⚠️  Could not fetch principals for bundle {bundle_id}: {e}")
             return []
 
     def fetch_reviews(self) -> List[Dict]:
@@ -222,9 +265,18 @@ class OIGImporter:
 
             safe_name = self._sanitize_name(name)
 
-            # Fetch principal entitlement assignments for this bundle
-            print(f"  Fetching principal assignments for: {name}")
-            assignments = self.fetch_principal_entitlements_for_bundle(bundle_id)
+            # Extract target resource information
+            target = bundle.get("target", {})
+            target_id = target.get("externalId", "")
+            target_type = target.get("type", "")
+
+            # Fetch principals assigned to this bundle
+            principals = []
+            if target_id and target_type:
+                print(f"  Fetching principal assignments for: {name}")
+                principals = self.fetch_principals_for_bundle(bundle_id, target_id, target_type)
+            else:
+                print(f"  ⚠️  No target resource found for: {name}, skipping principal fetch")
 
             tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'# {name}')
@@ -238,15 +290,13 @@ class OIGImporter:
                 tf_config.append(f'  # Description: {description}')
             tf_config.append(f'')
 
-            # Generate principal blocks from assignments
-            if assignments:
-                print(f"    Found {len(assignments)} assignment(s)")
-                for assignment in assignments:
-                    # Extract principal information from assignment
-                    principal = assignment.get("principal", {})
-                    principal_id = principal.get("id") or principal.get("externalId") or assignment.get("principalId")
-                    principal_type = principal.get("type", "").replace("OKTA_", "") or assignment.get("principalType", "USER")
-                    principal_name = principal.get("name") or assignment.get("principalName", "")
+            # Generate principal blocks
+            if principals:
+                print(f"    Found {len(principals)} principal(s) with this bundle")
+                for principal in principals:
+                    principal_id = principal.get("principalId")
+                    principal_type = principal.get("principalType", "USER")
+                    principal_name = principal.get("principalName", "")
 
                     if principal_id:
                         tf_config.append(f'  principal {{')
@@ -263,7 +313,7 @@ class OIGImporter:
                 tf_config.append(f'    name = "{name}"')
                 tf_config.append(f'  }}')
             else:
-                # No assignments found - add TODO comment
+                # No principals found - add TODO comment
                 tf_config.append(f'  # TODO: No principal assignments found')
                 tf_config.append(f'  # Add principal and entitlement configuration as needed')
                 tf_config.append(f'')
