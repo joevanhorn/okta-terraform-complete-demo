@@ -11,6 +11,9 @@ on:
         options:
           - 'true'
           - 'false'
+  push:
+    paths:
+      - '.github/workflows/lowerdecklabs-import-oig.yml'
 
 jobs:
   import-oig:
