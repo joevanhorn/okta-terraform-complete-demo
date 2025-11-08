@@ -20,10 +20,8 @@ resource "okta_principal_entitlements" "datadog_read_only" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfgMan9Qak1d7
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -46,10 +44,8 @@ resource "okta_principal_entitlements" "datadog_standard" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfc1Rwq0uN1d7
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -72,10 +68,8 @@ resource "okta_principal_entitlements" "datadog_admin_role" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zcvwl8qvb6Xv1d7
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -98,10 +92,8 @@ resource "okta_principal_entitlements" "request_report_of_my_company_s_users" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12x0qhaHpOxq6C1d7
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -125,10 +117,8 @@ resource "okta_principal_entitlements" "developer_bundle" {
   # Type: MANUAL
   # Description: Bundle of base access for developers
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -152,10 +142,8 @@ resource "okta_principal_entitlements" "asset_administrator" {
   # Type: MANUAL
   # Description: For asset management team
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -179,10 +167,8 @@ resource "okta_principal_entitlements" "it_service_desk_agent_bundle" {
   # Type: MANUAL
   # Description: Standard access bundle for L1 and L2 service desk agents
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -205,10 +191,8 @@ resource "okta_principal_entitlements" "b2b_marketing_role" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10ufnbov67EfIn1d7
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -231,10 +215,8 @@ resource "okta_principal_entitlements" "example_bundle" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10nq3zlAGkuY4F1d7
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -258,10 +240,8 @@ resource "okta_principal_entitlements" "customer_trial_finance" {
   # Type: MANUAL
   # Description: Allows management and processing of payments for paid customer trials. 
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -285,10 +265,8 @@ resource "okta_principal_entitlements" "customer_content_management" {
   # Type: MANUAL
   # Description: Access to create and manage content used for customer trials on the Salesday platform. 
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -312,10 +290,8 @@ resource "okta_principal_entitlements" "sales_associate" {
   # Type: MANUAL
   # Description: Access roles often required for Sales Associates to complete work around customer trials
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -338,10 +314,8 @@ resource "okta_principal_entitlements" "accounts_payable" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme70lOECK1um1d6
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -364,10 +338,8 @@ resource "okta_principal_entitlements" "auditor" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme7xWqTdKIbB1d6
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -390,10 +362,8 @@ resource "okta_principal_entitlements" "purchasing" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyln29kDyuJ581F1d6
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -417,10 +387,8 @@ resource "okta_principal_entitlements" "realm_auditor" {
   # Type: MANUAL
   # Description: Use this request to get access to audit and report on all realms.
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -444,10 +412,8 @@ resource "okta_principal_entitlements" "realm_admin" {
   # Type: MANUAL
   # Description: Use this request to have a new Realm created and to be made an administrator of it. 
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -471,10 +437,8 @@ resource "okta_principal_entitlements" "group_administrator" {
   # Type: MANUAL
   # Description: Group Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -498,10 +462,8 @@ resource "okta_principal_entitlements" "super_organization_administrator" {
   # Type: MANUAL
   # Description: Super Organization Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -525,10 +487,8 @@ resource "okta_principal_entitlements" "report_administrator" {
   # Type: MANUAL
   # Description: Report Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -552,10 +512,8 @@ resource "okta_principal_entitlements" "read_only_administrator" {
   # Type: MANUAL
   # Description: Read-only Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -579,10 +537,8 @@ resource "okta_principal_entitlements" "organization_administrator" {
   # Type: MANUAL
   # Description: Organization Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -606,10 +562,8 @@ resource "okta_principal_entitlements" "mobile_administrator" {
   # Type: MANUAL
   # Description: Mobile Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -633,10 +587,8 @@ resource "okta_principal_entitlements" "help_desk_administrator" {
   # Type: MANUAL
   # Description: Help Desk Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -660,10 +612,8 @@ resource "okta_principal_entitlements" "group_membership_administrator" {
   # Type: MANUAL
   # Description: Group Membership Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -687,10 +637,8 @@ resource "okta_principal_entitlements" "application_administrator" {
   # Type: MANUAL
   # Description: Application Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -714,10 +662,8 @@ resource "okta_principal_entitlements" "api_access_management_administrator" {
   # Type: MANUAL
   # Description: API Access Management Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -741,10 +687,8 @@ resource "okta_principal_entitlements" "workflows_administrator" {
   # Type: MANUAL
   # Description: Workflows Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -768,10 +712,8 @@ resource "okta_principal_entitlements" "access_requests_administrator" {
   # Type: MANUAL
   # Description: Access Requests Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -795,10 +737,8 @@ resource "okta_principal_entitlements" "access_certifications_administrator" {
   # Type: MANUAL
   # Description: Access Certifications Administrator
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
@@ -821,10 +761,8 @@ resource "okta_principal_entitlements" "salesforce_access" {
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr73q6YWsfFeC1d6
   # Type: MANUAL
 
-  # TODO: Add principal assignments
-  # This resource type requires principal and entitlement configuration.
-  # See the JSON export file for full bundle details.
-  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
+  # TODO: No principal assignments found
+  # Add principal and entitlement configuration as needed
 
   # Example configuration:
   # principal {
