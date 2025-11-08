@@ -33,7 +33,7 @@ jobs:
           echo ""
           echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
           echo "Operation: Import entitlement bundles and OIG configs"
-          echo "Update Terraform: ${{ inputs.update_terraform }}"
+          echo "Update Terraform: ${{ github.event.inputs.update_terraform || 'false' }}"
           echo "=================================================="
 
       - name: Checkout code
@@ -111,7 +111,7 @@ jobs:
           echo "  Approval Sequences: $SEQUENCES"
 
       - name: Update Terraform files
-        if: inputs.update_terraform == 'true'
+        if: github.event.inputs.update_terraform == 'true'
         run: |
           echo "Updating production-ready Terraform files..."
 
@@ -140,7 +140,7 @@ jobs:
           retention-days: 180
 
       - name: Commit updated files
-        if: inputs.update_terraform == 'true' && success()
+        if: github.event.inputs.update_terraform == 'true' && success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -181,7 +181,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
           echo "| Approval Sequences | ${{ steps.results.outputs.sequences }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ inputs.update_terraform }}" == "true" ]; then
+          if [ "${{ github.event.inputs.update_terraform }}" == "true" ]; then
             echo "✅ **Terraform files updated** in production-ready/" >> $GITHUB_STEP_SUMMARY
           else
             echo "ℹ️  **Terraform files NOT updated** (update_terraform=false)" >> $GITHUB_STEP_SUMMARY
