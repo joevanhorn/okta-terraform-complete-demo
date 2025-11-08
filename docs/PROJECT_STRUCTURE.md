@@ -6,43 +6,43 @@
 okta-terraform-complete-demo/
 ├── .github/
 │   ├── workflows/
-│   │   ├── admin-protection.yml
-│   │   ├── cleanup-imports.yml
-│   │   ├── lowerdecklabs-import.yml
+│   │   ├── import-all-resources.yml
+│   │   ├── lowerdecklabs-import-oig.yml
 │   │   ├── lowerdecklabs-export-oig.yml
-│   │   ├── terraformer.yml
-│   │   ├── terraform.yml
-│   │   ├── claude.yml
-│   │   └── claude-code-review.yml
+│   │   ├── lowerdecklabs-governance-setup.yml
+│   │   ├── lowerdecklabs-apply-owners.yml
+│   │   └── admin-protection.yml
 │   └── ISSUE_TEMPLATE/
 │       ├── bug_report.md
 │       ├── feature_request.md
 │       └── question.md
 │
-├── production-ready/
-│   ├── apps/                     # Imported OAuth/SAML apps
-│   ├── auth_servers/             # Imported authorization servers
-│   ├── groups/                   # Imported groups
-│   ├── policies/                 # Imported policies
-│   ├── users/                    # Imported users
-│   ├── backend.tf
-│   ├── provider.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   ├── README.md
-│   ├── FORKING_GUIDE.md
-│   ├── LESSONS_LEARNED.md
-│   └── RESOURCE_REFERENCE.md
-│
-├── oig-exports/
-│   ├── lowerdecklabs/           # LowerDeckLabs OIG exports
-│   │   ├── latest.json          # Most recent export
-│   │   └── YYYY-MM-DD.json      # Historical exports
-│   └── README.md                # OIG exports documentation
+├── environments/
+│   ├── lowerdecklabs/           # Primary demo tenant
+│   │   ├── terraform/           # Terraform configurations
+│   │   │   ├── oig_entitlements.tf
+│   │   │   ├── oig_reviews.tf
+│   │   │   ├── app_oauth.tf
+│   │   │   ├── user.tf
+│   │   │   ├── group.tf
+│   │   │   └── ...
+│   │   ├── imports/             # Raw API import data
+│   │   │   ├── entitlements.json
+│   │   │   └── reviews.json
+│   │   ├── config/              # API-only resource configs
+│   │   │   ├── owner_mappings.json
+│   │   │   └── label_mappings.json
+│   │   └── README.md
+│   ├── production/              # Production tenant
+│   ├── staging/                 # Staging tenant
+│   ├── development/             # Development tenant
+│   └── README.md
 │
 ├── scripts/
-│   ├── okta_api_manager.py        # Modular OIG export with graceful error handling
-│   └── protect_admin_users.py     # Filter admin users from imports
+│   ├── import_oig_resources.py    # Import OIG resources from Okta
+│   ├── sync_owner_mappings.py     # Sync resource owners
+│   ├── sync_label_mappings.py     # Sync governance labels
+│   └── apply_resource_owners.py   # Apply owner assignments
 │
 ├── docs/
 │   ├── API_MANAGEMENT.md
@@ -58,9 +58,8 @@ okta-terraform-complete-demo/
 ├── .gitignore
 ├── .gitattributes
 ├── CHANGELOG.md
-├── CLAUDE.md                     # Claude Code integration guide
 ├── CODE_OF_CONDUCT.md
-├── DIRECTORY_GUIDE.md            # Guide to choosing production-ready/ vs terraform/
+├── DIRECTORY_GUIDE.md            # Environment-based structure guide
 ├── LICENSE
 ├── OIG_PREREQUISITES.md          # Prerequisites for OIG features
 ├── README.md
@@ -70,54 +69,53 @@ okta-terraform-complete-demo/
 ## 📝 File Descriptions
 
 ### Root Directory
-- **README.md** - Main project documentation
-- **DIRECTORY_GUIDE.md** - Guide to choosing between production-ready/ and terraform/ directories
+- **README.md** - Main project documentation and quick start guide
+- **DIRECTORY_GUIDE.md** - Guide to environment-based structure
 - **OIG_PREREQUISITES.md** - Prerequisites for using OIG features
 - **LICENSE** - MIT license
 - **CHANGELOG.md** - Version history
 - **SECURITY.md** - Security policy
 - **CODE_OF_CONDUCT.md** - Community guidelines
-- **CLAUDE.md** - Claude Code integration guide
 - **.gitignore** - Files to exclude from git
 - **.gitattributes** - Git attributes for line endings
 
 ### .github/workflows/
 GitHub Actions workflows for automation:
-- **lowerdecklabs-import.yml** - Import standard Okta resources for LowerDeckLabs environment
-- **lowerdecklabs-export-oig.yml** - Export OIG resources with modular approach
+- **import-all-resources.yml** - Import all OIG resources from any tenant environment
+- **lowerdecklabs-import-oig.yml** - Import OIG entitlement bundles and reviews
+- **lowerdecklabs-export-oig.yml** - Export OIG resources (legacy)
+- **lowerdecklabs-governance-setup.yml** - Set up governance configurations
+- **lowerdecklabs-apply-owners.yml** - Apply resource owner assignments
 - **admin-protection.yml** - Protect admin users from modifications
-- **cleanup-imports.yml** - Clean up and organize imported resources
-- **terraformer.yml** - Terraformer import workflow
-- **claude.yml** - Claude Code integration
-- **claude-code-review.yml** - Automated code reviews
 
-### production-ready/
-Production-validated Terraform configurations for basic Okta resources (importable via Terraformer):
-- Organized by resource type (apps/, groups/, users/, etc.)
-- Includes comprehensive documentation
-- Validated workflow for importing existing infrastructure
-
-### oig-exports/
-OIG resource exports committed to the repository:
-- **lowerdecklabs/** - Exports from LowerDeckLabs tenant
-  - `latest.json` - Most recent export
-  - `YYYY-MM-DD.json` - Historical exports by date
-- Version controlled for drift detection
-- Automatically updated by GitHub Actions workflow
+### environments/
+Environment-specific Okta configurations organized by tenant:
+- **lowerdecklabs/** - Primary demo tenant (oktapreview.com)
+  - `terraform/` - Terraform configurations for all resources
+  - `imports/` - Raw API import data (JSON)
+  - `config/` - Resource owners, labels, and API configs
+- **production/** - Production tenant (placeholder)
+- **staging/** - Staging tenant (placeholder)
+- **development/** - Development tenant (placeholder)
+- Each environment is self-contained with its own Terraform state and configs
 
 ### scripts/
-Automation scripts:
-- **okta_api_manager.py** - Modular OIG export/import with graceful error handling
-- **protect_admin_users.py** - Filter admin users from imports
+Python automation scripts:
+- **import_oig_resources.py** - Import OIG resources from Okta and generate Terraform
+- **sync_owner_mappings.py** - Sync resource owner assignments from Okta
+- **sync_label_mappings.py** - Sync governance label assignments from Okta
+- **apply_resource_owners.py** - Apply resource owner assignments to Okta
 
 ### docs/
 Comprehensive documentation:
 - **LOWERDECKLABS_SETUP.md** - Setup guide for LowerDeckLabs environment
 - **API_MANAGEMENT.md** - API-based resource management guide
+- **OIG_MANUAL_IMPORT.md** - Manual OIG import procedures
 - **TERRAFORMER.md** - Terraformer usage guide
 - **TERRAFORMER_OIG_FAQ.md** - FAQ for OIG resources and Terraformer
 - **COMPLETE_SOLUTION.md** - Complete solution overview
 - **TESTING.md** - Testing guide
+- **PROJECT_STRUCTURE.md** - This file
 
 ## 🔑 Key Files for GitHub
 

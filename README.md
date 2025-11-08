@@ -13,33 +13,32 @@ This repository demonstrates the **Okta Terraform Provider v6.1.0** with the new
 
 See [Terraformer + OIG FAQ](./docs/TERRAFORMER_OIG_FAQ.md) for full details.
 
-## ✅ Production-Ready Validated Configuration
+## 🏗️ Environment-Based Structure
 
-**NEW:** The `production-ready/` directory contains a **fully validated** Terraform configuration that proves the complete workflow:
+This repository uses an **environment-based structure** to organize Okta configurations by tenant:
 
-- ✅ Import existing Okta resources with Terraformer
-- ✅ Manage imported resources with Terraform
-- ✅ Add new resources and apply changes
-- ✅ Zero drift after apply
+```
+environments/
+├── lowerdecklabs/      # Primary demo tenant
+│   ├── terraform/      # Terraform configurations
+│   ├── imports/        # Raw API import data
+│   └── config/         # Resource owners and labels
+├── production/         # Production tenant
+├── staging/            # Staging tenant
+└── development/        # Development tenant
+```
 
-**[→ See Production-Ready Directory](./production-ready/README.md)** for the complete validated setup with:
-- Working examples of all resource types
-- Comprehensive documentation
-- Lessons learned from real implementation
-- Forking guide for your own use
+**Benefits:**
+- ✅ Clear separation of tenant configurations
+- ✅ Easy to fork and customize for your organization
+- ✅ Self-contained environments with independent Terraform state
+- ✅ Template structure for multi-environment deployments
 
-This is the **recommended starting point** if you want to use Terraformer with Okta.
-
-### 🗂️ Two Configurations Available
-
-This repo contains two distinct configurations:
-
-| Directory | Purpose | Best For |
-|-----------|---------|----------|
-| **[`production-ready/`](./production-ready/)** | Import & manage existing basic resources | ✅ Most users - Validated workflow |
-| **[`terraform/`](./terraform/)** | OIG features demonstration | Advanced users needing governance features |
-
-**Not sure which to use?** See **[DIRECTORY_GUIDE.md](./DIRECTORY_GUIDE.md)** for a detailed comparison and decision tree.
+**[→ See Environments README](./environments/README.md)** for complete guide including:
+- Directory structure and organization
+- Import workflows for each environment
+- Terraform usage examples
+- Best practices for multi-tenant management
 
 **📋 Want to use OIG features?** See **[OIG_PREREQUISITES.md](./OIG_PREREQUISITES.md)** for required setup steps (Entitlement Management must be enabled manually in GUI).
 
@@ -99,12 +98,12 @@ This demo creates a complete OIG workflow with support for importing existing co
 
 ### Label Management (NEW)
 - ✅ Automatic discovery and labeling of admin entitlements
-- ✅ Label mapping file synced from Okta (`config/label_mappings.json`)
-- ✅ PR-based workflow for label assignments
+- ✅ Label mapping files synced from Okta per environment
+- ✅ Automated workflow for label assignments
 - ✅ GitHub Actions workflows for automated labeling
-- ✅ Currently managing 16 admin entitlements with Privileged label
+- ✅ Currently managing 2 governance labels in LowerDeckLabs
 
-See **[config/README.md](./config/README.md)** and **[config/label_mappings.json](./config/label_mappings.json)** for details.
+See **[environments/lowerdecklabs/config/label_mappings.json](./environments/lowerdecklabs/config/label_mappings.json)** for example configuration.
 
 ## 📋 Prerequisites
 
