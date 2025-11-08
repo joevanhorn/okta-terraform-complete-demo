@@ -1,48 +1,11 @@
 {
   "description": "Resource Owner mappings synced from Okta OIG",
-  "last_synced": "2025-11-07T00:00:00Z",
+  "last_synced": "2025-11-08T02:14:40.952350Z",
   "version": "1.0",
   "assignments": {
-    "apps": [
-      {
-        "resource_orn": "orn:okta:idp:<org>:apps:oauth2:<app-id>",
-        "resource_name": "Example OAuth App",
-        "resource_type": "oauth2",
-        "owners": [
-          {
-            "principal_orn": "orn:okta:directory:<org>:users:<user-id>",
-            "principal_type": "user",
-            "principal_name": "john.doe@example.com"
-          }
-        ]
-      }
-    ],
-    "groups": [
-      {
-        "resource_orn": "orn:okta:directory:<org>:groups:<group-id>",
-        "resource_name": "Example Group",
-        "owners": [
-          {
-            "principal_orn": "orn:okta:directory:<org>:users:<user-id>",
-            "principal_type": "user",
-            "principal_name": "jane.smith@example.com"
-          }
-        ]
-      }
-    ],
-    "entitlement_bundles": [
-      {
-        "resource_orn": "orn:okta:governance:<org>:entitlement-bundles:<bundle-id>",
-        "resource_name": "Example Entitlement",
-        "owners": [
-          {
-            "principal_orn": "orn:okta:directory:<org>:users:<user-id>",
-            "principal_type": "user",
-            "principal_name": "admin@example.com"
-          }
-        ]
-      }
-    ]
+    "apps": [],
+    "groups": [],
+    "entitlement_bundles": []
   },
   "notes": [
     "This file is the source of truth for resource owner assignments",

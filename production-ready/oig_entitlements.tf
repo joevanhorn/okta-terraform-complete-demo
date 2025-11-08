@@ -1,777 +1,914 @@
 # =============================================================================
 # OKTA IDENTITY GOVERNANCE - ENTITLEMENT BUNDLES
 # =============================================================================
-# These are entitlement bundles imported from Okta.
-# Each bundle represents a collection of access rights.
+# Entitlement bundles define collections of access rights that can be assigned
+# to users and groups. These bundles are managed via Terraform.
 #
-# NOTE: The Terraform okta_principal_entitlements resource is used to manage
-# assignments of principals to entitlements. The bundles themselves are
-# managed via the API and cannot be created in Terraform.
+# IMPORTANT:
+# - Entitlement BUNDLES (definitions) are managed here in Terraform
+# - Entitlement ASSIGNMENTS (which users/groups have bundles) should be
+#   managed in Okta Admin UI or via direct API calls, NOT in Terraform
 #
-# To import: Run the generated import.sh script
+# Resource: okta_entitlement_bundle
+# Documentation: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/entitlement_bundle
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Datadog Read Only
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "datadog_read_only" {
-  # Bundle ID: enb12zbvfgMan9Qak1d7
+resource "okta_entitlement_bundle" "datadog_read_only" {
+  name = "Datadog Read Only"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfgMan9Qak1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oanitkncxGbbNwrl1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12zbv44vDNoeIU1d7"
+    values {
+      id = "ent12zbv46MO7EWrw1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfgMan9Qak1d7
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12zbvfgMan9Qak1d7"
-  #   name = "Datadog Read Only"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Datadog Standard
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "datadog_standard" {
-  # Bundle ID: enb12zbvfc1Rwq0uN1d7
+resource "okta_entitlement_bundle" "datadog_standard" {
+  name = "Datadog Standard"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfc1Rwq0uN1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oanitkncxGbbNwrl1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12zbv44vDNoeIU1d7"
+    values {
+      id = "ent12zbv45QDKnhaM1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfc1Rwq0uN1d7
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12zbvfc1Rwq0uN1d7"
-  #   name = "Datadog Standard"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Datadog Admin ROle
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "datadog_admin_role" {
-  # Bundle ID: enb12zcvwl8qvb6Xv1d7
+resource "okta_entitlement_bundle" "datadog_admin_role" {
+  name = "Datadog Admin ROle"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zcvwl8qvb6Xv1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oanitkncxGbbNwrl1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12zbv44vDNoeIU1d7"
+    values {
+      id = "ent12zbv47bjSFrHZ1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zcvwl8qvb6Xv1d7
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12zcvwl8qvb6Xv1d7"
-  #   name = "Datadog Admin ROle"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Request Report of My Company's Users
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "request_report_of_my_company_s_users" {
-  # Bundle ID: enb12x0qhaHpOxq6C1d7
+resource "okta_entitlement_bundle" "request_report_of_my_company_s_users" {
+  name = "Request Report of My Company's Users"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12x0qhaHpOxq6C1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oar6jgx89kx2xO9I1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12x0qh8DjqIauW1d7"
+    values {
+      id = "ent12x0qh9idQPGKM1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12x0qhaHpOxq6C1d7
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12x0qhaHpOxq6C1d7"
-  #   name = "Request Report of My Company's Users"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Developer Bundle
+# Bundle of base access for developers
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "developer_bundle" {
-  # Bundle ID: enb12pob86e9ExVBm1d7
+resource "okta_entitlement_bundle" "developer_bundle" {
+  name = "Developer Bundle"
+  description = "Bundle of base access for developers"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob86e9ExVBm1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oar0edy8iuBrRn6t1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12pvbc9GsRkvu31d7"
+    values {
+      id = "ent12pvea9ScwnaQX1d7"
+    }
+    values {
+      id = "ent12pvebn5KdeN9l1d7"
+    }
+    values {
+      id = "ent12pvegiIQf9qti1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob86e9ExVBm1d7
-  # Type: MANUAL
-  # Description: Bundle of base access for developers
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12pob86e9ExVBm1d7"
-  #   name = "Developer Bundle"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Asset Administrator
+# For asset management team
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "asset_administrator" {
-  # Bundle ID: enb12pob80LpIChdk1d7
+resource "okta_entitlement_bundle" "asset_administrator" {
+  name = "Asset Administrator"
+  description = "For asset management team"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob80LpIChdk1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oar0edy8iuBrRn6t1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12pvbc9GsRkvu31d7"
+    values {
+      id = "ent12pva5mRfBHowQ1d7"
+    }
+    values {
+      id = "ent12pve7wUvKWXVS1d7"
+    }
+    values {
+      id = "ent12pve87e6OIyjW1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob80LpIChdk1d7
-  # Type: MANUAL
-  # Description: For asset management team
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12pob80LpIChdk1d7"
-  #   name = "Asset Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # IT Service Desk - Agent Bundle
+# Standard access bundle for L1 and L2 service desk agents
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "it_service_desk_agent_bundle" {
-  # Bundle ID: enb12pmq4gjryR0E31d7
+resource "okta_entitlement_bundle" "it_service_desk_agent_bundle" {
+  name = "IT Service Desk - Agent Bundle"
+  description = "Standard access bundle for L1 and L2 service desk agents"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pmq4gjryR0E31d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oar0edy8iuBrRn6t1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp12pvbc9GsRkvu31d7"
+    values {
+      id = "ent12pve80mQeNNUE1d7"
+    }
+    values {
+      id = "ent12pve87e6OIyjW1d7"
+    }
+    values {
+      id = "ent12pve8cHjmlJEW1d7"
+    }
+    values {
+      id = "ent12pveb2wubuGuS1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pmq4gjryR0E31d7
-  # Type: MANUAL
-  # Description: Standard access bundle for L1 and L2 service desk agents
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb12pmq4gjryR0E31d7"
-  #   name = "IT Service Desk - Agent Bundle"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # B2B Marketing Role
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "b2b_marketing_role" {
-  # Bundle ID: enb10ufnbov67EfIn1d7
+resource "okta_entitlement_bundle" "b2b_marketing_role" {
+  name = "B2B Marketing Role"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10ufnbov67EfIn1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxiwg4zsrWaeJF1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybuyfg0aY1Xp7y1d6"
+    values {
+      id = "entybuze9GDQYdAue1d6"
+    }
+  }
+
+  entitlements {
+    id = "espybuyfdDblx1vFd1d6"
+    values {
+      id = "entybuyhst5EWQmye1d6"
+    }
+  }
+
+  entitlements {
+    id = "espybuyfet4uKnC9j1d6"
+    values {
+      id = "entybuyiy7YcVRIVB1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10ufnbov67EfIn1d7
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb10ufnbov67EfIn1d7"
-  #   name = "B2B Marketing Role"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Example Bundle
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "example_bundle" {
-  # Bundle ID: enb10nq3zlAGkuY4F1d7
+resource "okta_entitlement_bundle" "example_bundle" {
+  name = "Example Bundle"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10nq3zlAGkuY4F1d7"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oapes0i16fD1dIqu1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "esp10no31j3Qyp2vJ1d7"
+    values {
+      id = "ent10no31kYItsx3H1d7"
+    }
+  }
+
+  entitlements {
+    id = "esp10np3liBs4F7Mr1d7"
+    values {
+      id = "ent10np3lj0UX475t1d7"
+    }
+  }
+
+  entitlements {
+    id = "esp10nq3zhKTqUePo1d7"
+    values {
+      id = "ent10nq3zi7lhGXni1d7"
+    }
+  }
+
+  entitlements {
+    id = "esp10no31lHmsDMl91d7"
+    values {
+      id = "ent10no31mow95e7F1d7"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10nq3zlAGkuY4F1d7
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enb10nq3zlAGkuY4F1d7"
-  #   name = "Example Bundle"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Customer Trial Finance
+# Allows management and processing of payments for paid customer trials. 
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "customer_trial_finance" {
-  # Bundle ID: enbywatjlhTpz7SPd1d6
+resource "okta_entitlement_bundle" "customer_trial_finance" {
+  name = "Customer Trial Finance"
+  description = "Allows management and processing of payments for paid customer trials. "
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjlhTpz7SPd1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxc34dudXXjGJT1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espyirusl3g5Acmjb1d6"
+    values {
+      id = "entyirusmOPUhfmLX1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjlhTpz7SPd1d6
-  # Type: MANUAL
-  # Description: Allows management and processing of payments for paid customer trials. 
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbywatjlhTpz7SPd1d6"
-  #   name = "Customer Trial Finance"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Customer Content Management
+# Access to create and manage content used for customer trials on the Salesday platform. 
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "customer_content_management" {
-  # Bundle ID: enbywatjaevWrlrOJ1d6
+resource "okta_entitlement_bundle" "customer_content_management" {
+  name = "Customer Content Management"
+  description = "Access to create and manage content used for customer trials on the Salesday platform. "
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjaevWrlrOJ1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxc34dudXXjGJT1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espyirusl3g5Acmjb1d6"
+    values {
+      id = "entyiruspbqDy6iV11d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjaevWrlrOJ1d6
-  # Type: MANUAL
-  # Description: Access to create and manage content used for customer trials on the Salesday platform. 
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbywatjaevWrlrOJ1d6"
-  #   name = "Customer Content Management"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Sales Associate
+# Access roles often required for Sales Associates to complete work around customer trials
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "sales_associate" {
-  # Bundle ID: enbywatj5ljTAfV0O1d6
+resource "okta_entitlement_bundle" "sales_associate" {
+  name = "Sales Associate"
+  description = "Access roles often required for Sales Associates to complete work around customer trials"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatj5ljTAfV0O1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxc34dudXXjGJT1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espyirusl3g5Acmjb1d6"
+    values {
+      id = "entyiruso5elEOEg61d6"
+    }
+    values {
+      id = "entyirusnLsvvibvg1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatj5ljTAfV0O1d6
-  # Type: MANUAL
-  # Description: Access roles often required for Sales Associates to complete work around customer trials
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbywatj5ljTAfV0O1d6"
-  #   name = "Sales Associate"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Accounts Payable
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "accounts_payable" {
-  # Bundle ID: enbylme70lOECK1um1d6
+resource "okta_entitlement_bundle" "accounts_payable" {
+  name = "Accounts Payable"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme70lOECK1um1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxbw5sdvxDgPry1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espygyvcjwIY1awIQ1d6"
+    values {
+      id = "entygyvclarzLpS4C1d6"
+    }
+  }
+
+  entitlements {
+    id = "espyln2a6CE8GxcYz1d6"
+    values {
+      id = "entyln2a8p6ICgLb11d6"
+    }
+    values {
+      id = "entylme882grbyL6X1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme70lOECK1um1d6
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbylme70lOECK1um1d6"
-  #   name = "Accounts Payable"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Auditor
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "auditor" {
-  # Bundle ID: enbylme7xWqTdKIbB1d6
+resource "okta_entitlement_bundle" "auditor" {
+  name = "Auditor"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme7xWqTdKIbB1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxbw5sdvxDgPry1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espygyvcjwIY1awIQ1d6"
+    values {
+      id = "entygyvcmcMj1n27a1d6"
+    }
+  }
+
+  entitlements {
+    id = "espyln2a6CE8GxcYz1d6"
+    values {
+      id = "entyln2a79ccyUEcG1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme7xWqTdKIbB1d6
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbylme7xWqTdKIbB1d6"
-  #   name = "Auditor"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Purchasing
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "purchasing" {
-  # Bundle ID: enbyln29kDyuJ581F1d6
+resource "okta_entitlement_bundle" "purchasing" {
+  name = "Purchasing"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyln29kDyuJ581F1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxbw5sdvxDgPry1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espygyvcjwIY1awIQ1d6"
+    values {
+      id = "entygyvclarzLpS4C1d6"
+    }
+  }
+
+  entitlements {
+    id = "espyln2a6CE8GxcYz1d6"
+    values {
+      id = "entyln2a9rCVBtG9c1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyln29kDyuJ581F1d6
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbyln29kDyuJ581F1d6"
-  #   name = "Purchasing"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Realm Auditor
+# Use this request to get access to audit and report on all realms.
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "realm_auditor" {
-  # Bundle ID: enbyce61eyAdMLeRa1d6
+resource "okta_entitlement_bundle" "realm_auditor" {
+  name = "Realm Auditor"
+  description = "Use this request to get access to audit and report on all realms."
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce61eyAdMLeRa1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamz8tk2nj4bZnbI1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espyce5bbgNyEsRN41d6"
+    values {
+      id = "entyce5bcOM2DDBEE1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce61eyAdMLeRa1d6
-  # Type: MANUAL
-  # Description: Use this request to get access to audit and report on all realms.
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbyce61eyAdMLeRa1d6"
-  #   name = "Realm Auditor"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Realm Admin
+# Use this request to have a new Realm created and to be made an administrator of it. 
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "realm_admin" {
-  # Bundle ID: enbyce5beI4h4ZpiL1d6
+resource "okta_entitlement_bundle" "realm_admin" {
+  name = "Realm Admin"
+  description = "Use this request to have a new Realm created and to be made an administrator of it. "
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce5beI4h4ZpiL1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamz8tk2nj4bZnbI1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espyce5bbgNyEsRN41d6"
+    values {
+      id = "entyce5bdBAWSYVEI1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce5beI4h4ZpiL1d6
-  # Type: MANUAL
-  # Description: Use this request to have a new Realm created and to be made an administrator of it. 
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbyce5beI4h4ZpiL1d6"
-  #   name = "Realm Admin"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Group Administrator
+# Group Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "group_administrator" {
-  # Bundle ID: enbybr791zEltKnNM1d6
+resource "okta_entitlement_bundle" "group_administrator" {
+  name = "Group Administrator"
+  description = "Group Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr791zEltKnNM1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybtgrrAolZ6Eso1d6"
+    values {
+      id = "entybtgrsSrMJeC0Z1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr791zEltKnNM1d6
-  # Type: MANUAL
-  # Description: Group Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr791zEltKnNM1d6"
-  #   name = "Group Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Super Organization Administrator
+# Super Organization Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "super_organization_administrator" {
-  # Bundle ID: enbybt2jiPAyBUe3T1d6
+resource "okta_entitlement_bundle" "super_organization_administrator" {
+  name = "Super Organization Administrator"
+  description = "Super Organization Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jiPAyBUe3T1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybr744xrP7dmkR1d6"
+    values {
+      id = "entybr745vozq71kV1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jiPAyBUe3T1d6
-  # Type: MANUAL
-  # Description: Super Organization Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybt2jiPAyBUe3T1d6"
-  #   name = "Super Organization Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Report Administrator
+# Report Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "report_administrator" {
-  # Bundle ID: enbybr78nCPHASTg51d6
+resource "okta_entitlement_bundle" "report_administrator" {
+  name = "Report Administrator"
+  description = "Report Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr78nCPHASTg51d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybtgroSK946jxq1d6"
+    values {
+      id = "entybtgrpNrPlwdTY1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr78nCPHASTg51d6
-  # Type: MANUAL
-  # Description: Report Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr78nCPHASTg51d6"
-  #   name = "Report Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Read-only Administrator
+# Read-only Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "read_only_administrator" {
-  # Bundle ID: enbybt2jeB4KymizN1d6
+resource "okta_entitlement_bundle" "read_only_administrator" {
+  name = "Read-only Administrator"
+  description = "Read-only Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jeB4KymizN1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybtgrmNtQjGYvk1d6"
+    values {
+      id = "entybtgrn9s7Ufon01d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jeB4KymizN1d6
-  # Type: MANUAL
-  # Description: Read-only Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybt2jeB4KymizN1d6"
-  #   name = "Read-only Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Organization Administrator
+# Organization Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "organization_administrator" {
-  # Bundle ID: enbybt2javo5dcN4G1d6
+resource "okta_entitlement_bundle" "organization_administrator" {
+  name = "Organization Administrator"
+  description = "Organization Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2javo5dcN4G1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybtgrkgpbCQHUS1d6"
+    values {
+      id = "entybtgrlv0lYy73V1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2javo5dcN4G1d6
-  # Type: MANUAL
-  # Description: Organization Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybt2javo5dcN4G1d6"
-  #   name = "Organization Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Mobile Administrator
+# Mobile Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "mobile_administrator" {
-  # Bundle ID: enbybt2j6FAUy9Jis1d6
+resource "okta_entitlement_bundle" "mobile_administrator" {
+  name = "Mobile Administrator"
+  description = "Mobile Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j6FAUy9Jis1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybr78fFzzsN2vY1d6"
+    values {
+      id = "entybr78gEY9YiWAt1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j6FAUy9Jis1d6
-  # Type: MANUAL
-  # Description: Mobile Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybt2j6FAUy9Jis1d6"
-  #   name = "Mobile Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Help Desk Administrator
+# Help Desk Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "help_desk_administrator" {
-  # Bundle ID: enbybt2j2WdriUP8L1d6
+resource "okta_entitlement_bundle" "help_desk_administrator" {
+  name = "Help Desk Administrator"
+  description = "Help Desk Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j2WdriUP8L1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybr78dOCeE0xWA1d6"
+    values {
+      id = "entybr78eMZ0ZsyyH1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j2WdriUP8L1d6
-  # Type: MANUAL
-  # Description: Help Desk Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybt2j2WdriUP8L1d6"
-  #   name = "Help Desk Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Group Membership Administrator
+# Group Membership Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "group_membership_administrator" {
-  # Bundle ID: enbybr74kotubjqR01d6
+resource "okta_entitlement_bundle" "group_membership_administrator" {
+  name = "Group Membership Administrator"
+  description = "Group Membership Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74kotubjqR01d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybt2j0NL4YdGV91d6"
+    values {
+      id = "entybt2j1r6vhn8FF1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74kotubjqR01d6
-  # Type: MANUAL
-  # Description: Group Membership Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr74kotubjqR01d6"
-  #   name = "Group Membership Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Application Administrator
+# Application Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "application_administrator" {
-  # Bundle ID: enbybt2iwvQtKgHK51d6
+resource "okta_entitlement_bundle" "application_administrator" {
+  name = "Application Administrator"
+  description = "Application Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2iwvQtKgHK51d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybr788bN8NoA151d6"
+    values {
+      id = "entybr789g9k5BuWe1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2iwvQtKgHK51d6
-  # Type: MANUAL
-  # Description: Application Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybt2iwvQtKgHK51d6"
-  #   name = "Application Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # API Access Management Administrator
+# API Access Management Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "api_access_management_administrator" {
-  # Bundle ID: enbybr7845qDAUdXb1d6
+resource "okta_entitlement_bundle" "api_access_management_administrator" {
+  name = "API Access Management Administrator"
+  description = "API Access Management Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr7845qDAUdXb1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybr74iuWJlkmCm1d6"
+    values {
+      id = "entybr74jTHs020JN1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr7845qDAUdXb1d6
-  # Type: MANUAL
-  # Description: API Access Management Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr7845qDAUdXb1d6"
-  #   name = "API Access Management Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Workflows Administrator
+# Workflows Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "workflows_administrator" {
-  # Bundle ID: enbybr74ehIJFA41L1d6
+resource "okta_entitlement_bundle" "workflows_administrator" {
+  name = "Workflows Administrator"
+  description = "Workflows Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ehIJFA41L1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybr782AbfntU8S1d6"
+    values {
+      id = "entybr783h32lyYrZ1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ehIJFA41L1d6
-  # Type: MANUAL
-  # Description: Workflows Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr74ehIJFA41L1d6"
-  #   name = "Workflows Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Access Requests Administrator
+# Access Requests Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "access_requests_administrator" {
-  # Bundle ID: enbybr74ap1j9m6Qc1d6
+resource "okta_entitlement_bundle" "access_requests_administrator" {
+  name = "Access Requests Administrator"
+  description = "Access Requests Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ap1j9m6Qc1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybt2irxr3i50NN1d6"
+    values {
+      id = "entybt2islYE7JXGn1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ap1j9m6Qc1d6
-  # Type: MANUAL
-  # Description: Access Requests Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr74ap1j9m6Qc1d6"
-  #   name = "Access Requests Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Access Certifications Administrator
+# Access Certifications Administrator
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "access_certifications_administrator" {
-  # Bundle ID: enbybr746NrVQrM1E1d6
+resource "okta_entitlement_bundle" "access_certifications_administrator" {
+  name = "Access Certifications Administrator"
+  description = "Access Certifications Administrator"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr746NrVQrM1E1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamx5xxhoWmuxbt61d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybt2ipTOQhIZoz1d6"
+    values {
+      id = "entybt2iqhRJCiD9f1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr746NrVQrM1E1d6
-  # Type: MANUAL
-  # Description: Access Certifications Administrator
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr746NrVQrM1E1d6"
-  #   name = "Access Certifications Administrator"
-  # }
 }
 
 # -----------------------------------------------------------------------------
 # Salesforce Access
 # -----------------------------------------------------------------------------
 
-resource "okta_principal_entitlements" "salesforce_access" {
-  # Bundle ID: enbybr73q6YWsfFeC1d6
+resource "okta_entitlement_bundle" "salesforce_access" {
+  name = "Salesforce Access"
+  target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr73q6YWsfFeC1d6"
+  status = "ACTIVE"
+
+  target {
+    external_id = "0oamxiwg4zsrWaeJF1d7"
+    type        = "APPLICATION"
+  }
+
+  entitlements {
+    id = "espybuyfet4uKnC9j1d6"
+    values {
+      id = "entybuyibwGtDw8pH1d6"
+    }
+  }
+
+  # Bundle Type: MANUAL
   # ORN: orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr73q6YWsfFeC1d6
-  # Type: MANUAL
-
-  # TODO: No principal assignments found
-  # Add principal and entitlement configuration as needed
-
-  # Example configuration:
-  # principal {
-  #   id   = "00u..."  # User or group ID
-  #   type = "USER"    # or "GROUP"
-  # }
-  #
-  # entitlement {
-  #   id   = "enbybr73q6YWsfFeC1d6"
-  #   name = "Salesforce Access"
-  # }
 }
