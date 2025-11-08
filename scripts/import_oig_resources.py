@@ -274,11 +274,19 @@ class OIGImporter:
 
         tf_config.append("# Access Review Campaigns\n")
 
-        for review in reviews:
+        for idx, review in enumerate(reviews, 1):
             review_id = review.get("id")
-            name = review.get("name", "unnamed")
+            name = review.get("name")
             description = review.get("description", "")
-            safe_name = self._sanitize_name(name)
+
+            # Use name if available, otherwise use ID or index for uniqueness
+            if name:
+                safe_name = self._sanitize_name(name)
+            else:
+                # Use last 8 chars of ID or index to create unique name
+                id_suffix = review_id[-8:] if review_id else f"{idx:03d}"
+                safe_name = f"review_{id_suffix}"
+                name = f"Review {id_suffix}"  # Placeholder display name
 
             tf_config.append(f'resource "okta_reviews" "{safe_name}" {{')
             tf_config.append(f'  # ID: {review_id}')
