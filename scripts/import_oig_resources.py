@@ -401,7 +401,10 @@ class OIGImporter:
 
         # Fetch all resources
         entitlements = self.fetch_entitlements()
-        reviews = self.fetch_reviews()
+        # Skip reviews - they should be managed in Okta Admin UI
+        # Reviews are individual access review decisions, not campaign definitions
+        # For campaign management, use the Okta Admin Console
+        reviews = []  # self.fetch_reviews() - disabled by default
         sequences = self.fetch_request_sequences()
         catalog_entries = self.fetch_catalog_entries()
         request_settings = self.fetch_request_settings()
