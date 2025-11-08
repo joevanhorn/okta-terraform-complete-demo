@@ -90,53 +90,33 @@ class OIGImporter:
             print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
             return []
 
-    def fetch_grants_for_bundle(self, bundle_id: str, target_id: str, target_type: str) -> List[Dict]:
-        """Fetch grants (principal assignments) for a specific entitlement bundle
+    def fetch_principal_entitlements_for_bundle(self, bundle_id: str) -> List[Dict]:
+        """Fetch principal entitlement assignments for a specific bundle
+
+        Uses the Principal Entitlements API to find which principals have been assigned
+        to this entitlement bundle.
 
         Args:
             bundle_id: The entitlement bundle ID
-            target_id: The target resource ID (e.g., app ID)
-            target_type: The target resource type (e.g., "APPLICATION")
         """
         try:
-            url = f"{self.base_url}/governance/api/v1/grants"
-            # Filter grants by target resource (required by API)
-            # API requires filtering by resource, not by entitlement directly
-            filter_expr = f'target.externalId eq "{target_id}" AND target.type eq "{target_type}"'
-            params = {"filter": filter_expr, "limit": 200, "include": "full_entitlements"}
+            url = f"{self.base_url}/governance/api/v1/principal-entitlements"
+            # Filter by entitlement bundle ID
+            filter_expr = f'entitlementId eq "{bundle_id}"'
+            params = {"filter": filter_expr, "limit": 200}
             response = self._make_request("GET", url, params=params)
 
             data = response.json()
             if isinstance(data, list):
-                all_grants = data
+                assignments = data
             elif isinstance(data, dict):
-                all_grants = data.get("data", data.get("grants", []))
+                assignments = data.get("data", data.get("principalEntitlements", data.get("items", [])))
             else:
-                all_grants = []
+                assignments = []
 
-            # Filter client-side for grants matching this specific entitlement bundle
-            matching_grants = []
-            print(f"      DEBUG: Received {len(all_grants)} total grants for target {target_id}")
-
-            # Print first grant structure for debugging
-            if all_grants:
-                import json
-                print(f"      DEBUG: Sample grant structure:")
-                print(f"      {json.dumps(all_grants[0], indent=2)[:500]}")
-
-            for grant in all_grants:
-                # Check if grant's entitlement matches our bundle
-                entitlement = grant.get("entitlement", {})
-                entitlement_id = entitlement.get("id") or entitlement.get("externalId")
-                print(f"      DEBUG: Grant entitlement ID: {entitlement_id}, looking for: {bundle_id}")
-                if entitlement_id == bundle_id:
-                    matching_grants.append(grant)
-                    print(f"      DEBUG: ✓ Match found!")
-
-            print(f"      DEBUG: Found {len(matching_grants)} matching grants")
-            return matching_grants
+            return assignments
         except Exception as e:
-            print(f"    ⚠️  Could not fetch grants for bundle {bundle_id}: {e}")
+            print(f"    ⚠️  Could not fetch principal entitlements for bundle {bundle_id}: {e}")
             return []
 
     def fetch_reviews(self) -> List[Dict]:
@@ -230,18 +210,9 @@ class OIGImporter:
 
             safe_name = self._sanitize_name(name)
 
-            # Extract target resource information for grants query
-            target = bundle.get("target", {})
-            target_id = target.get("externalId", "")
-            target_type = target.get("type", "")
-
-            # Fetch grants (principal assignments) for this bundle
-            if target_id and target_type:
-                print(f"  Fetching grants for: {name}")
-                grants = self.fetch_grants_for_bundle(bundle_id, target_id, target_type)
-            else:
-                print(f"  ⚠️  No target resource found for: {name}, skipping grants")
-                grants = []
+            # Fetch principal entitlement assignments for this bundle
+            print(f"  Fetching principal assignments for: {name}")
+            assignments = self.fetch_principal_entitlements_for_bundle(bundle_id)
 
             tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'# {name}')
@@ -255,16 +226,15 @@ class OIGImporter:
                 tf_config.append(f'  # Description: {description}')
             tf_config.append(f'')
 
-            # Generate principal blocks from grants
-            if grants:
-                print(f"    Found {len(grants)} grant(s)")
-                for grant in grants:
-                    # Try nested structure first (targetPrincipal.externalId)
-                    # then fall back to direct fields (principalId)
-                    target_principal = grant.get("targetPrincipal", {})
-                    principal_id = target_principal.get("externalId") or grant.get("principalId")
-                    principal_type = target_principal.get("type", "").replace("OKTA_", "") or grant.get("principalType", "USER")
-                    principal_name = target_principal.get("name") or grant.get("principalName", "")
+            # Generate principal blocks from assignments
+            if assignments:
+                print(f"    Found {len(assignments)} assignment(s)")
+                for assignment in assignments:
+                    # Extract principal information from assignment
+                    principal = assignment.get("principal", {})
+                    principal_id = principal.get("id") or principal.get("externalId") or assignment.get("principalId")
+                    principal_type = principal.get("type", "").replace("OKTA_", "") or assignment.get("principalType", "USER")
+                    principal_name = principal.get("name") or assignment.get("principalName", "")
 
                     if principal_id:
                         tf_config.append(f'  principal {{')
@@ -281,7 +251,7 @@ class OIGImporter:
                 tf_config.append(f'    name = "{name}"')
                 tf_config.append(f'  }}')
             else:
-                # No grants found - add TODO comment
+                # No assignments found - add TODO comment
                 tf_config.append(f'  # TODO: No principal assignments found')
                 tf_config.append(f'  # Add principal and entitlement configuration as needed')
                 tf_config.append(f'')
