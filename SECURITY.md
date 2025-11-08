@@ -44,11 +44,4 @@ Please include the following information:
 - Monitor for suspicious activity
 - Validate all inputs
 
-## Disclosure Policy
 
-We follow coordinated vulnerability disclosure. When we receive a security report:
-
-1. We will confirm receipt within 48 hours
-2. We will provide an estimated timeline for a fix
-3. We will notify you when the fix is deployed
-4. We will credit you in the security advisory (unless you prefer to remain anonymous)
