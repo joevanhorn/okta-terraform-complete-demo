@@ -55,7 +55,7 @@ jobs:
 
       - name: Terraform Format Check
         working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
-        run: terraform fmt -check -recursive || echo "Warning: Format check failed"
+        run: terraform fmt -check -recursive || echo "Warning Format check failed"
 
       - name: Terraform Plan
         id: plan
