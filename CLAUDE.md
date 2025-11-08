@@ -52,7 +52,7 @@ export OKTA_API_TOKEN="your-token"
 export OKTA_ORG_NAME="your-org"
 export OKTA_BASE_URL="okta.com"
 
-# Import all supported resources
+# Import all supported BASE resources (users, groups, apps, policies)
 ./scripts/import_okta_resources.sh
 
 # Import specific resource types
@@ -60,6 +60,12 @@ terraformer import okta --resources=okta_user,okta_group,okta_app_oauth
 
 # Import with filtering
 terraformer import okta --resources=okta_group --filter="okta_group=id1:id2:id3"
+
+# NOTE: Terraformer does NOT support OIG resources
+# For OIG resources (entitlements, reviews, sequences), use:
+python3 scripts/import_oig_resources.py --output-dir imported_oig
+# OR use the GitHub Actions workflow:
+gh workflow run lowerdecklabs-import-oig.yml
 ```
 
 ### Python API Management
@@ -208,12 +214,39 @@ When modifying OIG resources in Terraform:
 
 ### Working with Terraformer
 
-When importing existing resources:
+When importing existing BASE resources (users, groups, apps, policies):
 - ALWAYS run cleanup script after import: `python3 scripts/cleanup_terraform.py`
 - Terraformer adds `tfer--` prefixes - cleanup script removes these
 - Generated code may have null values and computed attributes - cleanup script handles this
 - Terraformer creates separate directories per resource type - organize as needed
 - Remember: OIG resources CANNOT be imported with Terraformer
+
+### Working with OIG Resource Import
+
+When importing OIG resources (entitlements, reviews, approval sequences):
+- Use `scripts/import_oig_resources.py` or the GitHub Actions workflow
+- Terraformer does NOT support OIG resources
+- The import script queries the Okta API directly and generates Terraform configurations
+- Generated .tf files include TODO comments for manual configuration
+- JSON exports provide full API response data for reference
+
+```bash
+# Import OIG resources locally
+python3 scripts/import_oig_resources.py --output-dir imported_oig
+
+# Via GitHub Actions (recommended)
+gh workflow run lowerdecklabs-import-oig.yml
+
+# Import and auto-update production files
+gh workflow run lowerdecklabs-import-oig.yml -f update_terraform=true
+```
+
+**Key differences from Terraformer:**
+- Direct API queries instead of Terraform provider import
+- Generates skeleton configurations that need manual completion
+- Provides JSON exports for reference
+- No automatic state management (must run `terraform import` manually)
+- Only supports OIG-specific resources
 
 ### Working with API Manager
 

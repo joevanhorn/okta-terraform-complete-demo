@@ -67,26 +67,27 @@ class OIGImporter:
         return sanitized or "unnamed"
 
     def fetch_entitlements(self) -> List[Dict]:
-        """Fetch all entitlements from Okta"""
-        print("Fetching entitlements...")
+        """Fetch all entitlement bundles from Okta"""
+        print("Fetching entitlement bundles...")
         try:
-            url = f"{self.base_url}/api/v1/governance/entitlements"
+            # Use the correct entitlement-bundles endpoint
+            url = f"{self.base_url}/governance/api/v1/entitlement-bundles"
             params = {"limit": 200}
             response = self._make_request("GET", url, params=params)
 
             # Handle both dict and list responses
             data = response.json()
             if isinstance(data, list):
-                entitlements = data
+                bundles = data
             elif isinstance(data, dict):
-                entitlements = data.get("entitlements", data.get("data", []))
+                bundles = data.get("data", data.get("entitlements", []))
             else:
-                entitlements = []
+                bundles = []
 
-            print(f"  Found {len(entitlements)} entitlements")
-            return entitlements
+            print(f"  Found {len(bundles)} entitlement bundles")
+            return bundles
         except Exception as e:
-            print(f"  ⚠️  Could not fetch entitlements: {e}")
+            print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
             return []
 
     def fetch_reviews(self) -> List[Dict]:
@@ -144,41 +145,76 @@ class OIGImporter:
             print(f"  ⚠️  Could not fetch request settings: {e}")
             return None
 
-    def generate_entitlement_tf(self, entitlements: List[Dict]) -> tuple[str, List[str]]:
-        """Generate Terraform config and import commands for entitlements"""
-        if not entitlements:
+    def generate_entitlement_tf(self, bundles: List[Dict]) -> tuple[str, List[str]]:
+        """Generate Terraform config and import commands for entitlement bundles"""
+        if not bundles:
             return "", []
 
         tf_config = []
         import_commands = []
 
-        tf_config.append("# Entitlements - Manual/Custom entitlements")
-        tf_config.append("# Note: App-managed entitlements are synced from apps and should not be in Terraform\n")
+        tf_config.append("# =============================================================================")
+        tf_config.append("# OKTA IDENTITY GOVERNANCE - ENTITLEMENT BUNDLES")
+        tf_config.append("# =============================================================================")
+        tf_config.append("# These are entitlement bundles imported from Okta.")
+        tf_config.append("# Each bundle represents a collection of access rights.")
+        tf_config.append("#")
+        tf_config.append("# NOTE: The Terraform okta_principal_entitlements resource is used to manage")
+        tf_config.append("# assignments of principals to entitlements. The bundles themselves are")
+        tf_config.append("# managed via the API and cannot be created in Terraform.")
+        tf_config.append("#")
+        tf_config.append("# To import: Run the generated import.sh script")
+        tf_config.append("# =============================================================================")
+        tf_config.append("")
 
-        for ent in entitlements:
-            ent_id = ent.get("id")
-            name = ent.get("name", "unnamed")
-            description = ent.get("description", "")
+        for bundle in bundles:
+            bundle_id = bundle.get("id") or bundle.get("bundleId")
+            name = bundle.get("name", "unnamed")
+            description = bundle.get("description", "")
+            orn = bundle.get("orn", "")
+            bundle_type = bundle.get("bundleType", "MANUAL")
 
-            # Skip app-managed entitlements
-            resource = ent.get("resource", {})
-            if isinstance(resource, dict) and ":apps:" in resource.get("orn", ""):
-                print(f"  Skipping app-managed entitlement: {name}")
+            # Skip app-managed bundles if they shouldn't be in Terraform
+            if ":apps:" in orn and bundle_type != "MANUAL":
+                print(f"  Skipping app-managed bundle: {name}")
                 continue
 
             safe_name = self._sanitize_name(name)
 
-            tf_config.append(f'resource "okta_principal_entitlements" "{safe_name}" {{')
-            tf_config.append(f'  # ID: {ent_id}')
-            tf_config.append(f'  # Original name: {name}')
+            tf_config.append(f'# {"-" * 77}')
+            tf_config.append(f'# {name}')
+            tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'')
-            tf_config.append(f'  # TODO: Add required configuration')
-            tf_config.append(f'  # Review the API response and add principals, resources, etc.')
-            tf_config.append(f'  # See: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements')
+            tf_config.append(f'resource "okta_principal_entitlements" "{safe_name}" {{')
+            tf_config.append(f'  # Bundle ID: {bundle_id}')
+            tf_config.append(f'  # ORN: {orn}')
+            tf_config.append(f'  # Type: {bundle_type}')
+            if description:
+                tf_config.append(f'  # Description: {description}')
+            tf_config.append(f'')
+            tf_config.append(f'  # TODO: Add principal assignments')
+            tf_config.append(f'  # This resource type requires principal and entitlement configuration.')
+            tf_config.append(f'  # See the JSON export file for full bundle details.')
+            tf_config.append(f'  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements')
+            tf_config.append(f'')
+            tf_config.append(f'  # Example configuration:')
+            tf_config.append(f'  # principal {{')
+            tf_config.append(f'  #   id   = "00u..."  # User or group ID')
+            tf_config.append(f'  #   type = "USER"    # or "GROUP"')
+            tf_config.append(f'  # }}')
+            tf_config.append(f'  #')
+            tf_config.append(f'  # entitlement {{')
+            tf_config.append(f'  #   id   = "{bundle_id}"')
+            tf_config.append(f'  #   name = "{name}"')
+            tf_config.append(f'  # }}')
             tf_config.append(f'}}')
             tf_config.append('')
 
-            import_commands.append(f'terraform import okta_principal_entitlements.{safe_name} {ent_id}')
+            # For import, we may need the bundle ID or a different identifier
+            # This might need adjustment based on actual Terraform import syntax
+            import_commands.append(f'# Import bundle: {name}')
+            import_commands.append(f'# terraform import okta_principal_entitlements.{safe_name} {bundle_id}')
+            import_commands.append('')
 
         return "\n".join(tf_config), import_commands
 

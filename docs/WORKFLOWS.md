@@ -162,7 +162,51 @@ gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
 - Policies
 - Authorization servers
 
-**Note:** OIG resources are NOT supported by Terraformer
+**Note:** OIG resources are NOT supported by Terraformer (use Import OIG Resources workflow instead)
+
+---
+
+### LowerDeckLabs - Import OIG Resources
+**File:** `.github/workflows/lowerdecklabs-import-oig.yml`
+
+**Purpose:** Imports OIG resources (entitlement bundles, reviews, sequences) from Okta and generates Terraform configurations
+
+**Trigger:** Manual (`workflow_dispatch`)
+
+**Parameters:**
+- `update_terraform` - Automatically update production-ready TF files (default: `false`)
+
+**What It Does:**
+1. Queries Okta API for OIG resources (entitlement bundles, access reviews, approval sequences)
+2. Generates Terraform configuration files (.tf)
+3. Generates JSON exports with full API data for reference
+4. Creates terraform import commands (import.sh)
+5. Optionally updates production-ready/oig_entitlements.tf
+
+**Usage:**
+```bash
+# Import and review (doesn't update Terraform files)
+gh workflow run lowerdecklabs-import-oig.yml
+
+# Import and automatically update Terraform files
+gh workflow run lowerdecklabs-import-oig.yml -f update_terraform=true
+```
+
+**Output:**
+- `entitlements.tf` - Terraform resource definitions
+- `entitlements.json` - Full API response data
+- `reviews.tf` - Access review campaigns
+- `request_sequences.tf` - Approval workflows
+- `import.sh` - Terraform import commands
+
+**Workflow:**
+1. Run workflow to import resources
+2. Download artifacts to review generated files
+3. If satisfied, re-run with `update_terraform=true` to update production files
+4. Review and complete TODO comments in generated .tf files
+5. Run `terraform import` commands to bring resources into state
+
+**Note:** Terraformer does NOT support OIG resources - this workflow provides equivalent functionality via direct API import.
 
 ---
 
