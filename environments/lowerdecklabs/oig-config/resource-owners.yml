@@ -1,0 +1,30 @@
+# OIG Resource Owners Configuration
+#
+# This file declaratively defines resource owners for OIG resources.
+# Changes to this file go through PR workflow with required approvals.
+#
+# Format:
+#   resources:
+#     - resourceId: <okta-resource-id>
+#       resourceType: <APP|GROUP|ROLE>
+#       owners:
+#         - userId: <okta-user-id>
+#           email: <user-email>  # For reference only
+
+resources:
+  # Example:
+  # - resourceId: "0oa1234567890"
+  #   resourceType: "APP"
+  #   owners:
+  #     - userId: "00u1234567890"
+  #       email: "app.owner@example.com"
+  #
+  # - resourceId: "00g9876543210"
+  #   resourceType: "GROUP"
+  #   owners:
+  #     - userId: "00u1234567890"
+  #       email: "group.owner@example.com"
+  #     - userId: "00u0987654321"
+  #       email: "backup.owner@example.com"
+
+  []  # Add your resource owners here

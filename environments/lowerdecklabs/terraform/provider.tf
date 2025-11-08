@@ -4,7 +4,7 @@ terraform {
   required_providers {
     okta = {
       source  = "okta/okta"
-      version = "~> 6.1.0"
+      version = ">= 6.4.0, < 7.0.0"  # Auto-update to latest 6.x
     }
   }
 
