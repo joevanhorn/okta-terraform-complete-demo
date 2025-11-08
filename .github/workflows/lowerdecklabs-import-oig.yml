@@ -58,7 +58,6 @@ jobs:
           echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
           echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
           echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
-          echo "DEBUG: Base URL is set to: ${OKTA_BASE_URL}"
 
       - name: Run OIG import
         id: import
