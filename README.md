@@ -1,6 +1,6 @@
 # Okta Terraform Provider Demo - OIG Features + Terraformer
 
-This repository demonstrates the **Okta Terraform Provider v6.1.0** with the new **Okta Identity Governance (OIG)** endpoints, automated through GitHub Actions, with full **Terraformer** support for importing existing Okta configurations.
+This repository demonstrates the **Okta Terraform Provider v6.4.0+** with **Okta Identity Governance (OIG)** endpoints, automated through GitHub Actions, with full **Terraformer** support for importing existing Okta configurations.
 
 ## 🚨 Important: Terraformer Limitations
 
@@ -15,13 +15,17 @@ See [Terraformer + OIG FAQ](./docs/TERRAFORMER_OIG_FAQ.md) for full details.
 
 ## 🏗️ Environment-Based Structure
 
-This repository uses an **environment-based structure** to organize Okta configurations by tenant:
+This repository uses an **environment-based structure** to organize Okta configurations by tenant.
+
+**🔒 Critical Rule: One Directory = One Okta Org**
+
+Each `environments/` subdirectory manages resources for **exactly one** Okta organization:
 
 ```
 environments/
-├── lowerdecklabs/      # Primary demo tenant
+├── lowerdecklabs/      # lowerdecklabs.oktapreview.com ONLY
 │   ├── terraform/      # Terraform configurations
-│   ├── imports/        # Raw API import data
+│   ├── imports/        # Terraformer imports and API data
 │   └── config/         # Resource owners and labels
 ├── production/         # Production tenant
 ├── staging/            # Staging tenant
@@ -29,12 +33,14 @@ environments/
 ```
 
 **Benefits:**
+- ✅ Strict environment isolation - no cross-org pollution
+- ✅ Each environment uses its own GitHub Environment secrets
 - ✅ Clear separation of tenant configurations
-- ✅ Easy to fork and customize for your organization
 - ✅ Self-contained environments with independent Terraform state
-- ✅ Template structure for multi-environment deployments
+- ✅ Easy to fork and customize for your organization
 
 **[→ See Environments README](./environments/README.md)** for complete guide including:
+- Environment isolation rules (CRITICAL)
 - Directory structure and organization
 - Import workflows for each environment
 - Terraform usage examples
@@ -42,9 +48,9 @@ environments/
 
 **📋 Want to use OIG features?** See **[OIG_PREREQUISITES.md](./OIG_PREREQUISITES.md)** for required setup steps (Entitlement Management must be enabled manually in GUI).
 
-## 🎯 What's New in v6.1.0
+## 🎯 Okta Identity Governance Features
 
-The Okta Terraform Provider v6.1.0 introduces comprehensive support for Okta Identity Governance, including:
+The Okta Terraform Provider (v6.4.0+ required) includes comprehensive support for Okta Identity Governance, including:
 
 ### New Resources & Data Sources
 
@@ -74,7 +80,7 @@ This demo creates a complete OIG workflow with support for importing existing co
 ## 📦 Features
 
 ### Terraform Provider Support
-- ✅ All 9 new OIG resources from v6.1.0
+- ✅ All OIG resources (provider v6.4.0+ required)
 - ✅ Advanced approval workflows
 - ✅ Risk-based conditional access
 - ✅ Access review campaigns
