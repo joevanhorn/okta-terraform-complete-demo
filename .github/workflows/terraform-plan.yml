@@ -1,0 +1,139 @@
+name: Terraform Plan - LowerDeckLabs
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to plan'
+        required: true
+        default: 'lowerdecklabs'
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
+  pull_request:
+    paths:
+      - 'environments/lowerdecklabs/terraform/**'
+      - '.github/workflows/terraform-plan.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Configure Terraform variables
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: |
+          cat > terraform.tfvars << EOF
+          okta_org_name  = "${{ secrets.OKTA_ORG_NAME }}"
+          okta_base_url  = "${{ secrets.OKTA_BASE_URL }}"
+          okta_api_token = "${{ secrets.OKTA_API_TOKEN }}"
+          EOF
+
+      - name: Terraform Init
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: terraform validate
+
+      - name: Terraform Format Check
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: terraform fmt -check -recursive || echo "Warning: Format check failed"
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: |
+          terraform plan -no-color -out=tfplan
+          terraform show -no-color tfplan > plan_output.txt
+        continue-on-error: true
+
+      - name: Display Plan Summary
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: |
+          echo "## Terraform Plan Summary"
+          echo ""
+          if [ -f plan_output.txt ]; then
+            # Extract summary
+            echo "### Changes"
+            grep -A 20 "Terraform will perform" plan_output.txt || echo "No changes detected"
+            echo ""
+            echo "### Resource Counts"
+            grep "Plan:" plan_output.txt || grep "No changes" plan_output.txt || echo "See full output below"
+          fi
+
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-plan-${{ inputs.environment || 'lowerdecklabs' }}
+          path: |
+            environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform/tfplan
+            environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform/plan_output.txt
+          retention-days: 30
+
+      - name: Comment PR with Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform/plan_output.txt', 'utf8');
+
+            const output = `## Terraform Plan Results
+
+            <details>
+            <summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${planOutput}
+            \`\`\`
+
+            </details>
+
+            *Environment: ${{ inputs.environment || 'lowerdecklabs' }}*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      - name: Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: |
+          echo "❌ Terraform plan failed"
+          exit 1
+
+      - name: Cleanup sensitive files
+        if: always()
+        working-directory: environments/${{ inputs.environment || 'lowerdecklabs' }}/terraform
+        run: |
+          rm -f terraform.tfvars
+          rm -f tfplan
+
+      - name: Plan Success
+        if: steps.plan.outcome == 'success'
+        run: |
+          echo "✅ Terraform plan completed successfully"
+          echo "Download the plan artifact to review details"
