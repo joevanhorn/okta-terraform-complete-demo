@@ -1,0 +1,494 @@
+name: LowerDeckLabs - Import Complete Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_types:
+        description: 'Resource types to import (comma-separated or "all")'
+        required: false
+        default: 'all'
+        type: string
+      commit_changes:
+        description: 'Commit and push imported terraform files'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  import-complete-environment:
+    name: Import Complete LowerDeckLabs Environment
+    runs-on: ubuntu-latest
+
+    environment:
+      name: LowerDeckLabs
+
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Workflow Overview
+        run: |
+          echo "=================================================================="
+          echo "  COMPLETE ENVIRONMENT IMPORT - LOWERDECKLABS"
+          echo "=================================================================="
+          echo ""
+          echo "This workflow imports the COMPLETE lowerdecklabs tenant:"
+          echo ""
+          echo "STANDARD OKTA RESOURCES (via Terraformer):"
+          echo "  • Users, Groups, Group Rules"
+          echo "  • OAuth/OIDC Apps, SAML Apps, SWA Apps"
+          echo "  • Authorization Servers (policies, claims, scopes)"
+          echo "  • MFA Policies, Password Policies, Sign-On Policies"
+          echo "  • Network Zones, Trusted Origins"
+          echo "  • SAML/OIDC Identity Providers"
+          echo "  • User/Group Schemas"
+          echo ""
+          echo "OIG RESOURCES (already imported via API):"
+          echo "  • Entitlement Bundles"
+          echo "  • Resource Owners, Governance Labels"
+          echo ""
+          echo "Target: environments/lowerdecklabs/terraform/"
+          echo "=================================================================="
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Install Terraformer
+        run: |
+          echo "Installing Terraformer..."
+          curl -LO "https://github.com/GoogleCloudPlatform/terraformer/releases/download/0.8.24/terraformer-all-linux-amd64"
+          chmod +x terraformer-all-linux-amd64
+          sudo mv terraformer-all-linux-amd64 /usr/local/bin/terraformer
+          terraformer version
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq tree
+          python -m pip install --upgrade pip
+
+      - name: Set up environment variables
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "OKTA_ORG_NAME=${OKTA_ORG_NAME}" >> $GITHUB_ENV
+          echo "OKTA_BASE_URL=${OKTA_BASE_URL}" >> $GITHUB_ENV
+          echo "OKTA_API_TOKEN=${OKTA_API_TOKEN}" >> $GITHUB_ENV
+          echo "ENV_DIR=environments/lowerdecklabs" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_ENV
+
+      - name: Verify API access
+        run: |
+          echo "Testing API access to lowerdecklabs..."
+          RESPONSE=$(curl -s -w "%{http_code}" -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
+            -H "Accept: application/json" \
+            "https://${OKTA_ORG_NAME}.${OKTA_BASE_URL}/api/v1/users?limit=1")
+          HTTP_CODE="${RESPONSE: -3}"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ API authentication failed with code $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ API access confirmed for ${OKTA_ORG_NAME}.${OKTA_BASE_URL}"
+
+      - name: Create temporary terraformer workspace
+        run: |
+          mkdir -p /tmp/terraformer-workspace
+          cd /tmp/terraformer-workspace
+
+          # Create provider configuration for Terraformer
+          cat > provider.tf <<EOF
+          terraform {
+            required_version = ">= 1.9.0"
+            required_providers {
+              okta = {
+                source  = "okta/okta"
+                version = ">= 6.4.0, < 7.0.0"
+              }
+            }
+          }
+
+          provider "okta" {
+            org_name  = "${OKTA_ORG_NAME}"
+            base_url  = "${OKTA_BASE_URL}"
+            api_token = "${OKTA_API_TOKEN}"
+          }
+          EOF
+
+          # Initialize Terraform
+          terraform init
+
+      - name: Import Standard Okta Resources with Terraformer
+        id: terraformer_import
+        working-directory: /tmp/terraformer-workspace
+        run: |
+          echo ""
+          echo "=================================================================="
+          echo "IMPORTING STANDARD OKTA RESOURCES WITH TERRAFORMER"
+          echo "=================================================================="
+
+          # Determine which resources to import
+          RESOURCE_TYPES="${{ github.event.inputs.resource_types }}"
+
+          if [ "$RESOURCE_TYPES" == "all" ] || [ -z "$RESOURCE_TYPES" ]; then
+            # Import all supported resource types
+            RESOURCES=(
+              "okta_user"
+              "okta_group"
+              "okta_group_rule"
+              "okta_app_oauth"
+              "okta_app_saml"
+              "okta_app_basic_auth"
+              "okta_app_bookmark"
+              "okta_app_secure_password_store"
+              "okta_auth_server"
+              "okta_auth_server_policy"
+              "okta_auth_server_policy_rule"
+              "okta_auth_server_claim"
+              "okta_auth_server_scope"
+              "okta_policy_mfa"
+              "okta_policy_password"
+              "okta_policy_signon"
+              "okta_policy_rule_signon"
+              "okta_policy_rule_password"
+              "okta_policy_rule_mfa"
+              "okta_network_zone"
+              "okta_trusted_origin"
+              "okta_idp_saml"
+              "okta_idp_oidc"
+              "okta_idp_social"
+              "okta_user_schema"
+              "okta_group_schema"
+            )
+          else
+            # Parse comma-separated list
+            IFS=',' read -ra RESOURCES <<< "$RESOURCE_TYPES"
+          fi
+
+          # Import each resource type
+          TOTAL_RESOURCES=0
+          SUCCESSFUL_IMPORTS=0
+
+          for resource in "${RESOURCES[@]}"; do
+            resource=$(echo "$resource" | xargs)  # Trim whitespace
+            echo ""
+            echo "Importing $resource..."
+
+            if terraformer import okta --resources="$resource" 2>&1 | tee -a import.log; then
+              echo "✅ $resource imported successfully"
+              SUCCESSFUL_IMPORTS=$((SUCCESSFUL_IMPORTS + 1))
+
+              # Count imported resources
+              if [ -d "generated/okta/$resource" ]; then
+                COUNT=$(find "generated/okta/$resource" -name "*.tf" -type f 2>/dev/null | wc -l)
+                TOTAL_RESOURCES=$((TOTAL_RESOURCES + COUNT))
+                echo "   Found $COUNT .tf files"
+              fi
+            else
+              echo "⚠️  $resource import failed or no resources found"
+            fi
+
+            sleep 2  # Rate limiting
+          done
+
+          echo ""
+          echo "=================================================================="
+          echo "TERRAFORMER IMPORT COMPLETE"
+          echo "=================================================================="
+          echo "Resource types imported: $SUCCESSFUL_IMPORTS"
+          echo "Total .tf files generated: $TOTAL_RESOURCES"
+          echo ""
+
+          echo "successful_imports=$SUCCESSFUL_IMPORTS" >> $GITHUB_OUTPUT
+          echo "total_files=$TOTAL_RESOURCES" >> $GITHUB_OUTPUT
+
+      - name: Organize imported terraform files
+        working-directory: /tmp/terraformer-workspace
+        run: |
+          echo ""
+          echo "=================================================================="
+          echo "ORGANIZING IMPORTED TERRAFORM FILES"
+          echo "=================================================================="
+
+          # Create organized directory structure
+          mkdir -p organized/{identity,applications,authorization,policies,security,schemas,misc}
+
+          # Check if generated directory exists
+          if [ ! -d "generated/okta" ]; then
+            echo "⚠️  No resources were imported by terraformer"
+            exit 0
+          fi
+
+          # Organize by category
+          echo "Organizing identity resources..."
+          for type in okta_user okta_group okta_group_rule; do
+            if [ -d "generated/okta/$type" ]; then
+              mkdir -p "organized/identity/$type"
+              cp -r "generated/okta/$type"/*.tf "organized/identity/$type/" 2>/dev/null || true
+              # Keep terraform.tfstate for import
+              cp "generated/okta/$type/terraform.tfstate" "organized/identity/$type/" 2>/dev/null || true
+            fi
+          done
+
+          echo "Organizing application resources..."
+          for type in okta_app_*; do
+            if [ -d "generated/okta/$type" ]; then
+              mkdir -p "organized/applications/$type"
+              cp -r "generated/okta/$type"/*.tf "organized/applications/$type/" 2>/dev/null || true
+              cp "generated/okta/$type/terraform.tfstate" "organized/applications/$type/" 2>/dev/null || true
+            fi
+          done
+
+          echo "Organizing authorization server resources..."
+          for type in okta_auth_server*; do
+            if [ -d "generated/okta/$type" ]; then
+              mkdir -p "organized/authorization/$type"
+              cp -r "generated/okta/$type"/*.tf "organized/authorization/$type/" 2>/dev/null || true
+              cp "generated/okta/$type/terraform.tfstate" "organized/authorization/$type/" 2>/dev/null || true
+            fi
+          done
+
+          echo "Organizing policy resources..."
+          for type in okta_policy*; do
+            if [ -d "generated/okta/$type" ]; then
+              mkdir -p "organized/policies/$type"
+              cp -r "generated/okta/$type"/*.tf "organized/policies/$type/" 2>/dev/null || true
+              cp "generated/okta/$type/terraform.tfstate" "organized/policies/$type/" 2>/dev/null || true
+            fi
+          done
+
+          echo "Organizing security resources..."
+          for type in okta_network_zone okta_trusted_origin okta_idp_*; do
+            if [ -d "generated/okta/$type" ]; then
+              mkdir -p "organized/security/$type"
+              cp -r "generated/okta/$type"/*.tf "organized/security/$type/" 2>/dev/null || true
+              cp "generated/okta/$type/terraform.tfstate" "organized/security/$type/" 2>/dev/null || true
+            fi
+          done
+
+          echo "Organizing schema resources..."
+          for type in okta_user_schema okta_group_schema; do
+            if [ -d "generated/okta/$type" ]; then
+              mkdir -p "organized/schemas/$type"
+              cp -r "generated/okta/$type"/*.tf "organized/schemas/$type/" 2>/dev/null || true
+              cp "generated/okta/$type/terraform.tfstate" "organized/schemas/$type/" 2>/dev/null || true
+            fi
+          done
+
+          echo "✅ Resources organized into categories"
+          tree organized/ -L 2 || find organized/ -type f
+
+      - name: Copy organized files to lowerdecklabs environment
+        run: |
+          echo ""
+          echo "=================================================================="
+          echo "COPYING TO LOWERDECKLABS ENVIRONMENT"
+          echo "=================================================================="
+
+          # Create backup of existing terraform directory
+          if [ -d "${{ env.ENV_DIR }}/terraform" ]; then
+            echo "Backing up existing terraform directory..."
+            cp -r "${{ env.ENV_DIR }}/terraform" "${{ env.ENV_DIR }}/terraform.backup-${{ env.TIMESTAMP }}"
+          fi
+
+          # Create imports directory for organized terraform files
+          mkdir -p "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}"
+
+          # Copy organized files
+          if [ -d "/tmp/terraformer-workspace/organized" ]; then
+            cp -r /tmp/terraformer-workspace/organized/* "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/"
+            echo "✅ Imported terraform files copied to ${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/"
+          fi
+
+          # Copy import log
+          if [ -f "/tmp/terraformer-workspace/import.log" ]; then
+            cp /tmp/terraformer-workspace/import.log "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/"
+          fi
+
+          # Generate import summary
+          cat > "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/IMPORT_SUMMARY.md" <<EOF
+          # Terraformer Import Summary
+
+          **Date:** $(date)
+          **Okta Org:** ${OKTA_ORG_NAME}.${OKTA_BASE_URL}
+          **Workflow Run:** ${{ github.run_number }}
+
+          ## Import Statistics
+
+          - **Successful resource types:** ${{ steps.terraformer_import.outputs.successful_imports }}
+          - **Total .tf files generated:** ${{ steps.terraformer_import.outputs.total_files }}
+
+          ## Directory Structure
+
+          \`\`\`
+          $(tree "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}" -L 2 || find "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}" -type d)
+          \`\`\`
+
+          ## Next Steps
+
+          1. **Review imported terraform files** in each category subdirectory
+          2. **Clean up and refactor:**
+             - Remove \`tfer--\` prefixes from resource names
+             - Remove null values and computed attributes
+             - Add meaningful resource names
+             - Extract variables for common values
+          3. **Consolidate into environment terraform directory:**
+             - Merge with existing \`environments/lowerdecklabs/terraform/\` configs
+             - Ensure no conflicts with OIG resources
+          4. **Import into terraform state:**
+             - Review terraform state files in each resource directory
+             - Merge states if needed
+          5. **Run terraform plan** to verify configuration
+
+          ## Important Notes
+
+          - OIG resources (entitlement bundles) are already managed separately
+          - Terraformer does not support OIG resources yet
+          - Some resources may need manual cleanup (lifecycle rules, ignore_changes, etc.)
+          - Check for sensitive data (passwords, secrets) before committing
+
+          ## Resources by Category
+
+          - **Identity:** Users, Groups, Group Rules
+          - **Applications:** OAuth, SAML, SWA, Basic Auth, Bookmark apps
+          - **Authorization:** Auth Servers, Policies, Rules, Claims, Scopes
+          - **Policies:** MFA, Password, Sign-On policies and rules
+          - **Security:** Network Zones, Trusted Origins, Identity Providers
+          - **Schemas:** User and Group custom attributes
+
+          EOF
+
+          echo "✅ Import summary created"
+
+      - name: Upload import artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraformer-import-lowerdecklabs-${{ github.run_number }}
+          path: |
+            ${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/
+          retention-days: 180
+
+      - name: Commit imported files
+        if: github.event.inputs.commit_changes == 'true' && success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/"
+
+          if git diff --staged --quiet; then
+            echo "ℹ️  No changes to commit"
+          else
+            git commit -m "$(cat <<'EOF'
+          feat(import): Import complete lowerdecklabs environment with Terraformer
+
+          Imported all standard Okta resources from lowerdecklabs.oktapreview.com
+          using Terraformer reverse terraform tool.
+
+          Import Statistics:
+          - Resource types: ${{ steps.terraformer_import.outputs.successful_imports }}
+          - Total .tf files: ${{ steps.terraformer_import.outputs.total_files }}
+
+          Location: ${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/
+
+          Imported Resources:
+          - Identity: Users, Groups, Group Rules
+          - Applications: OAuth, SAML, SWA, Basic Auth, Bookmark
+          - Authorization: Auth Servers (policies, claims, scopes, rules)
+          - Policies: MFA, Password, Sign-On (policies and rules)
+          - Security: Network Zones, Trusted Origins, IdPs
+          - Schemas: User and Group custom attributes
+
+          Next Steps:
+          1. Review and refactor imported terraform files
+          2. Clean up tfer-- prefixes and computed values
+          3. Consolidate with existing terraform configs
+          4. Import into terraform state
+          5. Run terraform plan to verify
+
+          NOTE: OIG resources (entitlement bundles) are managed separately
+          via API-based imports and are already in place.
+
+          🤖 Auto-generated by workflow
+
+          EOF
+          )"
+            git push
+            echo "✅ Changes committed and pushed"
+          fi
+
+      - name: Post summary
+        if: always()
+        run: |
+          echo "# Complete Environment Import - LowerDeckLabs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** lowerdecklabs.oktapreview.com" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Import Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Types Imported | ${{ steps.terraformer_import.outputs.successful_imports }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total .tf Files Generated | ${{ steps.terraformer_import.outputs.total_files }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Resources Imported" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Standard Okta Resources (Terraformer):**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Identity: Users, Groups, Group Rules" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Applications: OAuth, SAML, SWA, Basic Auth, Bookmark" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Authorization: Auth Servers, Policies, Rules, Claims, Scopes" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Policies: MFA, Password, Sign-On (policies and rules)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security: Network Zones, Trusted Origins, Identity Providers" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Schemas: User and Group custom attributes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**OIG Resources (Already Managed):**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Entitlement Bundles (via API import)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Resource Owners, Governance Labels (via API)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Files Location" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Imported files:** \`${{ env.ENV_DIR }}/imports/terraformer-${{ env.TIMESTAMP }}/\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.commit_changes }}" == "true" ]; then
+            echo "- ✅ **Files committed to repository**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ℹ️  **Files NOT committed** (commit_changes=false)" >> $GITHUB_STEP_SUMMARY
+            echo "- 📥 Download artifacts to review" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Review imported terraform files** in the imports directory" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Clean up and refactor:**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Remove \`tfer--\` prefixes from resource names" >> $GITHUB_STEP_SUMMARY
+          echo "   - Remove null values and computed attributes" >> $GITHUB_STEP_SUMMARY
+          echo "   - Extract variables for common values" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Consolidate with existing configs:**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Merge with \`environments/lowerdecklabs/terraform/\`" >> $GITHUB_STEP_SUMMARY
+          echo "   - Ensure no conflicts with OIG resources" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Import into terraform state** if needed" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Run \`terraform plan\`** to verify configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Download artifacts** for detailed review" >> $GITHUB_STEP_SUMMARY
