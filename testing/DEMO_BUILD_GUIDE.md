@@ -404,17 +404,26 @@ okta-terraform-complete-demo/
 - `terraform/` = The actual recipe instructions
 - `docs/` = The cookbook with explanations
 
+**🔒 Important - Environment Isolation:**
+Each `environments/` subdirectory represents a **separate Okta organization**. Never mix resources from different Okta orgs in the same environment directory. This ensures:
+- Clean separation between demo, staging, and production
+- No accidental changes to the wrong Okta org
+- Each environment uses its own GitHub secrets
+
 ### Key Files to Know
 
 In `environments/lowerdecklabs/terraform/`, you'll find:
 
-- **`provider.tf`** - Tells Terraform to talk to Okta
+- **`provider.tf`** - Tells Terraform to talk to Okta (version 6.4.0+ required)
 - **`variables.tf`** - Settings you can customize
-- **`user.tf`** - Code to create users
-- **`group.tf`** - Code to create groups
-- **`app_oauth.tf`** - Code to create applications
+- **`oig_entitlements.tf`** - OIG (Identity Governance) resources
 
-**Don't edit these yet!** We'll do that together soon.
+**For this demo**, you'll create example files like:
+- **`user.tf`** - Example code to create users
+- **`group.tf`** - Example code to create groups
+- **`app_oauth.tf`** - Example code to create applications
+
+**Note:** The actual lowerdecklabs environment may have different files depending on what's been imported. For learning purposes, you'll create these example files.
 
 ---
 
@@ -537,14 +546,16 @@ terraform init
 Initializing the backend...
 
 Initializing provider plugins...
-- Finding okta/okta versions matching "~> 6.1.0"...
-- Installing okta/okta v6.1.0...
-- Installed okta/okta v6.1.0
+- Finding okta/okta versions matching ">= 6.4.0"...
+- Installing okta/okta v6.4.x...
+- Installed okta/okta v6.4.x
 
 Terraform has been successfully initialized!
 ```
 
 ✅ **Success!** Terraform is ready to use.
+
+**Note:** Provider version 6.4.0+ is required for OIG (Identity Governance) features.
 
 **If you see errors:** Check the [Troubleshooting](#13-troubleshooting) section
 
