@@ -18,9 +18,9 @@
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "datadog_read_only" {
-  name = "Datadog Read Only"
+  name                = "Datadog Read Only"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfgMan9Qak1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oanitkncxGbbNwrl1d7"
@@ -43,9 +43,9 @@ resource "okta_entitlement_bundle" "datadog_read_only" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "datadog_standard" {
-  name = "Datadog Standard"
+  name                = "Datadog Standard"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfc1Rwq0uN1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oanitkncxGbbNwrl1d7"
@@ -68,9 +68,9 @@ resource "okta_entitlement_bundle" "datadog_standard" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "datadog_admin_role" {
-  name = "Datadog Admin ROle"
+  name                = "Datadog Admin ROle"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zcvwl8qvb6Xv1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oanitkncxGbbNwrl1d7"
@@ -93,9 +93,9 @@ resource "okta_entitlement_bundle" "datadog_admin_role" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "request_report_of_my_company_s_users" {
-  name = "Request Report of My Company's Users"
+  name                = "Request Report of My Company's Users"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12x0qhaHpOxq6C1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oar6jgx89kx2xO9I1d7"
@@ -119,10 +119,10 @@ resource "okta_entitlement_bundle" "request_report_of_my_company_s_users" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "developer_bundle" {
-  name = "Developer Bundle"
-  description = "Bundle of base access for developers"
+  name                = "Developer Bundle"
+  description         = "Bundle of base access for developers"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob86e9ExVBm1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oar0edy8iuBrRn6t1d7"
@@ -152,10 +152,10 @@ resource "okta_entitlement_bundle" "developer_bundle" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "asset_administrator" {
-  name = "Asset Administrator"
-  description = "For asset management team"
+  name                = "Asset Administrator"
+  description         = "For asset management team"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob80LpIChdk1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oar0edy8iuBrRn6t1d7"
@@ -185,10 +185,10 @@ resource "okta_entitlement_bundle" "asset_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "it_service_desk_agent_bundle" {
-  name = "IT Service Desk - Agent Bundle"
-  description = "Standard access bundle for L1 and L2 service desk agents"
+  name                = "IT Service Desk - Agent Bundle"
+  description         = "Standard access bundle for L1 and L2 service desk agents"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pmq4gjryR0E31d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oar0edy8iuBrRn6t1d7"
@@ -220,9 +220,9 @@ resource "okta_entitlement_bundle" "it_service_desk_agent_bundle" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "b2b_marketing_role" {
-  name = "B2B Marketing Role"
+  name                = "B2B Marketing Role"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10ufnbov67EfIn1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxiwg4zsrWaeJF1d7"
@@ -259,9 +259,9 @@ resource "okta_entitlement_bundle" "b2b_marketing_role" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "example_bundle" {
-  name = "Example Bundle"
+  name                = "Example Bundle"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10nq3zlAGkuY4F1d7"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oapes0i16fD1dIqu1d7"
@@ -306,10 +306,10 @@ resource "okta_entitlement_bundle" "example_bundle" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "customer_trial_finance" {
-  name = "Customer Trial Finance"
-  description = "Allows management and processing of payments for paid customer trials. "
+  name                = "Customer Trial Finance"
+  description         = "Allows management and processing of payments for paid customer trials. "
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjlhTpz7SPd1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxc34dudXXjGJT1d7"
@@ -333,10 +333,10 @@ resource "okta_entitlement_bundle" "customer_trial_finance" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "customer_content_management" {
-  name = "Customer Content Management"
-  description = "Access to create and manage content used for customer trials on the Salesday platform. "
+  name                = "Customer Content Management"
+  description         = "Access to create and manage content used for customer trials on the Salesday platform. "
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjaevWrlrOJ1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxc34dudXXjGJT1d7"
@@ -360,10 +360,10 @@ resource "okta_entitlement_bundle" "customer_content_management" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "sales_associate" {
-  name = "Sales Associate"
-  description = "Access roles often required for Sales Associates to complete work around customer trials"
+  name                = "Sales Associate"
+  description         = "Access roles often required for Sales Associates to complete work around customer trials"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatj5ljTAfV0O1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxc34dudXXjGJT1d7"
@@ -389,9 +389,9 @@ resource "okta_entitlement_bundle" "sales_associate" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "accounts_payable" {
-  name = "Accounts Payable"
+  name                = "Accounts Payable"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme70lOECK1um1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxbw5sdvxDgPry1d7"
@@ -424,9 +424,9 @@ resource "okta_entitlement_bundle" "accounts_payable" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "auditor" {
-  name = "Auditor"
+  name                = "Auditor"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme7xWqTdKIbB1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxbw5sdvxDgPry1d7"
@@ -456,9 +456,9 @@ resource "okta_entitlement_bundle" "auditor" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "purchasing" {
-  name = "Purchasing"
+  name                = "Purchasing"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyln29kDyuJ581F1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxbw5sdvxDgPry1d7"
@@ -489,10 +489,10 @@ resource "okta_entitlement_bundle" "purchasing" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "realm_auditor" {
-  name = "Realm Auditor"
-  description = "Use this request to get access to audit and report on all realms."
+  name                = "Realm Auditor"
+  description         = "Use this request to get access to audit and report on all realms."
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce61eyAdMLeRa1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamz8tk2nj4bZnbI1d7"
@@ -516,10 +516,10 @@ resource "okta_entitlement_bundle" "realm_auditor" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "realm_admin" {
-  name = "Realm Admin"
-  description = "Use this request to have a new Realm created and to be made an administrator of it. "
+  name                = "Realm Admin"
+  description         = "Use this request to have a new Realm created and to be made an administrator of it. "
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce5beI4h4ZpiL1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamz8tk2nj4bZnbI1d7"
@@ -543,10 +543,10 @@ resource "okta_entitlement_bundle" "realm_admin" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "group_administrator" {
-  name = "Group Administrator"
-  description = "Group Administrator"
+  name                = "Group Administrator"
+  description         = "Group Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr791zEltKnNM1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -570,10 +570,10 @@ resource "okta_entitlement_bundle" "group_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "super_organization_administrator" {
-  name = "Super Organization Administrator"
-  description = "Super Organization Administrator"
+  name                = "Super Organization Administrator"
+  description         = "Super Organization Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jiPAyBUe3T1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -597,10 +597,10 @@ resource "okta_entitlement_bundle" "super_organization_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "report_administrator" {
-  name = "Report Administrator"
-  description = "Report Administrator"
+  name                = "Report Administrator"
+  description         = "Report Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr78nCPHASTg51d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -624,10 +624,10 @@ resource "okta_entitlement_bundle" "report_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "read_only_administrator" {
-  name = "Read-only Administrator"
-  description = "Read-only Administrator"
+  name                = "Read-only Administrator"
+  description         = "Read-only Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jeB4KymizN1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -651,10 +651,10 @@ resource "okta_entitlement_bundle" "read_only_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "organization_administrator" {
-  name = "Organization Administrator"
-  description = "Organization Administrator"
+  name                = "Organization Administrator"
+  description         = "Organization Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2javo5dcN4G1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -678,10 +678,10 @@ resource "okta_entitlement_bundle" "organization_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "mobile_administrator" {
-  name = "Mobile Administrator"
-  description = "Mobile Administrator"
+  name                = "Mobile Administrator"
+  description         = "Mobile Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j6FAUy9Jis1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -705,10 +705,10 @@ resource "okta_entitlement_bundle" "mobile_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "help_desk_administrator" {
-  name = "Help Desk Administrator"
-  description = "Help Desk Administrator"
+  name                = "Help Desk Administrator"
+  description         = "Help Desk Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j2WdriUP8L1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -732,10 +732,10 @@ resource "okta_entitlement_bundle" "help_desk_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "group_membership_administrator" {
-  name = "Group Membership Administrator"
-  description = "Group Membership Administrator"
+  name                = "Group Membership Administrator"
+  description         = "Group Membership Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74kotubjqR01d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -759,10 +759,10 @@ resource "okta_entitlement_bundle" "group_membership_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "application_administrator" {
-  name = "Application Administrator"
-  description = "Application Administrator"
+  name                = "Application Administrator"
+  description         = "Application Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2iwvQtKgHK51d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -786,10 +786,10 @@ resource "okta_entitlement_bundle" "application_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "api_access_management_administrator" {
-  name = "API Access Management Administrator"
-  description = "API Access Management Administrator"
+  name                = "API Access Management Administrator"
+  description         = "API Access Management Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr7845qDAUdXb1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -813,10 +813,10 @@ resource "okta_entitlement_bundle" "api_access_management_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "workflows_administrator" {
-  name = "Workflows Administrator"
-  description = "Workflows Administrator"
+  name                = "Workflows Administrator"
+  description         = "Workflows Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ehIJFA41L1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -840,10 +840,10 @@ resource "okta_entitlement_bundle" "workflows_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "access_requests_administrator" {
-  name = "Access Requests Administrator"
-  description = "Access Requests Administrator"
+  name                = "Access Requests Administrator"
+  description         = "Access Requests Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ap1j9m6Qc1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -867,10 +867,10 @@ resource "okta_entitlement_bundle" "access_requests_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "access_certifications_administrator" {
-  name = "Access Certifications Administrator"
-  description = "Access Certifications Administrator"
+  name                = "Access Certifications Administrator"
+  description         = "Access Certifications Administrator"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr746NrVQrM1E1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamx5xxhoWmuxbt61d7"
@@ -893,9 +893,9 @@ resource "okta_entitlement_bundle" "access_certifications_administrator" {
 # -----------------------------------------------------------------------------
 
 resource "okta_entitlement_bundle" "salesforce_access" {
-  name = "Salesforce Access"
+  name                = "Salesforce Access"
   target_resource_orn = "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr73q6YWsfFeC1d6"
-  status = "ACTIVE"
+  status              = "ACTIVE"
 
   target {
     external_id = "0oamxiwg4zsrWaeJF1d7"
