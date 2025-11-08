@@ -96,26 +96,37 @@ class OIGImporter:
         Uses the Principal Entitlements API to find which principals have been assigned
         to this entitlement bundle.
 
+        Note: The API doesn't support filtering by entitlementId, so we fetch all
+        assignments and filter client-side.
+
         Args:
             bundle_id: The entitlement bundle ID
         """
         try:
             url = f"{self.base_url}/governance/api/v1/principal-entitlements"
-            # Filter by entitlement bundle ID
-            # Note: This endpoint doesn't support limit parameter
-            filter_expr = f'entitlementId eq "{bundle_id}"'
-            params = {"filter": filter_expr}
-            response = self._make_request("GET", url, params=params)
+            # API doesn't support filtering, fetch all and filter client-side
+            response = self._make_request("GET", url)
 
             data = response.json()
             if isinstance(data, list):
-                assignments = data
+                all_assignments = data
             elif isinstance(data, dict):
-                assignments = data.get("data", data.get("principalEntitlements", data.get("items", [])))
+                all_assignments = data.get("data", data.get("principalEntitlements", data.get("items", [])))
             else:
-                assignments = []
+                all_assignments = []
 
-            return assignments
+            # Filter client-side for this specific bundle
+            bundle_assignments = []
+            for assignment in all_assignments:
+                # Check various possible field names for entitlement ID
+                entitlement = assignment.get("entitlement", {})
+                ent_id = (entitlement.get("id") or entitlement.get("externalId") or
+                         assignment.get("entitlementId") or assignment.get("bundleId"))
+
+                if ent_id == bundle_id:
+                    bundle_assignments.append(assignment)
+
+            return bundle_assignments
         except Exception as e:
             print(f"    ⚠️  Could not fetch principal entitlements for bundle {bundle_id}: {e}")
             return []
