@@ -117,6 +117,13 @@ class OIGImporter:
             # Filter client-side for grants matching this specific entitlement bundle
             matching_grants = []
             print(f"      DEBUG: Received {len(all_grants)} total grants for target {target_id}")
+
+            # Print first grant structure for debugging
+            if all_grants:
+                import json
+                print(f"      DEBUG: Sample grant structure:")
+                print(f"      {json.dumps(all_grants[0], indent=2)[:500]}")
+
             for grant in all_grants:
                 # Check if grant's entitlement matches our bundle
                 entitlement = grant.get("entitlement", {})
