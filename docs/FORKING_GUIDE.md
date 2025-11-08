@@ -532,7 +532,7 @@ No changes. Your infrastructure matches the configuration.
 
 - [README.md](./README.md) - Overview and quick start
 - [LESSONS_LEARNED.md](./LESSONS_LEARNED.md) - Detailed issues and solutions
-- [RESOURCE_REFERENCE.md](./RESOURCE_REFERENCE.md) - Complete reference for all Okta resource attributes
+- [TERRAFORM_RESOURCES.md](./TERRAFORM_RESOURCES.md) - Complete resource guide (catalog + detailed attributes)
 - [Okta Provider Docs](https://registry.terraform.io/providers/okta/okta/latest/docs)
 - [Terraformer Docs](https://github.com/GoogleCloudPlatform/terraformer)
 
@@ -558,7 +558,7 @@ No changes. Your infrastructure matches the configuration.
 After successfully forking and setting up:
 
 1. ✅ Review the [LESSONS_LEARNED.md](./LESSONS_LEARNED.md) document
-2. ✅ Reference [RESOURCE_REFERENCE.md](./RESOURCE_REFERENCE.md) for detailed attribute explanations
+2. ✅ Reference [TERRAFORM_RESOURCES.md](./TERRAFORM_RESOURCES.md) for detailed attribute explanations
 3. ✅ Set up remote state backend for production
 4. ✅ Configure CI/CD for automated validation
 5. ✅ Set up monitoring/alerting for drift detection

@@ -49,7 +49,7 @@ These are NOT supported by Terraform and must use API scripts:
 ## 📚 Quick Reference Files
 
 - **[RESOURCE_EXAMPLES.tf](./RESOURCE_EXAMPLES.tf)** - Commented examples for ALL ~100 resources
-- **[TERRAFORM_RESOURCE_SUPPORT.md](./TERRAFORM_RESOURCE_SUPPORT.md)** - Complete support matrix (Terraformer vs Manual vs API)
+- **[TERRAFORM_RESOURCES.md](./TERRAFORM_RESOURCES.md)** - Complete resource guide (catalog + detailed attributes)
 - **[OIG_PREREQUISITES.md](../OIG_PREREQUISITES.md)** - Prerequisites for OIG features
 - **[oig-exports/README.md](../oig-exports/README.md)** - API-managed resource documentation
 
@@ -66,7 +66,7 @@ production-ready/
 ├── terraform.tfvars                 # Actual credentials (gitignored)
 ├── terraform.tfstate                # Root state file (consolidated)
 ├── RESOURCE_EXAMPLES.tf             # ⭐ Commented examples for ALL ~100 resources
-├── TERRAFORM_RESOURCE_SUPPORT.md    # ⭐ Complete support matrix
+├── TERRAFORM_RESOURCES.md           # ⭐ Complete resource guide (catalog + attributes)
 ├── app_oauth.tf                     # OAuth applications (3 existing + 1 new)
 ├── user.tf                          # Users (3 existing + 3 new)
 ├── group.tf                         # Groups (4 total)
@@ -339,8 +339,7 @@ terraform plan
 
 ### Resource References
 - **[RESOURCE_EXAMPLES.tf](./RESOURCE_EXAMPLES.tf)** - ⭐ Commented examples for ALL ~100 Terraform resources
-- **[TERRAFORM_RESOURCE_SUPPORT.md](./TERRAFORM_RESOURCE_SUPPORT.md)** - ⭐ Complete support matrix (Terraformer/Manual/API)
-- **[RESOURCE_REFERENCE.md](./RESOURCE_REFERENCE.md)** - Comprehensive attribute reference
+- **[TERRAFORM_RESOURCES.md](./TERRAFORM_RESOURCES.md)** - ⭐ Complete resource guide (catalog + detailed attributes for key resources)
 
 ### Setup & Usage Guides
 - **[FORKING_GUIDE.md](./FORKING_GUIDE.md)** - Complete guide for users forking this repo
