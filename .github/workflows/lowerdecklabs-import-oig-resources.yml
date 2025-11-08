@@ -28,12 +28,12 @@ jobs:
       - name: Workflow Overview
         run: |
           echo "=================================================="
-          echo "  IMPORT OIG RESOURCES FROM OKTA"
+          echo "  APPLY RESOURCE OWNER ASSIGNMENTS"
           echo "=================================================="
           echo ""
           echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
-          echo "Operation: Import entitlement bundles and OIG configs"
-          echo "Update Terraform: ${{ github.event.inputs.update_terraform || 'false' }}"
+          echo "Operation: Apply resource owners from config"
+          echo "Dry Run: ${{ github.event.inputs.dry_run }}"
           echo "=================================================="
 
       - name: Checkout code
@@ -63,7 +63,6 @@ jobs:
         id: import
         run: |
           chmod +x scripts/import_oig_resources.py
-
           mkdir -p oig-imports
 
           echo "Running OIG resource import..."
@@ -72,64 +71,32 @@ jobs:
           IMPORT_STATUS=$?
           echo "import_status=$IMPORT_STATUS" >> $GITHUB_OUTPUT
 
-          if [ $IMPORT_STATUS -eq 0 ]; then
-            echo "✅ Import completed successfully"
-          else
-            echo "⚠️  Import completed with warnings"
-          fi
-
-      - name: Parse import results
+      - name: Parse results
         id: results
         run: |
-          # Count imported resources
           if [ -f "oig-imports/entitlements.json" ]; then
             BUNDLES=$(jq '. | length' oig-imports/entitlements.json 2>/dev/null || echo "0")
           else
             BUNDLES=0
           fi
 
-          if [ -f "oig-imports/reviews.json" ]; then
-            REVIEWS=$(jq '. | length' oig-imports/reviews.json 2>/dev/null || echo "0")
-          else
-            REVIEWS=0
-          fi
-
-          if [ -f "oig-imports/request_sequences.json" ]; then
-            SEQUENCES=$(jq '. | length' oig-imports/request_sequences.json 2>/dev/null || echo "0")
-          else
-            SEQUENCES=0
-          fi
-
           echo "bundles=$BUNDLES" >> $GITHUB_OUTPUT
-          echo "reviews=$REVIEWS" >> $GITHUB_OUTPUT
-          echo "sequences=$SEQUENCES" >> $GITHUB_OUTPUT
-
-          echo ""
-          echo "Import Results:"
-          echo "  Entitlement Bundles: $BUNDLES"
-          echo "  Access Reviews: $REVIEWS"
-          echo "  Approval Sequences: $SEQUENCES"
+          echo "Imported $BUNDLES entitlement bundles"
 
       - name: Update Terraform files
         if: github.event.inputs.update_terraform == 'true'
         run: |
           echo "Updating production-ready Terraform files..."
-
-          # Backup current entitlements file
           if [ -f "production-ready/oig_entitlements.tf" ]; then
             cp production-ready/oig_entitlements.tf production-ready/oig_entitlements.tf.backup
           fi
-
-          # Copy imported entitlements to production-ready
           if [ -f "oig-imports/entitlements.tf" ]; then
             cp oig-imports/entitlements.tf production-ready/oig_entitlements.tf
             echo "✅ Updated production-ready/oig_entitlements.tf"
           fi
-
-          # Copy JSON exports for reference
           cp oig-imports/*.json production-ready/ 2>/dev/null || true
 
-      - name: Upload import artifacts
+      - name: Upload results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -144,18 +111,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add production-ready/oig_entitlements.tf
           git add production-ready/*.json 2>/dev/null || true
-
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "feat(oig): Import entitlement bundles from Okta
 
 Imported ${{ steps.results.outputs.bundles }} entitlement bundles
-Imported ${{ steps.results.outputs.reviews }} access reviews
-Imported ${{ steps.results.outputs.sequences }} approval sequences
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -170,17 +133,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
           echo "## OIG Import Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** LowerDeckLabs" >> $GITHUB_STEP_SUMMARY
-          echo "**Operation:** Import OIG Resources" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Resources Imported" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Resource Type | Count |" >> $GITHUB_STEP_SUMMARY
           echo "|---------------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Entitlement Bundles | ${{ steps.results.outputs.bundles }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Access Reviews | ${{ steps.results.outputs.reviews }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Approval Sequences | ${{ steps.results.outputs.sequences }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
           if [ "${{ github.event.inputs.update_terraform }}" == "true" ]; then
             echo "✅ **Terraform files updated** in production-ready/" >> $GITHUB_STEP_SUMMARY
           else
@@ -188,12 +147,5 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "To update Terraform files, re-run with update_terraform=true" >> $GITHUB_STEP_SUMMARY
           fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Generated Files" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- entitlements.tf - Terraform configuration" >> $GITHUB_STEP_SUMMARY
-          echo "- entitlements.json - Raw API data" >> $GITHUB_STEP_SUMMARY
-          echo "- import.sh - Terraform import commands" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📥 Download artifacts to review imported resources" >> $GITHUB_STEP_SUMMARY
