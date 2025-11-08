@@ -103,11 +103,21 @@ jobs:
       - name: Create import directories
         run: |
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          ENV_NAME=$(echo "${{ inputs.tenant_environment }}" | tr '[:upper:]' '[:lower:]')
+
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          echo "ENV_NAME=${ENV_NAME}" >> $GITHUB_ENV
+          echo "ENV_DIR=environments/${ENV_NAME}" >> $GITHUB_ENV
           echo "IMPORT_DIR=complete-import-${TIMESTAMP}" >> $GITHUB_ENV
+
+          # Create temporary import directory
           mkdir -p complete-import-${TIMESTAMP}/oig-resources
           mkdir -p complete-import-${TIMESTAMP}/config-exports
-          mkdir -p config
+
+          # Create environment-specific directories
+          mkdir -p environments/${ENV_NAME}/{terraform,imports,config}
+
+          echo "Environment directory: environments/${ENV_NAME}"
 
       # ============================================================================
       # STEP 1: Import OIG Resources to Terraform
@@ -226,48 +236,50 @@ jobs:
         run: |
           echo ""
           echo "=================================================================="
-          echo "STEP 4: Updating production-ready Terraform Files"
+          echo "STEP 4: Updating Environment Terraform Files"
           echo "=================================================================="
+          echo "Target: ${{ env.ENV_DIR }}/terraform/"
 
           # Backup existing files
-          if [ -f "production-ready/oig_entitlements.tf" ]; then
-            cp production-ready/oig_entitlements.tf production-ready/oig_entitlements.tf.backup-${{ env.TIMESTAMP }}
+          if [ -f "${{ env.ENV_DIR }}/terraform/oig_entitlements.tf" ]; then
+            cp "${{ env.ENV_DIR }}/terraform/oig_entitlements.tf" "${{ env.ENV_DIR }}/terraform/oig_entitlements.tf.backup-${{ env.TIMESTAMP }}"
             echo "📦 Backed up existing oig_entitlements.tf"
           fi
 
-          if [ -f "production-ready/oig_reviews.tf" ]; then
-            cp production-ready/oig_reviews.tf production-ready/oig_reviews.tf.backup-${{ env.TIMESTAMP }}
+          if [ -f "${{ env.ENV_DIR }}/terraform/oig_reviews.tf" ]; then
+            cp "${{ env.ENV_DIR }}/terraform/oig_reviews.tf" "${{ env.ENV_DIR }}/terraform/oig_reviews.tf.backup-${{ env.TIMESTAMP }}"
             echo "📦 Backed up existing oig_reviews.tf"
           fi
 
-          # Copy new Terraform files
+          # Copy new Terraform files to environment directory
           if [ -f "${{ env.IMPORT_DIR }}/oig-resources/entitlements.tf" ]; then
-            cp "${{ env.IMPORT_DIR }}/oig-resources/entitlements.tf" production-ready/oig_entitlements.tf
-            echo "✅ Updated production-ready/oig_entitlements.tf"
+            cp "${{ env.IMPORT_DIR }}/oig-resources/entitlements.tf" "${{ env.ENV_DIR }}/terraform/oig_entitlements.tf"
+            echo "✅ Updated ${{ env.ENV_DIR }}/terraform/oig_entitlements.tf"
           fi
 
           if [ -f "${{ env.IMPORT_DIR }}/oig-resources/reviews.tf" ]; then
-            cp "${{ env.IMPORT_DIR }}/oig-resources/reviews.tf" production-ready/oig_reviews.tf
-            echo "✅ Updated production-ready/oig_reviews.tf"
+            cp "${{ env.IMPORT_DIR }}/oig-resources/reviews.tf" "${{ env.ENV_DIR }}/terraform/oig_reviews.tf"
+            echo "✅ Updated ${{ env.ENV_DIR }}/terraform/oig_reviews.tf"
           fi
 
           if [ -f "${{ env.IMPORT_DIR }}/oig-resources/request_sequences.tf" ]; then
-            cp "${{ env.IMPORT_DIR }}/oig-resources/request_sequences.tf" production-ready/oig_request_sequences.tf
-            echo "✅ Updated production-ready/oig_request_sequences.tf"
+            cp "${{ env.IMPORT_DIR }}/oig-resources/request_sequences.tf" "${{ env.ENV_DIR }}/terraform/oig_request_sequences.tf"
+            echo "✅ Updated ${{ env.ENV_DIR }}/terraform/oig_request_sequences.tf"
           fi
 
           if [ -f "${{ env.IMPORT_DIR }}/oig-resources/catalog_entries.tf" ]; then
-            cp "${{ env.IMPORT_DIR }}/oig-resources/catalog_entries.tf" production-ready/oig_catalog_entries.tf
-            echo "✅ Updated production-ready/oig_catalog_entries.tf"
+            cp "${{ env.IMPORT_DIR }}/oig-resources/catalog_entries.tf" "${{ env.ENV_DIR }}/terraform/oig_catalog_entries.tf"
+            echo "✅ Updated ${{ env.ENV_DIR }}/terraform/oig_catalog_entries.tf"
           fi
 
           if [ -f "${{ env.IMPORT_DIR }}/oig-resources/request_settings.tf" ]; then
-            cp "${{ env.IMPORT_DIR }}/oig-resources/request_settings.tf" production-ready/oig_request_settings.tf
-            echo "✅ Updated production-ready/oig_request_settings.tf"
+            cp "${{ env.IMPORT_DIR }}/oig-resources/request_settings.tf" "${{ env.ENV_DIR }}/terraform/oig_request_settings.tf"
+            echo "✅ Updated ${{ env.ENV_DIR }}/terraform/oig_request_settings.tf"
           fi
 
-          # Copy JSON reference files
-          cp "${{ env.IMPORT_DIR }}/oig-resources/"*.json production-ready/ 2>/dev/null || true
+          # Copy JSON reference files to imports directory
+          cp "${{ env.IMPORT_DIR }}/oig-resources/"*.json "${{ env.ENV_DIR }}/imports/" 2>/dev/null || true
+          echo "✅ Updated JSON reference files in ${{ env.ENV_DIR }}/imports/"
 
       # ============================================================================
       # STEP 5: Update Config Files
@@ -277,29 +289,30 @@ jobs:
         run: |
           echo ""
           echo "=================================================================="
-          echo "STEP 5: Updating Config Files"
+          echo "STEP 5: Updating Environment Config Files"
           echo "=================================================================="
+          echo "Target: ${{ env.ENV_DIR }}/config/"
 
           # Backup existing config files
-          if [ -f "config/owner_mappings.json" ]; then
-            cp config/owner_mappings.json config/owner_mappings.json.backup-${{ env.TIMESTAMP }}
+          if [ -f "${{ env.ENV_DIR }}/config/owner_mappings.json" ]; then
+            cp "${{ env.ENV_DIR }}/config/owner_mappings.json" "${{ env.ENV_DIR }}/config/owner_mappings.json.backup-${{ env.TIMESTAMP }}"
             echo "📦 Backed up existing owner_mappings.json"
           fi
 
-          if [ -f "config/label_mappings.json" ]; then
-            cp config/label_mappings.json config/label_mappings.json.backup-${{ env.TIMESTAMP }}
+          if [ -f "${{ env.ENV_DIR }}/config/label_mappings.json" ]; then
+            cp "${{ env.ENV_DIR }}/config/label_mappings.json" "${{ env.ENV_DIR }}/config/label_mappings.json.backup-${{ env.TIMESTAMP }}"
             echo "📦 Backed up existing label_mappings.json"
           fi
 
-          # Copy new config files
+          # Copy new config files to environment directory
           if [ -f "${{ env.IMPORT_DIR }}/config-exports/owner_mappings.json" ]; then
-            cp "${{ env.IMPORT_DIR }}/config-exports/owner_mappings.json" config/owner_mappings.json
-            echo "✅ Updated config/owner_mappings.json"
+            cp "${{ env.IMPORT_DIR }}/config-exports/owner_mappings.json" "${{ env.ENV_DIR }}/config/owner_mappings.json"
+            echo "✅ Updated ${{ env.ENV_DIR }}/config/owner_mappings.json"
           fi
 
           if [ -f "${{ env.IMPORT_DIR }}/config-exports/label_mappings.json" ]; then
-            cp "${{ env.IMPORT_DIR }}/config-exports/label_mappings.json" config/label_mappings.json
-            echo "✅ Updated config/label_mappings.json"
+            cp "${{ env.IMPORT_DIR }}/config-exports/label_mappings.json" "${{ env.ENV_DIR }}/config/label_mappings.json"
+            echo "✅ Updated ${{ env.ENV_DIR }}/config/label_mappings.json"
           fi
 
       # ============================================================================
@@ -331,11 +344,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Stage all changes
-          git add production-ready/*.tf 2>/dev/null || true
-          git add production-ready/*.json 2>/dev/null || true
-          git add config/owner_mappings.json 2>/dev/null || true
-          git add config/label_mappings.json 2>/dev/null || true
+          # Stage all changes in environment directory
+          git add ${{ env.ENV_DIR }}/terraform/*.tf 2>/dev/null || true
+          git add ${{ env.ENV_DIR }}/imports/*.json 2>/dev/null || true
+          git add ${{ env.ENV_DIR }}/config/*.json 2>/dev/null || true
+          git add environments/README.md 2>/dev/null || true
+          git add ${{ env.ENV_DIR }}/README.md 2>/dev/null || true
 
           if git diff --staged --quiet; then
             echo "ℹ️  No changes to commit"
@@ -343,7 +357,7 @@ jobs:
             git commit -m "$(cat <<'EOF'
           feat(import): Complete import from ${{ inputs.tenant_environment }} tenant
 
-          Imported all supported resources:
+          Imported all supported resources to ${{ env.ENV_DIR }}/:
           - Entitlement bundles: ${{ steps.import_oig.outputs.bundles_count }}
           - Access reviews: ${{ steps.import_oig.outputs.reviews_count }}
           - Approval workflows: ${{ steps.import_oig.outputs.sequences_count }}
@@ -351,9 +365,9 @@ jobs:
           - Governance labels: ${{ steps.sync_labels.outputs.labels_count }}
 
           Files updated:
-          - production-ready/oig_*.tf (Terraform configurations)
-          - config/owner_mappings.json (Resource ownership)
-          - config/label_mappings.json (Governance labels)
+          - ${{ env.ENV_DIR }}/terraform/ (Terraform configurations)
+          - ${{ env.ENV_DIR }}/imports/ (Raw API import data)
+          - ${{ env.ENV_DIR }}/config/ (Resource owners and labels)
 
           NOTE: Principal assignments (grants) are managed in Okta UI, not in code.
 
@@ -384,11 +398,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Resource Type | Count | Destination |" >> $GITHUB_STEP_SUMMARY
           echo "|---------------|-------|-------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Entitlement Bundles | ${{ steps.import_oig.outputs.bundles_count }} | production-ready/oig_entitlements.tf |" >> $GITHUB_STEP_SUMMARY
-          echo "| Access Reviews | ${{ steps.import_oig.outputs.reviews_count }} | production-ready/oig_reviews.tf |" >> $GITHUB_STEP_SUMMARY
-          echo "| Approval Workflows | ${{ steps.import_oig.outputs.sequences_count }} | production-ready/oig_request_sequences.tf |" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource Owners | ${{ steps.sync_owners.outputs.owners_count }} | config/owner_mappings.json |" >> $GITHUB_STEP_SUMMARY
-          echo "| Governance Labels | ${{ steps.sync_labels.outputs.labels_count }} | config/label_mappings.json |" >> $GITHUB_STEP_SUMMARY
+          echo "| Entitlement Bundles | ${{ steps.import_oig.outputs.bundles_count }} | ${{ env.ENV_DIR }}/terraform/oig_entitlements.tf |" >> $GITHUB_STEP_SUMMARY
+          echo "| Access Reviews | ${{ steps.import_oig.outputs.reviews_count }} | ${{ env.ENV_DIR }}/terraform/oig_reviews.tf |" >> $GITHUB_STEP_SUMMARY
+          echo "| Approval Workflows | ${{ steps.import_oig.outputs.sequences_count }} | ${{ env.ENV_DIR }}/terraform/oig_request_sequences.tf |" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Owners | ${{ steps.sync_owners.outputs.owners_count }} | ${{ env.ENV_DIR }}/config/owner_mappings.json |" >> $GITHUB_STEP_SUMMARY
+          echo "| Governance Labels | ${{ steps.sync_labels.outputs.labels_count }} | ${{ env.ENV_DIR }}/config/label_mappings.json |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "## Actions Taken" >> $GITHUB_STEP_SUMMARY
@@ -408,11 +422,16 @@ jobs:
 
           echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. **Review imported Terraform configurations** in production-ready/" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Review imported Terraform configurations** in ${{ env.ENV_DIR }}/terraform/" >> $GITHUB_STEP_SUMMARY
           echo "2. **Complete TODO items** in generated .tf files" >> $GITHUB_STEP_SUMMARY
-          echo "3. **Review config files** for resource owners and labels" >> $GITHUB_STEP_SUMMARY
-          echo "4. **Run terraform plan** to verify configurations" >> $GITHUB_STEP_SUMMARY
-          echo "5. **Run terraform apply** to manage resources" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Review config files** in ${{ env.ENV_DIR }}/config/" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Initialize and plan Terraform:**" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "   cd ${{ env.ENV_DIR }}/terraform" >> $GITHUB_STEP_SUMMARY
+          echo "   terraform init" >> $GITHUB_STEP_SUMMARY
+          echo "   terraform plan" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Apply Terraform changes** (after reviewing plan)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Important Notes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
