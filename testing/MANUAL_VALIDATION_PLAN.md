@@ -41,10 +41,10 @@ This document provides a comprehensive manual validation plan for testing the Ok
   ```bash
   cd environments/lowerdecklabs/terraform
   terraform version
-  # Expected: provider registry.terraform.io/okta/okta v6.1.0
+  # Expected: provider registry.terraform.io/okta/okta v6.4.0+
   ```
-  - ✅ Pass: Provider v6.1.0 or higher
-  - ❌ Fail: Older version or missing
+  - ✅ Pass: Provider v6.4.0 or higher (required for OIG resources)
+  - ❌ Fail: Version < 6.4.0 or missing
 
 - [ ] **Python 3.8+ Installed**
   ```bash
@@ -150,18 +150,18 @@ This document provides a comprehensive manual validation plan for testing the Ok
   ```bash
   cd environments/lowerdecklabs/terraform
   ls *.tf
-  # Expected files:
-  # - provider.tf
+  # Expected core files:
+  # - provider.tf (with provider >= 6.4.0)
   # - variables.tf
   # - backend.tf (optional)
-  # - oig_entitlements.tf
-  # - oig_reviews.tf
-  # - app_oauth.tf
-  # - user.tf
-  # - group.tf
+  # - oig_entitlements.tf (OIG resources)
+  #
+  # NOTE: Standard Okta resources (apps, users, groups) are imported
+  # via terraformer into environments/lowerdecklabs/imports/ directory
+  # and should be consolidated into terraform/ after review
   ```
-  - ✅ Pass: Key files present
-  - ❌ Fail: Missing critical files
+  - ✅ Pass: Core terraform files present
+  - ❌ Fail: Missing provider.tf or oig_entitlements.tf
 
 - [ ] **Terraform Init**
   ```bash
@@ -178,6 +178,61 @@ This document provides a comprehensive manual validation plan for testing the Ok
   ```
   - ✅ Pass: Configuration is valid
   - ❌ Fail: Validation errors
+
+### 2.3 Environment Isolation
+
+**Objective:** Verify strict environment isolation - one directory = one Okta org
+
+- [ ] **Verify Environment README Exists**
+  ```bash
+  cat environments/README.md
+  # Should document isolation rules
+  ```
+  - ✅ Pass: README exists with isolation documentation
+  - ❌ Fail: Missing or incomplete documentation
+
+- [ ] **Verify No Cross-Environment Resources**
+  ```bash
+  # Lowerdecklabs should only have lowerdecklabs.oktapreview.com resources
+  cd environments/lowerdecklabs/terraform
+  grep -r "okta.com" . && echo "FAIL: Found okta.com references" || echo "PASS"
+  grep -r "dev-" . && echo "FAIL: Found dev org references" || echo "PASS"
+
+  # Expected: No references to other orgs
+  ```
+  - ✅ Pass: Only lowerdecklabs.oktapreview.com references found
+  - ❌ Fail: References to other orgs detected
+
+- [ ] **Verify Environment-Specific Secrets**
+  ```bash
+  # Check GitHub environments are configured
+  gh api repos/joevanhorn/okta-terraform-complete-demo/environments \
+    | jq -r '.environments[] | select(.name=="LowerDeckLabs") | .name'
+  # Expected: LowerDeckLabs
+  ```
+  - ✅ Pass: LowerDeckLabs environment exists with secrets
+  - ❌ Fail: Environment missing or misconfigured
+
+- [ ] **Verify Workflow Environment Specification**
+  ```bash
+  # All terraform workflows should specify environment
+  grep -l "environment:" .github/workflows/terraform-*.yml | wc -l
+  # Expected: All terraform workflows (at least 3)
+  ```
+  - ✅ Pass: All terraform workflows use environment parameter
+  - ❌ Fail: Some workflows missing environment specification
+
+- [ ] **Test Environment Isolation in Practice**
+  ```bash
+  # Trigger a terraform plan - should use LowerDeckLabs secrets
+  gh workflow run terraform-plan.yml
+
+  # Monitor and verify it uses lowerdecklabs.oktapreview.com
+  gh run watch <RUN_ID>
+  # Check logs for: "Configured for org: lowerdecklabs"
+  ```
+  - ✅ Pass: Workflow uses correct environment secrets
+  - ❌ Fail: Wrong org detected or secrets not applied
 
 ---
 
@@ -316,6 +371,70 @@ This document provides a comprehensive manual validation plan for testing the Ok
   - ✅ Pass: Workflow completes and creates commit
   - ❌ Fail: Workflow fails or doesn't commit
   - **Note:** Check that commit message follows format and includes updated OIG files
+
+### 3.4 Complete Environment Import with Terraformer
+
+**Objective:** Test complete environment import with terraformer for all standard Okta resources
+
+- [ ] **Trigger Complete Environment Import**
+  ```bash
+  gh workflow run lowerdecklabs-import-complete.yml \
+    -f resource_types=all \
+    -f commit_changes=false
+  ```
+  - ✅ Pass: Workflow triggered successfully
+  - ❌ Fail: Workflow failed to trigger
+
+- [ ] **Monitor Terraformer Import Workflow**
+  ```bash
+  gh run list --workflow=lowerdecklabs-import-complete.yml --limit 1
+  gh run watch <RUN_ID>
+  ```
+  - ✅ Pass: Workflow completes successfully
+  - ❌ Fail: Workflow fails or times out
+  - **Expected Duration:** 5-10 minutes (depending on org size)
+  - **Note:** Terraformer imports ALL standard resources (users, groups, apps, policies, etc.)
+
+- [ ] **Verify Terraformer Artifacts**
+  ```bash
+  gh run download <RUN_ID>
+  ls -la terraformer-import-*/
+  ```
+  - Expected directory structure:
+    - `identity/` - Users, groups, group rules
+    - `applications/` - OAuth, SAML, SWA apps
+    - `authorization/` - Auth servers, policies, claims, scopes
+    - `policies/` - MFA, password, sign-on policies
+    - `security/` - Network zones, trusted origins, IdPs
+    - `schemas/` - User and group custom attributes
+    - `IMPORT_SUMMARY.md` - Import summary report
+  - ✅ Pass: All categories present with terraform files
+  - ❌ Fail: Missing categories or malformed structure
+
+- [ ] **Validate Terraformer Import Quality**
+  ```bash
+  # Check that terraform files are valid
+  cd terraformer-import-*/identity/okta_user
+  terraform validate
+
+  # Check for tfer-- prefixes (expected in raw terraformer output)
+  grep -r "tfer--" . | wc -l
+  # Expected: >0 (terraformer adds tfer-- prefixes)
+  ```
+  - ✅ Pass: Valid terraform syntax, tfer-- prefixes present (expected)
+  - ❌ Fail: Invalid terraform or unexpected resource names
+
+- [ ] **Verify Environment Isolation**
+  ```bash
+  # Confirm import went to correct environment directory
+  ls -la environments/lowerdecklabs/imports/terraformer-*/
+
+  # Verify no cross-contamination with other environments
+  ls environments/ | grep -v lowerdecklabs
+  # Should show no terraformer imports in other environment dirs
+  ```
+  - ✅ Pass: Import only in lowerdecklabs, isolated from other environments
+  - ❌ Fail: Cross-environment contamination detected
 
 ---
 
