@@ -186,7 +186,7 @@ jobs:
           git add production-ready/oig_entitlements.tf
           git add production-ready/*.json 2>/dev/null || true
           git add environments/lowerdecklabs/terraform/oig_entitlements.tf
-          git add environments/lowerdecklabs/terraform/terraform.tfstate
+          git add -f environments/lowerdecklabs/terraform/terraform.tfstate
           git add environments/lowerdecklabs/terraform/.terraform.lock.hcl
           if git diff --staged --quiet; then
             echo "No changes to commit"
