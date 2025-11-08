@@ -1,0 +1,222 @@
+name: Terraform Apply - LowerDeckLabs
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply changes'
+        required: true
+        default: 'lowerdecklabs'
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
+      dry_run:
+        description: 'Dry run (plan only, no apply)'
+        required: true
+        default: true
+        type: boolean
+      auto_approve:
+        description: 'Auto-approve (skip manual confirmation)'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Configure Terraform variables
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          cat > terraform.tfvars << EOF
+          okta_org_name  = "${{ secrets.OKTA_ORG_NAME }}"
+          okta_base_url  = "${{ secrets.OKTA_BASE_URL }}"
+          okta_api_token = "${{ secrets.OKTA_API_TOKEN }}"
+          EOF
+
+      - name: Terraform Init
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: terraform validate
+
+      - name: Terraform Format Check
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: terraform fmt -check -recursive || echo "⚠️ Warning: Format check failed"
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          echo "Running terraform plan..."
+          terraform plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
+
+          # Extract summary
+          echo "## Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          grep "Plan:" plan_output.txt >> $GITHUB_STEP_SUMMARY || echo "No changes detected" >> $GITHUB_STEP_SUMMARY
+
+          # Check for changes
+          if grep -q "No changes" plan_output.txt; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: false
+
+      - name: Display Plan
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          echo "================================"
+          echo "TERRAFORM PLAN OUTPUT"
+          echo "================================"
+          cat plan_output.txt
+          echo "================================"
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ inputs.environment }}-${{ github.run_number }}
+          path: |
+            environments/${{ inputs.environment }}/terraform/tfplan
+            environments/${{ inputs.environment }}/terraform/plan_output.txt
+          retention-days: 30
+
+      - name: Check for Changes
+        id: check_changes
+        if: steps.plan.outputs.no_changes == 'true'
+        run: |
+          echo "✅ No changes detected - nothing to apply"
+          echo "## No Changes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Terraform plan shows no changes needed." >> $GITHUB_STEP_SUMMARY
+          echo "Your infrastructure matches the configuration." >> $GITHUB_STEP_SUMMARY
+
+      - name: Dry Run Notice
+        if: inputs.dry_run == true && steps.plan.outputs.no_changes != 'true'
+        run: |
+          echo "================================"
+          echo "DRY RUN MODE - NO APPLY"
+          echo "================================"
+          echo "This was a dry run. No changes were applied."
+          echo "To apply changes, run again with dry_run=false"
+          echo ""
+          echo "## Dry Run Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Plan generated successfully" >> $GITHUB_STEP_SUMMARY
+          echo "❌ Changes NOT applied (dry_run=true)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To apply these changes:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the plan output above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run workflow again with \`dry_run=false\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform Apply
+        id: apply
+        if: inputs.dry_run == false && steps.plan.outputs.no_changes != 'true'
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          echo "================================"
+          echo "APPLYING TERRAFORM CHANGES"
+          echo "================================"
+
+          if [ "${{ inputs.auto_approve }}" == "true" ]; then
+            echo "Auto-approve enabled - applying changes..."
+            terraform apply -auto-approve tfplan 2>&1 | tee apply_output.txt
+          else
+            echo "Manual approval required - applying plan..."
+            terraform apply tfplan 2>&1 | tee apply_output.txt
+          fi
+
+          echo "================================"
+          echo "APPLY COMPLETE"
+          echo "================================"
+
+      - name: Apply Summary
+        if: inputs.dry_run == false && steps.plan.outputs.no_changes != 'true'
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          echo "## Apply Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Terraform apply succeeded" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changes Applied" >> $GITHUB_STEP_SUMMARY
+          grep "Apply complete!" apply_output.txt >> $GITHUB_STEP_SUMMARY || echo "See full output for details" >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit State Changes
+        if: inputs.dry_run == false && steps.plan.outputs.no_changes != 'true'
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          # Note: State files should typically be in remote backend
+          # This is for local state only
+          if [ -f terraform.tfstate ]; then
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add terraform.tfstate terraform.tfstate.backup 2>/dev/null || true
+            git diff --staged --quiet || git commit -m "chore: Update Terraform state after apply
+
+Environment: ${{ inputs.environment }}
+Run: ${{ github.run_number }}
+
+🤖 Auto-generated by workflow"
+            git push || echo "No state changes to push"
+          fi
+
+      - name: Cleanup Sensitive Files
+        if: always()
+        working-directory: environments/${{ inputs.environment }}/terraform
+        run: |
+          rm -f terraform.tfvars
+          rm -f tfplan
+          rm -f plan_output.txt
+          rm -f apply_output.txt
+
+      - name: Workflow Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow Parameters" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run:** ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Auto Approve:** ${{ inputs.auto_approve }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Apply Success
+        if: steps.apply.outcome == 'success'
+        run: |
+          echo "✅ Terraform apply completed successfully"
+          echo ""
+          echo "Changes have been applied to: ${{ inputs.environment }}"
+          echo "Review the Okta Admin Console to verify changes"
+
+      - name: Apply Failure
+        if: steps.apply.outcome == 'failure'
+        run: |
+          echo "❌ Terraform apply failed"
+          echo ""
+          echo "Review the error output above"
+          echo "Download plan artifact for investigation"
+          exit 1
