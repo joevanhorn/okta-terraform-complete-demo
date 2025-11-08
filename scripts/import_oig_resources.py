@@ -476,8 +476,8 @@ def main():
     )
     parser.add_argument(
         "--base-url",
-        default="okta.com",
-        help="Okta base URL (default: okta.com)"
+        default=None,
+        help="Okta base URL (default: okta.com, or OKTA_BASE_URL env var)"
     )
     parser.add_argument(
         "--api-token",
