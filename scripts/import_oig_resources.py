@@ -90,26 +90,39 @@ class OIGImporter:
             print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
             return []
 
-    def fetch_grants_for_bundle(self, bundle_id: str) -> List[Dict]:
-        """Fetch grants (principal assignments) for a specific entitlement bundle"""
+    def fetch_grants_for_bundle(self, bundle_id: str, target_id: str, target_type: str) -> List[Dict]:
+        """Fetch grants (principal assignments) for a specific entitlement bundle
+
+        Args:
+            bundle_id: The entitlement bundle ID
+            target_id: The target resource ID (e.g., app ID)
+            target_type: The target resource type (e.g., "APPLICATION")
+        """
         try:
             url = f"{self.base_url}/governance/api/v1/grants"
-            # Filter grants by entitlement bundle ID
-            # Based on API pattern: target.externalId, targetPrincipal.externalId
-            # We try entitlement.id for consistency
-            filter_expr = f'entitlement.id eq "{bundle_id}"'
+            # Filter grants by target resource (required by API)
+            # API requires filtering by resource, not by entitlement directly
+            filter_expr = f'target.externalId eq "{target_id}" AND target.type eq "{target_type}"'
             params = {"filter": filter_expr, "limit": 200, "include": "full_entitlements"}
             response = self._make_request("GET", url, params=params)
 
             data = response.json()
             if isinstance(data, list):
-                grants = data
+                all_grants = data
             elif isinstance(data, dict):
-                grants = data.get("data", data.get("grants", []))
+                all_grants = data.get("data", data.get("grants", []))
             else:
-                grants = []
+                all_grants = []
 
-            return grants
+            # Filter client-side for grants matching this specific entitlement bundle
+            matching_grants = []
+            for grant in all_grants:
+                # Check if grant's entitlement matches our bundle
+                entitlement = grant.get("entitlement", {})
+                if entitlement.get("id") == bundle_id or entitlement.get("externalId") == bundle_id:
+                    matching_grants.append(grant)
+
+            return matching_grants
         except Exception as e:
             print(f"    ⚠️  Could not fetch grants for bundle {bundle_id}: {e}")
             return []
@@ -205,9 +218,18 @@ class OIGImporter:
 
             safe_name = self._sanitize_name(name)
 
+            # Extract target resource information for grants query
+            target = bundle.get("target", {})
+            target_id = target.get("externalId", "")
+            target_type = target.get("type", "")
+
             # Fetch grants (principal assignments) for this bundle
-            print(f"  Fetching grants for: {name}")
-            grants = self.fetch_grants_for_bundle(bundle_id)
+            if target_id and target_type:
+                print(f"  Fetching grants for: {name}")
+                grants = self.fetch_grants_for_bundle(bundle_id, target_id, target_type)
+            else:
+                print(f"  ⚠️  No target resource found for: {name}, skipping grants")
+                grants = []
 
             tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'# {name}')
