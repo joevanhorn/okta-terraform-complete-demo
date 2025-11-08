@@ -73,7 +73,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: environments/${{ steps.detect-env.outputs.environment }}/terraform
-        run: terraform init
+        run: terraform init -upgrade
 
       - name: Terraform Validate
         working-directory: environments/${{ steps.detect-env.outputs.environment }}/terraform

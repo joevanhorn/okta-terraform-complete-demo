@@ -70,7 +70,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: environments/${{ inputs.environment }}/terraform
-        run: terraform init
+        run: terraform init -upgrade
 
       - name: Download Plan Artifact (if specified)
         if: inputs.plan_artifact != ''
