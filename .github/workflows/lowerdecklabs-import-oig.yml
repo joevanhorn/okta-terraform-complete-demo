@@ -91,6 +91,7 @@ jobs:
         if: github.event.inputs.update_terraform == 'true'
         run: |
           echo "Updating production-ready Terraform files..."
+          mkdir -p production-ready
           if [ -f "production-ready/oig_entitlements.tf" ]; then
             cp production-ready/oig_entitlements.tf production-ready/oig_entitlements.tf.backup
           fi
@@ -99,6 +100,73 @@ jobs:
             echo "✅ Updated production-ready/oig_entitlements.tf"
           fi
           cp oig-imports/*.json production-ready/ 2>/dev/null || true
+
+          echo "Updating LowerDeckLabs terraform directory..."
+          if [ -f "oig-imports/entitlements.tf" ]; then
+            cp oig-imports/entitlements.tf environments/lowerdecklabs/terraform/oig_entitlements.tf
+            echo "✅ Updated environments/lowerdecklabs/terraform/oig_entitlements.tf"
+          fi
+
+      - name: Setup Terraform for Import
+        if: github.event.inputs.update_terraform == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Import Resources into Terraform State
+        if: github.event.inputs.update_terraform == 'true'
+        working-directory: environments/lowerdecklabs/terraform
+        run: |
+          # Configure Terraform variables
+          cat > terraform.tfvars << EOF
+          okta_org_name  = "${{ secrets.OKTA_ORG_NAME }}"
+          okta_base_url  = "${{ secrets.OKTA_BASE_URL }}"
+          okta_api_token = "${{ secrets.OKTA_API_TOKEN }}"
+          EOF
+
+          # Initialize Terraform
+          terraform init -upgrade
+
+          # Check if import.sh exists from the import script
+          if [ -f "../../../oig-imports/import.sh" ]; then
+            echo "Using import commands from import script..."
+            cp ../../../oig-imports/import.sh ./
+          else
+            echo "Generating import commands from terraform config..."
+            python3 <<'PYTHON'
+          import re
+
+          with open('oig_entitlements.tf', 'r') as f:
+              content = f.read()
+
+          pattern = r'resource "okta_entitlement_bundle" "([^"]+)"[^}]*?target_resource_orn\s*=\s*"orn:okta:governance:[^:]+:entitlement-bundles:([^"]+)"'
+          matches = re.findall(pattern, content, re.DOTALL)
+
+          with open('import.sh', 'w') as f:
+              f.write('#!/bin/bash\n')
+              f.write('set +e\n\n')  # Don't exit on error for imports
+              f.write(f'echo "Importing {len(matches)} OIG entitlement bundles..."\n')
+              f.write('echo ""\n\n')
+
+              for i, (resource_name, bundle_id) in enumerate(matches, 1):
+                  f.write(f'echo "Importing {i}/{len(matches)}: okta_entitlement_bundle.{resource_name}"\n')
+                  f.write(f'terraform import okta_entitlement_bundle.{resource_name} {bundle_id} 2>&1 | grep -v "Error: resource already exists" || true\n')
+                  f.write('echo ""\n\n')
+
+          print(f'Generated import commands for {len(matches)} resources')
+          PYTHON
+          fi
+
+          chmod +x import.sh
+          ./import.sh 2>&1 | tee import.log
+
+          # Count imported resources
+          IMPORTED=$(terraform state list | grep okta_entitlement_bundle | wc -l | tr -d ' ')
+          echo "✅ Imported $IMPORTED entitlement bundles into terraform state"
+
+          # Clean up sensitive files
+          rm -f terraform.tfvars
+          rm -f import.sh
 
       - name: Upload results
         uses: actions/upload-artifact@v4
@@ -117,16 +185,24 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add production-ready/oig_entitlements.tf
           git add production-ready/*.json 2>/dev/null || true
+          git add environments/lowerdecklabs/terraform/oig_entitlements.tf
+          git add environments/lowerdecklabs/terraform/terraform.tfstate
+          git add environments/lowerdecklabs/terraform/.terraform.lock.hcl
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "$(cat <<'EOF'
-          feat(oig): Import entitlement bundle definitions from Okta
+          feat(oig): Import entitlement bundles from Okta into Terraform
 
-          Imported ${{ steps.results.outputs.bundles }} entitlement bundle definitions.
+          Imported ${{ steps.results.outputs.bundles }} entitlement bundle definitions
+          from Okta and populated terraform state.
 
-          NOTE: This imports bundle definitions only (okta_entitlement_bundle resources).
-          Principal assignments (grants) are managed in Okta Admin UI, not in Terraform.
+          Changes:
+          - Generated Terraform configs from Okta API
+          - Imported resources into terraform state
+          - Terraform now manages these OIG resources
+
+          NOTE: Principal assignments (grants) are managed in Okta Admin UI.
 
           🤖 Auto-generated by workflow
 
