@@ -21,6 +21,49 @@ This document provides a comprehensive breakdown of ALL Okta Terraform resources
 
 ---
 
+## 📖 Table of Contents
+
+### Resources (116 Total)
+- [👥 Users & User Management (10)](#-users--user-management-10-resources)
+- [👪 Groups & Group Management (6)](#-groups--group-management-5-resources)
+- [📱 Applications (24)](#-applications-24-resources)
+- [🔐 Authorization Servers & OAuth (7)](#-authorization-servers--oauth-7-resources)
+- [🔒 Policies (20)](#-policies-20-resources)
+- [🌐 Identity Providers & Social Auth (4)](#-identity-providers--social-auth-4-resources)
+- [🛡️ Security & Network (4)](#️-security--network-4-resources)
+- [🎨 Brands, Themes & Customization (9)](#-brands-themes--customization-9-resources)
+- [🌍 Domains & Certificates (3)](#-domains--certificates-3-resources)
+- [🔗 Hooks & Event Handlers (3)](#-hooks--event-handlers-3-resources)
+- [👔 OIG - Identity Governance (11)](#-okta-identity-governance-oig---v610-11-resources)
+- [👨‍💼 Admin Roles & Permissions (5)](#-admin-roles--permissions-5-resources)
+- [⚙️ Org Settings & Configuration (6)](#️-org-settings--configuration-6-resources)
+- [🔗 Linking & Associations (3)](#-linking--associations-3-resources)
+- [📊 Logging & Monitoring (1)](#-logging--monitoring-1-resource)
+- [🌐 Realms (2)](#-realms-beta-2-resources)
+
+### Data Sources (63 Total)
+- [👥 User Data Sources (5)](#-user-data-sources-5)
+- [👪 Group Data Sources (4)](#-group-data-sources-4)
+- [📱 Application Data Sources (8)](#-application-data-sources-8)
+- [🔐 Authorization Server Data Sources (5)](#-authorization-server-data-sources-5)
+- [🔒 Policy Data Sources (3)](#-policy-data-sources-2)
+- [🛡️ Security Data Sources (5)](#️-security-data-sources-4)
+- [🌐 Identity Provider Data Sources (4)](#-identity-provider-data-sources-4)
+- [🎨 Branding Data Sources (7)](#-branding-data-sources-6)
+- [📧 Email Data Sources (4)](#-email-data-sources-4)
+- [👔 OIG Data Sources (12)](#-oig-data-sources-7)
+- [⚙️ Organization Data Sources (6)](#️-organization-data-sources-5)
+
+### Management & Best Practices
+- [🎯 Resource Management Best Practices](#-resource-management-best-practices)
+  - [Use Case 1: Import Existing Infrastructure](#use-case-1-import-existing-infrastructure)
+  - [Use Case 2: Create New Resources](#use-case-2-create-new-resources)
+  - [Use Case 3: OIG Governance via API](#use-case-3-oig-governance-via-api)
+- [📖 Additional Resources](#-additional-resources)
+- [🔄 Version History](#-version-history)
+
+---
+
 ## 📋 Complete Resource Reference (116 Resources)
 
 ### 👥 USERS & USER MANAGEMENT (10 resources)
