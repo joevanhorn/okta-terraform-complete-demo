@@ -116,12 +116,17 @@ class OIGImporter:
 
             # Filter client-side for grants matching this specific entitlement bundle
             matching_grants = []
+            print(f"      DEBUG: Received {len(all_grants)} total grants for target {target_id}")
             for grant in all_grants:
                 # Check if grant's entitlement matches our bundle
                 entitlement = grant.get("entitlement", {})
-                if entitlement.get("id") == bundle_id or entitlement.get("externalId") == bundle_id:
+                entitlement_id = entitlement.get("id") or entitlement.get("externalId")
+                print(f"      DEBUG: Grant entitlement ID: {entitlement_id}, looking for: {bundle_id}")
+                if entitlement_id == bundle_id:
                     matching_grants.append(grant)
+                    print(f"      DEBUG: ✓ Match found!")
 
+            print(f"      DEBUG: Found {len(matching_grants)} matching grants")
             return matching_grants
         except Exception as e:
             print(f"    ⚠️  Could not fetch grants for bundle {bundle_id}: {e}")
