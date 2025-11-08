@@ -531,7 +531,7 @@ terraform apply  # Dangerous - modifies tenant
 **Questions or issues?**
 - Check existing import logs in Actions → Workflow runs
 - Review `docs/TERRAFORMER_OIG_FAQ.md` for known limitations
-- See `production-ready/LESSONS_LEARNED.md` for common issues
+- See `docs/LESSONS_LEARNED.md` for common issues
 - Open GitHub issue for repository-specific problems
 
 ---
