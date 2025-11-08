@@ -90,6 +90,30 @@ class OIGImporter:
             print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
             return []
 
+    def fetch_grants_for_bundle(self, bundle_id: str) -> List[Dict]:
+        """Fetch grants (principal assignments) for a specific entitlement bundle"""
+        try:
+            url = f"{self.base_url}/governance/api/v1/grants"
+            # Filter grants by entitlement bundle ID
+            # Based on API pattern: target.externalId, targetPrincipal.externalId
+            # We try entitlement.id for consistency
+            filter_expr = f'entitlement.id eq "{bundle_id}"'
+            params = {"filter": filter_expr, "limit": 200, "include": "full_entitlements"}
+            response = self._make_request("GET", url, params=params)
+
+            data = response.json()
+            if isinstance(data, list):
+                grants = data
+            elif isinstance(data, dict):
+                grants = data.get("data", data.get("grants", []))
+            else:
+                grants = []
+
+            return grants
+        except Exception as e:
+            print(f"    ⚠️  Could not fetch grants for bundle {bundle_id}: {e}")
+            return []
+
     def fetch_reviews(self) -> List[Dict]:
         """Fetch all access review campaigns"""
         print("Fetching access review campaigns...")
@@ -181,6 +205,10 @@ class OIGImporter:
 
             safe_name = self._sanitize_name(name)
 
+            # Fetch grants (principal assignments) for this bundle
+            print(f"  Fetching grants for: {name}")
+            grants = self.fetch_grants_for_bundle(bundle_id)
+
             tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'# {name}')
             tf_config.append(f'# {"-" * 77}')
@@ -192,21 +220,48 @@ class OIGImporter:
             if description:
                 tf_config.append(f'  # Description: {description}')
             tf_config.append(f'')
-            tf_config.append(f'  # TODO: Add principal assignments')
-            tf_config.append(f'  # This resource type requires principal and entitlement configuration.')
-            tf_config.append(f'  # See the JSON export file for full bundle details.')
-            tf_config.append(f'  # Docs: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements')
-            tf_config.append(f'')
-            tf_config.append(f'  # Example configuration:')
-            tf_config.append(f'  # principal {{')
-            tf_config.append(f'  #   id   = "00u..."  # User or group ID')
-            tf_config.append(f'  #   type = "USER"    # or "GROUP"')
-            tf_config.append(f'  # }}')
-            tf_config.append(f'  #')
-            tf_config.append(f'  # entitlement {{')
-            tf_config.append(f'  #   id   = "{bundle_id}"')
-            tf_config.append(f'  #   name = "{name}"')
-            tf_config.append(f'  # }}')
+
+            # Generate principal blocks from grants
+            if grants:
+                print(f"    Found {len(grants)} grant(s)")
+                for grant in grants:
+                    # Try nested structure first (targetPrincipal.externalId)
+                    # then fall back to direct fields (principalId)
+                    target_principal = grant.get("targetPrincipal", {})
+                    principal_id = target_principal.get("externalId") or grant.get("principalId")
+                    principal_type = target_principal.get("type", "").replace("OKTA_", "") or grant.get("principalType", "USER")
+                    principal_name = target_principal.get("name") or grant.get("principalName", "")
+
+                    if principal_id:
+                        tf_config.append(f'  principal {{')
+                        tf_config.append(f'    id   = "{principal_id}"')
+                        tf_config.append(f'    type = "{principal_type}"')
+                        if principal_name:
+                            tf_config.append(f'    # Name: {principal_name}')
+                        tf_config.append(f'  }}')
+                        tf_config.append(f'')
+
+                # Add entitlement block
+                tf_config.append(f'  entitlement {{')
+                tf_config.append(f'    id   = "{bundle_id}"')
+                tf_config.append(f'    name = "{name}"')
+                tf_config.append(f'  }}')
+            else:
+                # No grants found - add TODO comment
+                tf_config.append(f'  # TODO: No principal assignments found')
+                tf_config.append(f'  # Add principal and entitlement configuration as needed')
+                tf_config.append(f'')
+                tf_config.append(f'  # Example configuration:')
+                tf_config.append(f'  # principal {{')
+                tf_config.append(f'  #   id   = "00u..."  # User or group ID')
+                tf_config.append(f'  #   type = "USER"    # or "GROUP"')
+                tf_config.append(f'  # }}')
+                tf_config.append(f'  #')
+                tf_config.append(f'  # entitlement {{')
+                tf_config.append(f'  #   id   = "{bundle_id}"')
+                tf_config.append(f'  #   name = "{name}"')
+                tf_config.append(f'  # }}')
+
             tf_config.append(f'}}')
             tf_config.append('')
 
