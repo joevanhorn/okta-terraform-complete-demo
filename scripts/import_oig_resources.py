@@ -491,6 +491,12 @@ def main():
     api_token = args.api_token or os.environ.get("OKTA_API_TOKEN")
     base_url = args.base_url or os.environ.get("OKTA_BASE_URL", "okta.com")
 
+    print(f"DEBUG: Reading environment variables:")
+    print(f"  OKTA_ORG_NAME env var: {os.environ.get('OKTA_ORG_NAME', 'NOT SET')}")
+    print(f"  OKTA_BASE_URL env var: {os.environ.get('OKTA_BASE_URL', 'NOT SET')}")
+    print(f"  Using base_url: {base_url}")
+    print(f"  Full URL will be: https://{org_name}.{base_url}")
+
     if not org_name or not api_token:
         print("Error: Okta org name and API token required")
         print("Set via --org-name and --api-token or OKTA_ORG_NAME and OKTA_API_TOKEN env vars")
