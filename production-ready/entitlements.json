@@ -1,0 +1,1489 @@
+{
+  "entitlements": [
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfgMan9Qak1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:datadog:0oanitkncxGbbNwrl1d7",
+      "target": {
+        "externalId": "0oanitkncxGbbNwrl1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12zbv46MO7EWrw1d7",
+              "name": "Read Only",
+              "externalValue": "2a734128-81c6-11f0-ab70-da7ad0900002",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12zbv46MO7EWrw1d7"
+            }
+          ],
+          "id": "esp12zbv44vDNoeIU1d7",
+          "name": "Roles",
+          "externalValue": "dd_role",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12zbvfgMan9Qak1d7",
+          "hints": {}
+        }
+      },
+      "name": "Datadog Read Only",
+      "id": "enb12zbvfgMan9Qak1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-23T17:41:48Z",
+      "lastUpdated": "2025-10-23T17:41:48Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfc1Rwq0uN1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:datadog:0oanitkncxGbbNwrl1d7",
+      "target": {
+        "externalId": "0oanitkncxGbbNwrl1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12zbv45QDKnhaM1d7",
+              "name": "Standard",
+              "externalValue": "2a68d71a-81c6-11f0-bda5-da7ad0900002",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12zbv45QDKnhaM1d7"
+            }
+          ],
+          "id": "esp12zbv44vDNoeIU1d7",
+          "name": "Roles",
+          "externalValue": "dd_role",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12zbvfc1Rwq0uN1d7",
+          "hints": {}
+        }
+      },
+      "name": "Datadog Standard",
+      "id": "enb12zbvfc1Rwq0uN1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-23T17:41:33Z",
+      "lastUpdated": "2025-10-23T17:41:33Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zcvwl8qvb6Xv1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:datadog:0oanitkncxGbbNwrl1d7",
+      "target": {
+        "externalId": "0oanitkncxGbbNwrl1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12zbv47bjSFrHZ1d7",
+              "name": "Admin Role",
+              "externalValue": "2a53dc48-81c6-11f0-bda4-da7ad0900002",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12zbv47bjSFrHZ1d7"
+            }
+          ],
+          "id": "esp12zbv44vDNoeIU1d7",
+          "name": "Roles",
+          "externalValue": "dd_role",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12zcvwl8qvb6Xv1d7",
+          "hints": {}
+        }
+      },
+      "name": "Datadog Admin ROle",
+      "id": "enb12zcvwl8qvb6Xv1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-23T17:41:09Z",
+      "lastUpdated": "2025-10-23T17:41:09Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12x0qhaHpOxq6C1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:scim2testapp_basic:0oar6jgx89kx2xO9I1d7",
+      "target": {
+        "externalId": "0oar6jgx89kx2xO9I1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12x0qh9idQPGKM1d7",
+              "name": "Request Report of My Company's Users",
+              "externalValue": "requestReport",
+              "description": "Select this option to have a CSV report of the members of your company along with their group membership emailed to you",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12x0qh9idQPGKM1d7"
+            }
+          ],
+          "id": "esp12x0qh8DjqIauW1d7",
+          "name": "Request Item",
+          "externalValue": "requestItem",
+          "multiValue": false,
+          "required": false,
+          "dataType": "string"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12x0qhaHpOxq6C1d7",
+          "hints": {}
+        }
+      },
+      "name": "Request Report of My Company's Users",
+      "id": "enb12x0qhaHpOxq6C1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-21T22:16:22Z",
+      "lastUpdated": "2025-10-21T22:17:27Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob86e9ExVBm1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:servicenow_ud:0oar0edy8iuBrRn6t1d7",
+      "target": {
+        "externalId": "0oar0edy8iuBrRn6t1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12pvea9ScwnaQX1d7",
+              "name": "personalize_choices",
+              "externalValue": "{\"name\":\"personalize_choices\"}",
+              "externalId": "3016d3e0a9fe3dba016a03916401c2d7",
+              "description": "Can personalize the choices for a choice list field",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pvea9ScwnaQX1d7"
+            },
+            {
+              "id": "ent12pvebn5KdeN9l1d7",
+              "name": "rest_api_explorer",
+              "externalValue": "{\"name\":\"rest_api_explorer\"}",
+              "externalId": "d0d45ba0470002004695d7527c9a71c6",
+              "description": "Can access REST API Explorer",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pvebn5KdeN9l1d7"
+            },
+            {
+              "id": "ent12pvegiIQf9qti1d7",
+              "name": "soap",
+              "externalValue": "{\"name\":\"soap\"}",
+              "externalId": "32e527030a0a0b5000d51d88b28db5c8",
+              "description": "Can query, create, update, and delete records on all tables, as well as execute scripts",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pvegiIQf9qti1d7"
+            }
+          ],
+          "id": "esp12pvbc9GsRkvu31d7",
+          "name": "Roles",
+          "externalValue": "roles",
+          "description": "Roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12pob86e9ExVBm1d7",
+          "hints": {}
+        }
+      },
+      "name": "Developer Bundle",
+      "description": "Bundle of base access for developers",
+      "id": "enb12pob86e9ExVBm1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-16T03:58:51Z",
+      "lastUpdated": "2025-10-16T03:58:51Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pob80LpIChdk1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:servicenow_ud:0oar0edy8iuBrRn6t1d7",
+      "target": {
+        "externalId": "0oar0edy8iuBrRn6t1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12pva5mRfBHowQ1d7",
+              "name": "agent_security_admin",
+              "externalValue": "{\"name\":\"agent_security_admin\"}",
+              "externalId": "1e310fdaff1550103894c787d53bf198",
+              "description": "Manages security of the MID Server.",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pva5mRfBHowQ1d7"
+            },
+            {
+              "id": "ent12pve7wUvKWXVS1d7",
+              "name": "import_admin",
+              "externalValue": "{\"name\":\"import_admin\"}",
+              "externalId": "4a6a6e710a0a0bc000e6426eac13db01",
+              "description": "Can manage all aspects of Import Sets and imports",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve7wUvKWXVS1d7"
+            },
+            {
+              "id": "ent12pve87e6OIyjW1d7",
+              "name": "itil",
+              "externalValue": "{\"name\":\"itil\"}",
+              "externalId": "282bf1fac6112285017366cb5f867469",
+              "description": "Can perform standard actions for an ITIL helpdesk technician. This is the out-of-box ''technician'' role. Can open, update, close incidents, problems, changes, config management items. Out-of-box, only users with the itil role can have tasks assigned to them",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve87e6OIyjW1d7"
+            }
+          ],
+          "id": "esp12pvbc9GsRkvu31d7",
+          "name": "Roles",
+          "externalValue": "roles",
+          "description": "Roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12pob80LpIChdk1d7",
+          "hints": {}
+        }
+      },
+      "name": "Asset Administrator",
+      "description": "For asset management team",
+      "id": "enb12pob80LpIChdk1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-16T03:57:56Z",
+      "lastUpdated": "2025-10-16T03:57:56Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12pmq4gjryR0E31d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:servicenow_ud:0oar0edy8iuBrRn6t1d7",
+      "target": {
+        "externalId": "0oar0edy8iuBrRn6t1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent12pve80mQeNNUE1d7",
+              "name": "incident_manager",
+              "externalValue": "{\"name\":\"incident_manager\"}",
+              "externalId": "415f09c10bb63200ecfd818393673af1",
+              "description": "Can administer Incident properties and Major Incident trigger rules.",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve80mQeNNUE1d7"
+            },
+            {
+              "id": "ent12pve87e6OIyjW1d7",
+              "name": "itil",
+              "externalValue": "{\"name\":\"itil\"}",
+              "externalId": "282bf1fac6112285017366cb5f867469",
+              "description": "Can perform standard actions for an ITIL helpdesk technician. This is the out-of-box ''technician'' role. Can open, update, close incidents, problems, changes, config management items. Out-of-box, only users with the itil role can have tasks assigned to them",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve87e6OIyjW1d7"
+            },
+            {
+              "id": "ent12pve8cHjmlJEW1d7",
+              "name": "knowledge",
+              "externalValue": "{\"name\":\"knowledge\"}",
+              "externalId": "1f26da36c0a8016b000c7f06a1ce7e14",
+              "description": "Can write, edit, and review knowledge management articles",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve8cHjmlJEW1d7"
+            },
+            {
+              "id": "ent12pveb2wubuGuS1d7",
+              "name": "problem_manager",
+              "externalValue": "{\"name\":\"problem_manager\"}",
+              "externalId": "b573c1f9538823004247ddeeff7b12e0",
+              "description": "Responsible for the overall Problem Management process and can configure Problem Management settings as well as act as a Problem Coordinator",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pveb2wubuGuS1d7"
+            }
+          ],
+          "id": "esp12pvbc9GsRkvu31d7",
+          "name": "Roles",
+          "externalValue": "roles",
+          "description": "Roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb12pmq4gjryR0E31d7",
+          "hints": {}
+        }
+      },
+      "name": "IT Service Desk - Agent Bundle",
+      "description": "Standard access bundle for L1 and L2 service desk agents",
+      "id": "enb12pmq4gjryR0E31d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-10-16T03:56:41Z",
+      "lastUpdated": "2025-10-16T03:56:41Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10ufnbov67EfIn1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7",
+      "target": {
+        "externalId": "0oamxiwg4zsrWaeJF1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybuze9GDQYdAue1d6",
+              "name": "Salesforce CRM Content User",
+              "externalValue": "{\"name\":\"Salesforce CRM Content User\"}",
+              "externalId": "UserPermissionsSFContentUser",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybuze9GDQYdAue1d6"
+            }
+          ],
+          "id": "espybuyfg0aY1Xp7y1d6",
+          "name": "Feature Licenses",
+          "externalValue": "featureLicenses",
+          "description": "Feature Licenses",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        },
+        {
+          "values": [
+            {
+              "id": "entybuyhst5EWQmye1d6",
+              "name": "B2BBuyer",
+              "externalValue": "{\"name\":\"B2BBuyer\"}",
+              "externalId": "B2BBuyer",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybuyhst5EWQmye1d6"
+            }
+          ],
+          "id": "espybuyfdDblx1vFd1d6",
+          "name": "Permission Sets",
+          "externalValue": "salesforceGroups",
+          "description": "Permission Sets",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        },
+        {
+          "values": [
+            {
+              "id": "entybuyiy7YcVRIVB1d6",
+              "name": "Contract Manager",
+              "externalValue": "{\"name\":\"Contract Manager\"}",
+              "externalId": "00egL0000024NQZQA2",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybuyiy7YcVRIVB1d6"
+            }
+          ],
+          "id": "espybuyfet4uKnC9j1d6",
+          "name": "Profile",
+          "externalValue": "profile",
+          "description": "Profile",
+          "multiValue": false,
+          "required": true,
+          "dataType": "string"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb10ufnbov67EfIn1d7",
+          "hints": {}
+        }
+      },
+      "name": "B2B Marketing Role",
+      "id": "enb10ufnbov67EfIn1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-08-26T19:20:51Z",
+      "lastUpdated": "2025-08-26T19:20:51Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb10nq3zlAGkuY4F1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:scim2testapp_basic:0oapes0i16fD1dIqu1d7",
+      "target": {
+        "externalId": "0oapes0i16fD1dIqu1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "ent10no31kYItsx3H1d7",
+              "name": "db01",
+              "externalValue": "db01",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent10no31kYItsx3H1d7"
+            }
+          ],
+          "id": "esp10no31j3Qyp2vJ1d7",
+          "name": "database",
+          "externalValue": "database",
+          "multiValue": false,
+          "required": false,
+          "dataType": "string"
+        },
+        {
+          "values": [
+            {
+              "id": "ent10np3lj0UX475t1d7",
+              "name": "perm01",
+              "externalValue": "perm01",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent10np3lj0UX475t1d7"
+            }
+          ],
+          "id": "esp10np3liBs4F7Mr1d7",
+          "name": "permission",
+          "externalValue": "permission",
+          "multiValue": false,
+          "required": false,
+          "dataType": "string"
+        },
+        {
+          "values": [
+            {
+              "id": "ent10nq3zi7lhGXni1d7",
+              "name": "server123",
+              "externalValue": "server123",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent10nq3zi7lhGXni1d7"
+            }
+          ],
+          "id": "esp10nq3zhKTqUePo1d7",
+          "name": "server",
+          "externalValue": "server",
+          "multiValue": false,
+          "required": false,
+          "dataType": "string"
+        },
+        {
+          "values": [
+            {
+              "id": "ent10no31mow95e7F1d7",
+              "name": "table",
+              "externalValue": "01",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent10no31mow95e7F1d7"
+            }
+          ],
+          "id": "esp10no31lHmsDMl91d7",
+          "name": "table",
+          "externalValue": "table",
+          "description": "table01",
+          "multiValue": false,
+          "required": false,
+          "dataType": "string"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb10nq3zlAGkuY4F1d7",
+          "hints": {}
+        }
+      },
+      "name": "Example Bundle",
+      "id": "enb10nq3zlAGkuY4F1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-08-22T20:45:44Z",
+      "lastUpdated": "2025-08-22T20:45:44Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjlhTpz7SPd1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7",
+      "target": {
+        "externalId": "0oamxc34dudXXjGJT1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entyirusmOPUhfmLX1d6",
+              "name": "Paid Trial Finance",
+              "externalValue": "p_trial_finance",
+              "description": "Allows users to input, manage, and process payment information for paid trials",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyirusmOPUhfmLX1d6"
+            }
+          ],
+          "id": "espyirusl3g5Acmjb1d6",
+          "name": "User Role",
+          "externalValue": "user_role",
+          "description": "Roles available to users within the Salesday CRM interaction platform",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbywatjlhTpz7SPd1d6",
+          "hints": {}
+        }
+      },
+      "name": "Customer Trial Finance",
+      "description": "Allows management and processing of payments for paid customer trials. ",
+      "id": "enbywatjlhTpz7SPd1d6",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-06-24T16:22:37Z",
+      "lastUpdated": "2025-06-24T16:22:37Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatjaevWrlrOJ1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7",
+      "target": {
+        "externalId": "0oamxc34dudXXjGJT1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entyiruspbqDy6iV11d6",
+              "name": "Content Manager",
+              "externalValue": "content_manager",
+              "description": "Allows users to manage customer facing content",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyiruspbqDy6iV11d6"
+            }
+          ],
+          "id": "espyirusl3g5Acmjb1d6",
+          "name": "User Role",
+          "externalValue": "user_role",
+          "description": "Roles available to users within the Salesday CRM interaction platform",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbywatjaevWrlrOJ1d6",
+          "hints": {}
+        }
+      },
+      "name": "Customer Content Management",
+      "description": "Access to create and manage content used for customer trials on the Salesday platform. ",
+      "id": "enbywatjaevWrlrOJ1d6",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-06-24T16:21:23Z",
+      "lastUpdated": "2025-06-24T16:21:23Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbywatj5ljTAfV0O1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7",
+      "target": {
+        "externalId": "0oamxc34dudXXjGJT1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entyiruso5elEOEg61d6",
+              "name": "Content Viewer",
+              "externalValue": "content_viewer",
+              "description": "Allows users to view published content",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyiruso5elEOEg61d6"
+            },
+            {
+              "id": "entyirusnLsvvibvg1d6",
+              "name": "Paid Trial Manager",
+              "externalValue": "p_trial_manage",
+              "description": "Allows users to create and manage paid trials for customers",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyirusnLsvvibvg1d6"
+            }
+          ],
+          "id": "espyirusl3g5Acmjb1d6",
+          "name": "User Role",
+          "externalValue": "user_role",
+          "description": "Roles available to users within the Salesday CRM interaction platform",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbywatj5ljTAfV0O1d6",
+          "hints": {}
+        }
+      },
+      "name": "Sales Associate",
+      "description": "Access roles often required for Sales Associates to complete work around customer trials",
+      "id": "enbywatj5ljTAfV0O1d6",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-06-24T16:20:04Z",
+      "lastUpdated": "2025-06-24T16:20:04Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme70lOECK1um1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_marketti_1:0oamxbw5sdvxDgPry1d7",
+      "target": {
+        "externalId": "0oamxbw5sdvxDgPry1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entygyvclarzLpS4C1d6",
+              "name": "Premier",
+              "externalValue": "premier",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entygyvclarzLpS4C1d6"
+            }
+          ],
+          "id": "espygyvcjwIY1awIQ1d6",
+          "name": "License",
+          "externalValue": "license",
+          "description": "License level for the customer based on current contract",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        },
+        {
+          "values": [
+            {
+              "id": "entyln2a8p6ICgLb11d6",
+              "name": "Invoice Processing",
+              "externalValue": "q_invoice",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a8p6ICgLb11d6"
+            },
+            {
+              "id": "entylme882grbyL6X1d6",
+              "name": "Payment Authorization",
+              "externalValue": "q_payment",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entylme882grbyL6X1d6"
+            }
+          ],
+          "id": "espyln2a6CE8GxcYz1d6",
+          "name": "Roles",
+          "externalValue": "roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbylme70lOECK1um1d6",
+          "hints": {}
+        }
+      },
+      "name": "Accounts Payable",
+      "id": "enbylme70lOECK1um1d6",
+      "createdBy": "00un405cteWNUz71P1d7",
+      "created": "2025-06-13T20:08:26Z",
+      "lastUpdated": "2025-06-13T20:33:51Z",
+      "lastUpdatedBy": "00un405cteWNUz71P1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbylme7xWqTdKIbB1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_marketti_1:0oamxbw5sdvxDgPry1d7",
+      "target": {
+        "externalId": "0oamxbw5sdvxDgPry1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entygyvcmcMj1n27a1d6",
+              "name": "Basic",
+              "externalValue": "basic",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entygyvcmcMj1n27a1d6"
+            }
+          ],
+          "id": "espygyvcjwIY1awIQ1d6",
+          "name": "License",
+          "externalValue": "license",
+          "description": "License level for the customer based on current contract",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        },
+        {
+          "values": [
+            {
+              "id": "entyln2a79ccyUEcG1d6",
+              "name": "Auditor",
+              "externalValue": "q_audit",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a79ccyUEcG1d6"
+            }
+          ],
+          "id": "espyln2a6CE8GxcYz1d6",
+          "name": "Roles",
+          "externalValue": "roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbylme7xWqTdKIbB1d6",
+          "hints": {}
+        }
+      },
+      "name": "Auditor",
+      "id": "enbylme7xWqTdKIbB1d6",
+      "createdBy": "00un405cteWNUz71P1d7",
+      "created": "2025-06-13T20:29:03Z",
+      "lastUpdated": "2025-06-13T20:29:03Z",
+      "lastUpdatedBy": "00un405cteWNUz71P1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyln29kDyuJ581F1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_marketti_1:0oamxbw5sdvxDgPry1d7",
+      "target": {
+        "externalId": "0oamxbw5sdvxDgPry1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entygyvclarzLpS4C1d6",
+              "name": "Premier",
+              "externalValue": "premier",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entygyvclarzLpS4C1d6"
+            }
+          ],
+          "id": "espygyvcjwIY1awIQ1d6",
+          "name": "License",
+          "externalValue": "license",
+          "description": "License level for the customer based on current contract",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        },
+        {
+          "values": [
+            {
+              "id": "entyln2a9rCVBtG9c1d6",
+              "name": "Purchaser",
+              "externalValue": "q_purchaser",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a9rCVBtG9c1d6"
+            }
+          ],
+          "id": "espyln2a6CE8GxcYz1d6",
+          "name": "Roles",
+          "externalValue": "roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbyln29kDyuJ581F1d6",
+          "hints": {}
+        }
+      },
+      "name": "Purchasing",
+      "id": "enbyln29kDyuJ581F1d6",
+      "createdBy": "00un405cteWNUz71P1d7",
+      "created": "2025-06-13T20:05:13Z",
+      "lastUpdated": "2025-06-13T20:28:47Z",
+      "lastUpdatedBy": "00un405cteWNUz71P1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce61eyAdMLeRa1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_realmrequest_1:0oamz8tk2nj4bZnbI1d7",
+      "target": {
+        "externalId": "0oamz8tk2nj4bZnbI1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entyce5bcOM2DDBEE1d6",
+              "name": "Realm Auditor",
+              "externalValue": "realm_audit",
+              "description": "Allows required access to view and audit realm access for all realms",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyce5bcOM2DDBEE1d6"
+            }
+          ],
+          "id": "espyce5bbgNyEsRN41d6",
+          "name": "Realm Role",
+          "externalValue": "realm_role",
+          "description": "Used for an access request to automate Realm management. ",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbyce61eyAdMLeRa1d6",
+          "hints": {}
+        }
+      },
+      "name": "Realm Auditor",
+      "description": "Use this request to get access to audit and report on all realms.",
+      "id": "enbyce61eyAdMLeRa1d6",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-06-04T14:23:10Z",
+      "lastUpdated": "2025-06-04T14:23:10Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyce5beI4h4ZpiL1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_realmrequest_1:0oamz8tk2nj4bZnbI1d7",
+      "target": {
+        "externalId": "0oamz8tk2nj4bZnbI1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entyce5bdBAWSYVEI1d6",
+              "name": "Realm Admin",
+              "externalValue": "realm_admin",
+              "description": "Grants the Partner Admin role assigned to a resource group based on access request. ",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyce5bdBAWSYVEI1d6"
+            }
+          ],
+          "id": "espyce5bbgNyEsRN41d6",
+          "name": "Realm Role",
+          "externalValue": "realm_role",
+          "description": "Used for an access request to automate Realm management. ",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbyce5beI4h4ZpiL1d6",
+          "hints": {}
+        }
+      },
+      "name": "Realm Admin",
+      "description": "Use this request to have a new Realm created and to be made an administrator of it. ",
+      "id": "enbyce5beI4h4ZpiL1d6",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-06-04T14:22:33Z",
+      "lastUpdated": "2025-06-04T14:22:33Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr791zEltKnNM1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybtgrsSrMJeC0Z1d6",
+              "name": "All groups",
+              "externalValue": "orn:oktapreview:directory:00omx5xxhePEbjFNp1d7:groups",
+              "description": "All groups",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybtgrsSrMJeC0Z1d6"
+            }
+          ],
+          "id": "espybtgrrAolZ6Eso1d6",
+          "name": "GroupAdmin",
+          "externalValue": "ro1ffiDIAATQIYBVTZNH",
+          "description": "Group Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr791zEltKnNM1d6",
+          "hints": {}
+        }
+      },
+      "name": "Group Administrator",
+      "description": "Group Administrator",
+      "id": "enbybr791zEltKnNM1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:28Z",
+      "lastUpdated": "2025-06-04T01:57:28Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jiPAyBUe3T1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybr745vozq71kV1d6",
+              "name": "All resources",
+              "externalValue": "*",
+              "description": "All resources",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybr745vozq71kV1d6"
+            }
+          ],
+          "id": "espybr744xrP7dmkR1d6",
+          "name": "SuperOrgAdmin",
+          "externalValue": "ro101100000000000067",
+          "description": "Super Organization Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybt2jiPAyBUe3T1d6",
+          "hints": {}
+        }
+      },
+      "name": "Super Organization Administrator",
+      "description": "Super Organization Administrator",
+      "id": "enbybt2jiPAyBUe3T1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:26Z",
+      "lastUpdated": "2025-06-04T01:57:26Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr78nCPHASTg51d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybtgrpNrPlwdTY1d6",
+              "name": "All resources",
+              "externalValue": "*",
+              "description": "All resources",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybtgrpNrPlwdTY1d6"
+            }
+          ],
+          "id": "espybtgroSK946jxq1d6",
+          "name": "ReportAdmin",
+          "externalValue": "ro1qr1O4R0j2wAA7H0g3",
+          "description": "Report Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr78nCPHASTg51d6",
+          "hints": {}
+        }
+      },
+      "name": "Report Administrator",
+      "description": "Report Administrator",
+      "id": "enbybr78nCPHASTg51d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:24Z",
+      "lastUpdated": "2025-06-04T01:57:24Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2jeB4KymizN1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybtgrn9s7Ufon01d6",
+              "name": "All resources",
+              "externalValue": "*",
+              "description": "All resources",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybtgrn9s7Ufon01d6"
+            }
+          ],
+          "id": "espybtgrmNtQjGYvk1d6",
+          "name": "ReadOnlyAdmin",
+          "externalValue": "ro18j7UNENEQOJHYUFNT",
+          "description": "Read-only Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybt2jeB4KymizN1d6",
+          "hints": {}
+        }
+      },
+      "name": "Read-only Administrator",
+      "description": "Read-only Administrator",
+      "id": "enbybt2jeB4KymizN1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:22Z",
+      "lastUpdated": "2025-06-04T01:57:22Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2javo5dcN4G1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybtgrlv0lYy73V1d6",
+              "name": "All resources",
+              "externalValue": "*",
+              "description": "All resources",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybtgrlv0lYy73V1d6"
+            }
+          ],
+          "id": "espybtgrkgpbCQHUS1d6",
+          "name": "OrgAdmin",
+          "externalValue": "ro101100000000000063",
+          "description": "Organization Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybt2javo5dcN4G1d6",
+          "hints": {}
+        }
+      },
+      "name": "Organization Administrator",
+      "description": "Organization Administrator",
+      "id": "enbybt2javo5dcN4G1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:19Z",
+      "lastUpdated": "2025-06-04T01:57:19Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j6FAUy9Jis1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybr78gEY9YiWAt1d6",
+              "name": "All resources",
+              "externalValue": "*",
+              "description": "All resources",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybr78gEY9YiWAt1d6"
+            }
+          ],
+          "id": "espybr78fFzzsN2vY1d6",
+          "name": "MobileAdmin",
+          "externalValue": "ro1h0nXQxfbKnfcFM0g3",
+          "description": "Mobile Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybt2j6FAUy9Jis1d6",
+          "hints": {}
+        }
+      },
+      "name": "Mobile Administrator",
+      "description": "Mobile Administrator",
+      "id": "enbybt2j6FAUy9Jis1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:17Z",
+      "lastUpdated": "2025-06-04T01:57:17Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2j2WdriUP8L1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybr78eMZ0ZsyyH1d6",
+              "name": "All groups",
+              "externalValue": "orn:oktapreview:directory:00omx5xxhePEbjFNp1d7:groups",
+              "description": "All groups",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybr78eMZ0ZsyyH1d6"
+            }
+          ],
+          "id": "espybr78dOCeE0xWA1d6",
+          "name": "HelpDeskAdmin",
+          "externalValue": "ro1lh5PhvbNq31e2C0g3",
+          "description": "Help Desk Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybt2j2WdriUP8L1d6",
+          "hints": {}
+        }
+      },
+      "name": "Help Desk Administrator",
+      "description": "Help Desk Administrator",
+      "id": "enbybt2j2WdriUP8L1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:15Z",
+      "lastUpdated": "2025-06-04T01:57:15Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74kotubjqR01d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybt2j1r6vhn8FF1d6",
+              "name": "All groups",
+              "externalValue": "orn:oktapreview:directory:00omx5xxhePEbjFNp1d7:groups",
+              "description": "All groups",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybt2j1r6vhn8FF1d6"
+            }
+          ],
+          "id": "espybt2j0NL4YdGV91d6",
+          "name": "GroupMembershipAdmin",
+          "externalValue": "ro1s9lWRjnQxMDPmu0g3",
+          "description": "Group Membership Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr74kotubjqR01d6",
+          "hints": {}
+        }
+      },
+      "name": "Group Membership Administrator",
+      "description": "Group Membership Administrator",
+      "id": "enbybr74kotubjqR01d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:13Z",
+      "lastUpdated": "2025-06-04T01:57:13Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybt2iwvQtKgHK51d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybr789g9k5BuWe1d6",
+              "name": "All apps",
+              "externalValue": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps",
+              "description": "All apps",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybr789g9k5BuWe1d6"
+            }
+          ],
+          "id": "espybr788bN8NoA151d6",
+          "name": "AppAdmin",
+          "externalValue": "ro101100000000000065",
+          "description": "Application Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybt2iwvQtKgHK51d6",
+          "hints": {}
+        }
+      },
+      "name": "Application Administrator",
+      "description": "Application Administrator",
+      "id": "enbybt2iwvQtKgHK51d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:10Z",
+      "lastUpdated": "2025-06-04T01:57:10Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr7845qDAUdXb1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybr74jTHs020JN1d6",
+              "name": "All resources",
+              "externalValue": "*",
+              "description": "All resources",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybr74jTHs020JN1d6"
+            }
+          ],
+          "id": "espybr74iuWJlkmCm1d6",
+          "name": "ApiAccessManagementAdmin",
+          "externalValue": "ro1orcQb5vpIeys1Z0g3",
+          "description": "API Access Management Administrator",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr7845qDAUdXb1d6",
+          "hints": {}
+        }
+      },
+      "name": "API Access Management Administrator",
+      "description": "API Access Management Administrator",
+      "id": "enbybr7845qDAUdXb1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:08Z",
+      "lastUpdated": "2025-06-04T01:57:08Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ehIJFA41L1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybr783h32lyYrZ1d6",
+              "name": "WORKFLOWS_IAM_POLICY",
+              "externalValue": "orn:oktapreview:iam:00omx5xxhePEbjFNp1d7:resource-sets:WORKFLOWS_IAM_POLICY",
+              "description": "A resource set managed by Workflows Administrator",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybr783h32lyYrZ1d6"
+            }
+          ],
+          "id": "espybr782AbfntU8S1d6",
+          "name": "WORKFLOWS_ADMIN",
+          "externalValue": "WORKFLOWS_ADMIN",
+          "description": "An admin role for managing workflows",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr74ehIJFA41L1d6",
+          "hints": {}
+        }
+      },
+      "name": "Workflows Administrator",
+      "description": "Workflows Administrator",
+      "id": "enbybr74ehIJFA41L1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:05Z",
+      "lastUpdated": "2025-06-04T01:57:05Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr74ap1j9m6Qc1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybt2islYE7JXGn1d6",
+              "name": "ACCESS_REQUESTS_IAM_POLICY",
+              "externalValue": "orn:oktapreview:iam:00omx5xxhePEbjFNp1d7:resource-sets:ACCESS_REQUESTS_IAM_POLICY",
+              "description": "A resource set managed by Access Requests Admin",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybt2islYE7JXGn1d6"
+            }
+          ],
+          "id": "espybt2irxr3i50NN1d6",
+          "name": "ACCESS_REQUESTS_ADMIN",
+          "externalValue": "ACCESS_REQUESTS_ADMIN",
+          "description": "An IGA admin role for managing access requests",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr74ap1j9m6Qc1d6",
+          "hints": {}
+        }
+      },
+      "name": "Access Requests Administrator",
+      "description": "Access Requests Administrator",
+      "id": "enbybr74ap1j9m6Qc1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:03Z",
+      "lastUpdated": "2025-06-04T01:57:03Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr746NrVQrM1E1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:saasure:0oamx5xxhoWmuxbt61d7",
+      "target": {
+        "externalId": "0oamx5xxhoWmuxbt61d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybt2iqhRJCiD9f1d6",
+              "name": "ACCESS_CERTIFICATIONS_IAM_POLICY",
+              "externalValue": "orn:oktapreview:iam:00omx5xxhePEbjFNp1d7:resource-sets:ACCESS_CERTIFICATIONS_IAM_POLICY",
+              "description": "A resource set managed by Access Certifications Admin",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybt2iqhRJCiD9f1d6"
+            }
+          ],
+          "id": "espybt2ipTOQhIZoz1d6",
+          "name": "ACCESS_CERTIFICATIONS_ADMIN",
+          "externalValue": "ACCESS_CERTIFICATIONS_ADMIN",
+          "description": "An IGA admin role for managing access certifications",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr746NrVQrM1E1d6",
+          "hints": {}
+        }
+      },
+      "name": "Access Certifications Administrator",
+      "description": "Access Certifications Administrator",
+      "id": "enbybr746NrVQrM1E1d6",
+      "createdBy": "pcamx6t880LPjEqK61d7",
+      "created": "2025-06-04T01:57:01Z",
+      "lastUpdated": "2025-06-04T01:57:01Z",
+      "lastUpdatedBy": "pcamx6t880LPjEqK61d7"
+    },
+    {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbybr73q6YWsfFeC1d6",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7",
+      "target": {
+        "externalId": "0oamxiwg4zsrWaeJF1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entybuyibwGtDw8pH1d6",
+              "name": "Chatter Free User",
+              "externalValue": "{\"name\":\"Chatter Free User\"}",
+              "externalId": "00egL0000024NPyQAM",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybuyibwGtDw8pH1d6"
+            }
+          ],
+          "id": "espybuyfet4uKnC9j1d6",
+          "name": "Profile",
+          "externalValue": "profile",
+          "description": "Profile",
+          "multiValue": false,
+          "required": true,
+          "dataType": "string"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbybr73q6YWsfFeC1d6",
+          "hints": {}
+        }
+      },
+      "name": "Salesforce Access",
+      "id": "enbybr73q6YWsfFeC1d6",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-06-04T01:56:10Z",
+      "lastUpdated": "2025-06-04T01:56:10Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ provider "registry.terraform.io/okta/okta" {
   constraints = ">= 6.4.0, < 7.0.0"
   hashes = [
     "h1:8tdt9h0pj572nnmRHwTa/oXuxk+vASORxIy+2tADDxY=",
+    "h1:D9LRze+jmIz4r9meHTMVUxswY24Jzdnv8Cd7P0NolzM=",
     "zh:05c499a539ed0175935475ec49a27aed770e2c3b19b44b03561a1c516b08aa17",
     "zh:1ca352b6d2377744680b9ad76b280550afa4417cbb4944fa614afc6038ac67ec",
     "zh:3eca71bcd583c5a1bcdb9717d5ff7157ad0dbac51cafd104320fcf96e860ccc0",
