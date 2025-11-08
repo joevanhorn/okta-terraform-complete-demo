@@ -37,6 +37,7 @@ By the end of this guide, you will have:
 - ✅ Set up applications in Okta
 - ✅ Made changes and seen them apply instantly
 - ✅ Learned how to "undo" everything safely
+- ✅ (Advanced) Explored Identity Governance (OIG) features
 
 ### Why This Matters for Sales
 
@@ -940,6 +941,94 @@ Try creating a new user:
 Learn how to bring existing Okta resources under Terraform management:
 - See: `docs/TERRAFORM_RESOURCES.md`
 - Section: "Use Case 1: Import Existing Infrastructure"
+
+#### Level 5: Advanced - Identity Governance (OIG)
+
+**What is OIG?**
+
+OIG (Okta Identity Governance) helps you manage who has access to what in your organization. Think of it like:
+- A security guard keeping track of who has keys to different rooms
+- Automatically reviewing if people still need their access
+- Organizing access permissions into bundles (like "Marketing Access" or "Engineering Tools")
+
+**Key Concepts:**
+
+1. **Entitlement Bundles** - Packages of access rights
+   - Example: "Marketing Bundle" might include access to HubSpot, Salesforce, and Google Analytics
+   - Instead of assigning 3 apps individually, assign 1 bundle
+
+2. **Access Reviews** - Scheduled checkups
+   - Periodically asks: "Does John still need admin access?"
+   - Managers review and approve/revoke access
+
+3. **Resource Owners** - Who's responsible for what
+   - Every app/group has an owner
+   - Owners get notified about access requests
+
+**Hands-On: Working with OIG Resources**
+
+This repository includes automated workflows for importing OIG resources:
+
+1. **View Entitlement Bundles:**
+   ```bash
+   cd environments/lowerdecklabs/imports
+   cat entitlements.json | head -20
+   ```
+
+   **What you'll see:** JSON data listing all entitlement bundles from Okta
+
+2. **See the Terraform Configuration:**
+   ```bash
+   cd ../terraform
+   cat oig_entitlements.tf | head -30
+   ```
+
+   **What this is:** Terraform code that manages entitlement bundles
+
+3. **Import OIG Resources Automatically:**
+
+   This repo has GitHub Actions workflows that automatically:
+   - Connect to your Okta tenant
+   - Export all entitlement bundles
+   - Generate Terraform configuration
+   - Keep everything in sync
+
+   See: `.github/workflows/lowerdecklabs-import-oig.yml`
+
+**Example: Creating an Entitlement Bundle**
+
+```hcl
+resource "okta_entitlement_bundle" "marketing_bundle" {
+  name        = "Marketing Access Bundle"
+  description = "Access to all marketing tools"
+}
+```
+
+**What happens:**
+1. Terraform creates the bundle in Okta
+2. You can assign apps to this bundle in the Okta Admin Console
+3. Users who get this bundle automatically get all apps in it
+
+**Why This Matters for Sales:**
+
+Traditional demo:
+- "And here's how you manually assign 10 apps to a new marketing employee..."
+- Customer: "That seems tedious"
+
+OIG demo:
+- "Watch me assign one bundle and the employee gets all 10 apps instantly"
+- "Plus, we automatically review their access every quarter"
+- Customer: "That's amazing! How much time does this save?"
+
+**Next Steps with OIG:**
+- Review the OIG validation plan: `testing/MANUAL_VALIDATION_PLAN.md` (Section 5)
+- Explore all OIG resources: `docs/TERRAFORM_RESOURCES.md` (OIG section)
+- Learn about resource owners and governance labels in the main docs
+
+**Important Notes:**
+- OIG requires Okta Identity Governance license
+- Some OIG features are API-only (can't be managed in Terraform)
+- This repo handles those with Python scripts in `scripts/`
 
 ### Resources for Learning More
 

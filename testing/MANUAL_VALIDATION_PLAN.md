@@ -255,6 +255,68 @@ This document provides a comprehensive manual validation plan for testing the Ok
   - ✅ Pass: No secrets found
   - ❌ Fail: Secrets detected in files
 
+### 3.3 OIG-Specific Import Workflow
+
+**Objective:** Test the dedicated OIG import workflow
+
+- [ ] **Trigger OIG Import Workflow**
+  ```bash
+  gh workflow run lowerdecklabs-import-oig.yml \
+    -f update_terraform=false \
+    -f commit_changes=false
+  ```
+  - ✅ Pass: Workflow triggered successfully
+  - ❌ Fail: Workflow failed to trigger
+
+- [ ] **Monitor OIG Workflow**
+  ```bash
+  gh run list --workflow=lowerdecklabs-import-oig.yml --limit 1
+  gh run watch <RUN_ID>
+  ```
+  - ✅ Pass: Workflow completes successfully
+  - ❌ Fail: Workflow fails or times out
+  - **Expected Duration:** 1-2 minutes
+  - **Note:** This workflow is OIG-focused and may run faster than full import
+
+- [ ] **Verify OIG Artifacts**
+  ```bash
+  gh run download <RUN_ID>
+  ls -la oig-import-*/
+  ```
+  - Expected OIG files:
+    - `imports/entitlements.json`
+    - `imports/reviews.json`
+    - `terraform/oig_entitlements.tf`
+    - `terraform/oig_reviews.tf`
+  - ✅ Pass: All OIG files present and valid
+  - ❌ Fail: Missing or corrupted OIG files
+
+- [ ] **Validate OIG Resource Structure**
+  ```bash
+  # Check entitlement bundle structure
+  jq '.[0] | keys' oig-import-*/imports/entitlements.json
+  # Expected keys: id, name, description, etc.
+
+  # Check reviews structure
+  jq '.[0] | keys' oig-import-*/imports/reviews.json
+  # Expected keys: id, name, type, status, etc.
+  ```
+  - ✅ Pass: Valid JSON structure with expected fields
+  - ❌ Fail: Malformed or incomplete data
+
+- [ ] **Test Workflow with Auto-Commit**
+  ```bash
+  # Test with update_terraform=true to verify end-to-end flow
+  gh workflow run lowerdecklabs-import-oig.yml \
+    -f update_terraform=true \
+    -f commit_changes=true
+
+  gh run watch <RUN_ID>
+  ```
+  - ✅ Pass: Workflow completes and creates commit
+  - ❌ Fail: Workflow fails or doesn't commit
+  - **Note:** Check that commit message follows format and includes updated OIG files
+
 ---
 
 ## 4. Resource Management Validation
