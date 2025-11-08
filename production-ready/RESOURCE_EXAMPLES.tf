@@ -650,16 +650,50 @@
 # }
 
 # -----------------------------------------------------------------------------
-# Principal Entitlements
+# Entitlement Bundles
+# -----------------------------------------------------------------------------
+
+# resource "okta_entitlement_bundle" "example" {
+#   # Entitlement bundles define collections of access rights
+#   # Documentation: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/entitlement_bundle
+#
+#   name                = "Sales Team Access"
+#   description         = "Standard access for sales team members"
+#   target_resource_orn = "orn:okta:idp:org:apps:oauth2:0oa..."
+#   status              = "ACTIVE"
+#
+#   target {
+#     external_id = "0oa..."  # App or resource ID
+#     type        = "APPLICATION"
+#   }
+#
+#   entitlements {
+#     id = "ent..."
+#     values {
+#       id = "val..."
+#     }
+#   }
+#
+#   # Note: This resource manages the BUNDLE DEFINITION only
+#   # Principal assignments (which users/groups have this bundle) should be
+#   # managed via Okta Admin UI or direct API calls, not in Terraform
+# }
+
+# -----------------------------------------------------------------------------
+# Principal Entitlements (Assignments)
 # -----------------------------------------------------------------------------
 
 # resource "okta_principal_entitlements" "example" {
-#   # Principal entitlements represent bundled access
-#   # Only MANUAL entitlements can be managed in Terraform
-#   # App-managed entitlements (e.g., Salesforce) are READ-ONLY
+#   # WARNING: This resource manages principal ASSIGNMENTS to entitlement bundles
+#   # It is NOT recommended to manage assignments in Terraform due to complexity
+#   # and drift issues. Manage assignments in Okta Admin UI or via API instead.
+#   #
+#   # This resource is for assigning specific users/groups to entitlement bundles
+#   # Only use if you have a strong requirement for IaC-managed assignments
+#   #
+#   # Documentation: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/principal_entitlements
 #
-#   # Note: Exact schema TBD - this is a NEW resource in v6.1.0
-#   # Check official documentation for current schema
+#   # Note: Schema TBD - this is a NEW resource in v6.1.0
 # }
 
 # -----------------------------------------------------------------------------

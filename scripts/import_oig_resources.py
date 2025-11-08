@@ -70,9 +70,12 @@ class OIGImporter:
         """Fetch all entitlement bundles from Okta"""
         print("Fetching entitlement bundles...")
         try:
-            # Use the correct entitlement-bundles endpoint
+            # Use the correct entitlement-bundles endpoint with full entitlements included
             url = f"{self.base_url}/governance/api/v1/entitlement-bundles"
-            params = {"limit": 200}
+            params = {
+                "limit": 200,
+                "include": "full_entitlements"  # Include entitlement details in response
+            }
             response = self._make_request("GET", url, params=params)
 
             # Handle both dict and list responses
@@ -88,90 +91,6 @@ class OIGImporter:
             return bundles
         except Exception as e:
             print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
-            return []
-
-    def fetch_principals_for_bundle(self, bundle_id: str, target_id: str, target_type: str) -> List[Dict]:
-        """Fetch principals assigned to a specific entitlement bundle
-
-        Uses a two-step process:
-        1. Get all principals with grants to the target resource (Grants API)
-        2. For each principal, check if they have this specific bundle (Principal Entitlements API)
-
-        Args:
-            bundle_id: The entitlement bundle ID
-            target_id: The target resource ID (e.g., app ID)
-            target_type: The target resource type (e.g., "APPLICATION")
-
-        Returns:
-            List of dicts with principal information
-        """
-        principals_with_bundle = []
-
-        try:
-            # Step 1: Get all principals with grants to this resource
-            grants_url = f"{self.base_url}/governance/api/v1/grants"
-            filter_expr = f'target.externalId eq "{target_id}" AND target.type eq "{target_type}"'
-            params = {"filter": filter_expr}
-            grants_response = self._make_request("GET", grants_url, params=params)
-
-            grants_data = grants_response.json()
-            if isinstance(grants_data, list):
-                grants = grants_data
-            elif isinstance(grants_data, dict):
-                grants = grants_data.get("data", grants_data.get("grants", []))
-            else:
-                grants = []
-
-            # Extract unique principals from grants
-            principals_seen = set()
-            for grant in grants:
-                target_principal = grant.get("targetPrincipal", {})
-                principal_id = target_principal.get("externalId")
-                principal_type = target_principal.get("type", "")
-
-                if principal_id and principal_id not in principals_seen:
-                    principals_seen.add(principal_id)
-
-                    # Step 2: Check if this principal has the specific bundle
-                    entitlements_url = f"{self.base_url}/governance/api/v1/principal-entitlements"
-                    filter_expr = (f'parent.externalId eq "{target_id}" AND '
-                                 f'parent.type eq "{target_type}" AND '
-                                 f'targetPrincipal.externalId eq "{principal_id}" AND '
-                                 f'targetPrincipal.type eq "{principal_type}"')
-                    params = {"filter": filter_expr}
-
-                    try:
-                        ent_response = self._make_request("GET", entitlements_url, params=params)
-                        ent_data = ent_response.json()
-
-                        if isinstance(ent_data, list):
-                            entitlements = ent_data
-                        elif isinstance(ent_data, dict):
-                            entitlements = ent_data.get("data", ent_data.get("entitlements", []))
-                        else:
-                            entitlements = []
-
-                        # Check if any entitlement matches our bundle
-                        for entitlement in entitlements:
-                            ent_id = entitlement.get("id") or entitlement.get("externalId")
-                            if ent_id == bundle_id:
-                                # Found a match! Add this principal
-                                principals_with_bundle.append({
-                                    "principalId": principal_id,
-                                    "principalType": principal_type.replace("OKTA_", ""),
-                                    "principalName": target_principal.get("name", "")
-                                })
-                                break
-
-                    except Exception as e:
-                        # Log but continue with other principals
-                        print(f"      ⚠️  Could not check entitlements for principal {principal_id}: {e}")
-                        continue
-
-            return principals_with_bundle
-
-        except Exception as e:
-            print(f"    ⚠️  Could not fetch principals for bundle {bundle_id}: {e}")
             return []
 
     def fetch_reviews(self) -> List[Dict]:
@@ -240,14 +159,16 @@ class OIGImporter:
         tf_config.append("# =============================================================================")
         tf_config.append("# OKTA IDENTITY GOVERNANCE - ENTITLEMENT BUNDLES")
         tf_config.append("# =============================================================================")
-        tf_config.append("# These are entitlement bundles imported from Okta.")
-        tf_config.append("# Each bundle represents a collection of access rights.")
+        tf_config.append("# Entitlement bundles define collections of access rights that can be assigned")
+        tf_config.append("# to users and groups. These bundles are managed via Terraform.")
         tf_config.append("#")
-        tf_config.append("# NOTE: The Terraform okta_principal_entitlements resource is used to manage")
-        tf_config.append("# assignments of principals to entitlements. The bundles themselves are")
-        tf_config.append("# managed via the API and cannot be created in Terraform.")
+        tf_config.append("# IMPORTANT:")
+        tf_config.append("# - Entitlement BUNDLES (definitions) are managed here in Terraform")
+        tf_config.append("# - Entitlement ASSIGNMENTS (which users/groups have bundles) should be")
+        tf_config.append("#   managed in Okta Admin UI or via direct API calls, NOT in Terraform")
         tf_config.append("#")
-        tf_config.append("# To import: Run the generated import.sh script")
+        tf_config.append("# Resource: okta_entitlement_bundle")
+        tf_config.append("# Documentation: https://registry.terraform.io/providers/okta/okta/latest/docs/resources/entitlement_bundle")
         tf_config.append("# =============================================================================")
         tf_config.append("")
 
@@ -265,76 +186,80 @@ class OIGImporter:
 
             safe_name = self._sanitize_name(name)
 
-            # Extract target resource information
+            # Extract bundle properties
             target = bundle.get("target", {})
             target_id = target.get("externalId", "")
             target_type = target.get("type", "")
+            target_name = target.get("name", "")
+            status = bundle.get("status", "ACTIVE")
+            entitlements = bundle.get("entitlements", [])
 
-            # Fetch principals assigned to this bundle
-            principals = []
-            if target_id and target_type:
-                print(f"  Fetching principal assignments for: {name}")
-                principals = self.fetch_principals_for_bundle(bundle_id, target_id, target_type)
-            else:
-                print(f"  ⚠️  No target resource found for: {name}, skipping principal fetch")
+            print(f"  Generating resource for bundle: {name}")
 
+            # Add comment header
             tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'# {name}')
+            if description:
+                tf_config.append(f'# {description}')
             tf_config.append(f'# {"-" * 77}')
             tf_config.append(f'')
-            tf_config.append(f'resource "okta_principal_entitlements" "{safe_name}" {{')
-            tf_config.append(f'  # Bundle ID: {bundle_id}')
-            tf_config.append(f'  # ORN: {orn}')
-            tf_config.append(f'  # Type: {bundle_type}')
+
+            # Generate okta_entitlement_bundle resource
+            tf_config.append(f'resource "okta_entitlement_bundle" "{safe_name}" {{')
+            tf_config.append(f'  name = "{name}"')
+
             if description:
-                tf_config.append(f'  # Description: {description}')
+                # Escape quotes in description
+                escaped_desc = description.replace('"', '\\"')
+                tf_config.append(f'  description = "{escaped_desc}"')
+
+            if orn:
+                tf_config.append(f'  target_resource_orn = "{orn}"')
+
+            if status:
+                tf_config.append(f'  status = "{status}"')
+
             tf_config.append(f'')
 
-            # Generate principal blocks
-            if principals:
-                print(f"    Found {len(principals)} principal(s) with this bundle")
-                for principal in principals:
-                    principal_id = principal.get("principalId")
-                    principal_type = principal.get("principalType", "USER")
-                    principal_name = principal.get("principalName", "")
+            # Add target block
+            if target_id and target_type:
+                tf_config.append(f'  target {{')
+                tf_config.append(f'    external_id = "{target_id}"')
+                tf_config.append(f'    type        = "{target_type}"')
+                if target_name:
+                    tf_config.append(f'    # Resource name: {target_name}')
+                tf_config.append(f'  }}')
+                tf_config.append(f'')
 
-                    if principal_id:
-                        tf_config.append(f'  principal {{')
-                        tf_config.append(f'    id   = "{principal_id}"')
-                        tf_config.append(f'    type = "{principal_type}"')
-                        if principal_name:
-                            tf_config.append(f'    # Name: {principal_name}')
+            # Add entitlements blocks
+            if entitlements:
+                for entitlement in entitlements:
+                    ent_id = entitlement.get("id") or entitlement.get("externalId")
+                    ent_values = entitlement.get("values", [])
+
+                    if ent_id:
+                        tf_config.append(f'  entitlements {{')
+                        tf_config.append(f'    id = "{ent_id}"')
+
+                        if ent_values:
+                            for value in ent_values:
+                                value_id = value.get("id") or value.get("externalId")
+                                if value_id:
+                                    tf_config.append(f'    values {{')
+                                    tf_config.append(f'      id = "{value_id}"')
+                                    tf_config.append(f'    }}')
+
                         tf_config.append(f'  }}')
                         tf_config.append(f'')
 
-                # Add entitlement block
-                tf_config.append(f'  entitlement {{')
-                tf_config.append(f'    id   = "{bundle_id}"')
-                tf_config.append(f'    name = "{name}"')
-                tf_config.append(f'  }}')
-            else:
-                # No principals found - add TODO comment
-                tf_config.append(f'  # TODO: No principal assignments found')
-                tf_config.append(f'  # Add principal and entitlement configuration as needed')
-                tf_config.append(f'')
-                tf_config.append(f'  # Example configuration:')
-                tf_config.append(f'  # principal {{')
-                tf_config.append(f'  #   id   = "00u..."  # User or group ID')
-                tf_config.append(f'  #   type = "USER"    # or "GROUP"')
-                tf_config.append(f'  # }}')
-                tf_config.append(f'  #')
-                tf_config.append(f'  # entitlement {{')
-                tf_config.append(f'  #   id   = "{bundle_id}"')
-                tf_config.append(f'  #   name = "{name}"')
-                tf_config.append(f'  # }}')
-
+            tf_config.append(f'  # Bundle Type: {bundle_type}')
+            tf_config.append(f'  # ORN: {orn}')
             tf_config.append(f'}}')
             tf_config.append('')
 
-            # For import, we may need the bundle ID or a different identifier
-            # This might need adjustment based on actual Terraform import syntax
+            # Generate import command
             import_commands.append(f'# Import bundle: {name}')
-            import_commands.append(f'# terraform import okta_principal_entitlements.{safe_name} {bundle_id}')
+            import_commands.append(f'terraform import okta_entitlement_bundle.{safe_name} {bundle_id}')
             import_commands.append('')
 
         return "\n".join(tf_config), import_commands

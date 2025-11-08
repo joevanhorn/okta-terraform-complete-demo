@@ -32,8 +32,12 @@ jobs:
           echo "=================================================="
           echo ""
           echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
-          echo "Operation: Import entitlement bundles from Okta"
+          echo "Operation: Import entitlement bundle definitions from Okta"
           echo "Update Terraform: ${{ github.event.inputs.update_terraform }}"
+          echo ""
+          echo "NOTE: This imports BUNDLE DEFINITIONS only."
+          echo "Principal assignments (grants) are NOT imported and"
+          echo "should be managed in Okta Admin UI or via API."
           echo "=================================================="
 
       - name: Checkout code
@@ -117,9 +121,12 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "$(cat <<'EOF'
-          feat(oig): Import entitlement bundles from Okta
+          feat(oig): Import entitlement bundle definitions from Okta
 
-          Imported ${{ steps.results.outputs.bundles }} entitlement bundles
+          Imported ${{ steps.results.outputs.bundles }} entitlement bundle definitions.
+
+          NOTE: This imports bundle definitions only (okta_entitlement_bundle resources).
+          Principal assignments (grants) are managed in Okta Admin UI, not in Terraform.
 
           🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
