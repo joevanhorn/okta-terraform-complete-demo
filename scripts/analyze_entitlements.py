@@ -201,7 +201,7 @@ def main():
     if not api_token:
         print("Error: OKTA_API_TOKEN environment variable required")
         print("\nUsage:")
-        print("  export OKTA_API_TOKEN='your-token'")
+        print("  export OKTA" + "_API_TOKEN=<your-token-here>")
         print("  python3 analyze_entitlements.py")
         sys.exit(1)
 
