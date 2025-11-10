@@ -125,10 +125,25 @@ Don't worry - we'll explain every command you type!
 3. **An Okta Account** with admin access
    - Ask your team for access to a demo tenant
    - You need "Super Admin" permissions
+4. **AWS Account** (for secure state storage)
+   - Free tier eligible
+   - **Cost:** ~$0.50/month for typical demo usage
+   - Stores Terraform state in S3 (not on your computer)
+   - Enables team collaboration and automated workflows
 
 #### Nice to Have:
 1. **A text editor** - We recommend Visual Studio Code (free)
 2. **Patience** - First time always takes longer (that's normal!)
+
+#### About AWS State Storage
+
+**Why AWS?** This demo uses Amazon S3 to store Terraform state files securely:
+- ✅ **Team Collaboration:** Multiple people can work on the same demo
+- ✅ **State History:** Rollback to previous versions if needed
+- ✅ **State Locking:** Prevents conflicts when multiple people make changes
+- ✅ **GitHub Actions:** Automated testing and deployment
+
+**Alternative:** You can use local state (files on your computer), but you'll miss out on collaboration features and GitHub Actions workflows. See `docs/AWS_BACKEND_SETUP.md` for migration back to local if needed.
 
 ---
 
@@ -196,7 +211,105 @@ We need to install several tools. Don't worry - we'll guide you through each one
 
 ---
 
-### Step 3: Install Terraform (10 minutes)
+### Step 3: Install AWS CLI (10 minutes)
+
+**What is it?** Command-line tool to interact with AWS services.
+
+**Why do we need it?** To set up S3 storage for Terraform state and verify AWS resources.
+
+#### For Mac Users:
+
+1. Open Terminal
+2. Type this command and press Enter:
+   ```bash
+   curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+   sudo installer -pkg AWSCLIV2.pkg -target /
+   ```
+3. Enter your Mac password when prompted
+
+#### For Windows Users:
+
+1. Go to: https://awscli.amazonaws.com/AWSCLIV2.msi
+2. Download and run the installer
+3. Click "Next" through all options
+4. Restart your command prompt/terminal
+
+**Test it worked:**
+
+1. Open a new Terminal/Command Prompt
+2. Type:
+   ```bash
+   aws --version
+   ```
+3. You should see something like: `aws-cli/2.15.0 Python/3.11.6`
+
+✅ **Success!** AWS CLI is installed.
+
+#### Configure AWS Credentials
+
+After AWS backend infrastructure is deployed (see Section 7.5), you'll need AWS credentials.
+
+**Getting Your AWS Credentials (Using AWS Console/GUI):**
+
+1. **Sign in to AWS Console**
+   - Go to: https://console.aws.amazon.com/
+   - Sign in with your AWS account
+   - (Don't have AWS? Create free account at: https://aws.amazon.com/free/)
+
+2. **Navigate to IAM (Identity and Access Management)**
+   - In the search bar at the top, type: `IAM`
+   - Click **IAM** from the results
+   - Or go directly to: https://console.aws.amazon.com/iam/
+
+3. **Create Access Keys**
+   - Click **Users** in the left sidebar
+   - Click on your username (or create a user if needed)
+   - Click the **Security credentials** tab
+   - Scroll down to **Access keys** section
+   - Click **Create access key**
+   - Select use case: **Command Line Interface (CLI)**
+   - Check the box: "I understand the above recommendation"
+   - Click **Next**
+   - (Optional) Add description tag: "Terraform Local Development"
+   - Click **Create access key**
+
+4. **Save Your Credentials** ⚠️ IMPORTANT!
+   - You'll see:
+     - **Access key ID** (starts with `AKIA...`)
+     - **Secret access key** (long random string)
+   - Click **Download .csv file** (recommended)
+   - Or copy both values to a secure note
+   - ⚠️ You can NEVER see the secret again after closing this page!
+
+5. **Configure AWS CLI**
+   ```bash
+   aws configure
+   # Paste your values when prompted:
+   # AWS Access Key ID: AKIAIOSFODNN7EXAMPLE
+   # AWS Secret Access Key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+   # Default region name: us-east-1
+   # Default output format: json
+   ```
+
+6. **Test It Works**
+   ```bash
+   aws sts get-caller-identity
+   # Should show your AWS account ID and user info
+   ```
+
+✅ **Success!** AWS CLI is configured with your credentials.
+
+**Security Note:** These credentials give access to your AWS account. Keep them secure:
+- ✅ Store in password manager
+- ✅ Don't commit to Git
+- ✅ Don't share with others
+- ❌ Never post online or in screenshots
+
+**Note:** For GitHub Actions, we'll use OIDC (no credentials stored in GitHub), but you need local credentials for the initial infrastructure setup.
+
+---
+
+### Step 4: Install Terraform (10 minutes)
 
 **What is it?** The tool that reads your code and talks to Okta.
 
@@ -511,6 +624,148 @@ Now we'll create a file with your Okta details.
 3. If you see it, great! This means Git will ignore this file and won't upload it anywhere.
 
 ✅ **Success!** You're connected to Okta.
+
+---
+
+## 7.5. Setting Up AWS Backend (One-Time Setup)
+
+Before you can use Terraform, you need to set up AWS to store the Terraform state files.
+
+**What is State?** Terraform keeps track of what it created in a "state file" - think of it as Terraform's memory. We store this in AWS S3 instead of your computer so your team can collaborate.
+
+### Step 1: Deploy AWS Backend Infrastructure
+
+This creates the S3 bucket and DynamoDB table for state storage:
+
+```bash
+# Navigate to the aws-backend directory
+cd ~/okta-terraform-complete-demo/aws-backend
+
+# Initialize Terraform (one-time)
+terraform init
+
+# See what will be created
+terraform plan
+# You should see: S3 bucket, DynamoDB table, IAM roles
+
+# Create the infrastructure
+terraform apply
+# Type "yes" when prompted
+```
+
+**What this creates:**
+- S3 bucket: `okta-terraform-demo` (stores state files)
+- DynamoDB table: `okta-terraform-state-lock` (prevents conflicts)
+- IAM role: `GitHubActions-OktaTerraform` (for GitHub workflows)
+- OIDC provider: For secure GitHub authentication
+
+**Time:** 2-3 minutes
+
+### Step 2: Save the AWS Role ARN
+
+After `terraform apply` completes, you'll see outputs. Save this value:
+
+```bash
+# Copy this value - you'll need it for GitHub
+terraform output github_actions_role_arn
+
+# Example output:
+# arn:aws:iam::123456789012:role/GitHubActions-OktaTerraform
+```
+
+**Write this down** or save it in a note - you'll use it in the next step!
+
+### Step 3: Configure GitHub Secret
+
+Now tell GitHub how to authenticate with AWS:
+
+1. Go to your GitHub repository: https://github.com/YOUR_USERNAME/okta-terraform-complete-demo
+2. Click **Settings** (top right)
+3. Click **Secrets and variables** → **Actions** (left sidebar)
+4. Click **New repository secret**
+5. **Name:** `AWS_ROLE_ARN`
+6. **Value:** Paste the ARN from Step 2
+7. Click **Add secret**
+
+✅ **Done!** GitHub can now authenticate with AWS securely (no passwords stored!)
+
+### Understanding What You Did
+
+You just created a secure, production-ready backend:
+- ✅ State files stored in S3 (encrypted, versioned)
+- ✅ State locking via DynamoDB (prevents conflicts)
+- ✅ GitHub Actions can deploy automatically (via OIDC)
+- ✅ Team members can collaborate safely
+
+**Cost:** ~$0.50/month for typical demo usage
+
+### Step 4: Verify in AWS Console (Optional but Recommended)
+
+Want to see what was created? Let's look in the AWS Console:
+
+#### View S3 Bucket (Where State Files Live)
+
+1. **Go to S3 Console**
+   - Navigate to: https://console.aws.amazon.com/s3/
+   - Or search "S3" in the AWS Console search bar
+
+2. **Find Your Bucket**
+   - Look for bucket named: `okta-terraform-demo`
+   - Click on the bucket name
+
+3. **Explore the Bucket**
+   - You should see:
+     - **Versioning:** Enabled (shown at top)
+     - **Encryption:** Enabled (shown in Properties tab)
+   - The bucket might be empty now (state files created when you run Terraform)
+   - After running Terraform, you'll see: `Okta-GitOps/lowerdecklabs/terraform.tfstate`
+
+**Screenshot Tip:** Take a screenshot of your empty bucket - you can compare it later after Terraform runs!
+
+#### View DynamoDB Table (State Locking)
+
+1. **Go to DynamoDB Console**
+   - Navigate to: https://console.aws.amazon.com/dynamodb/
+   - Or search "DynamoDB" in the AWS Console
+
+2. **Find Your Table**
+   - Click **Tables** in the left sidebar
+   - Look for table named: `okta-terraform-state-lock`
+   - Click on the table name
+
+3. **Explore the Table**
+   - Click **Explore table items** button
+   - Should be empty (locks only appear during Terraform operations)
+   - Click **Additional info** to see:
+     - **Billing mode:** On-demand (pay per use)
+     - **Encryption:** Enabled
+
+**What This Table Does:** When someone runs Terraform, a lock record appears here temporarily. This prevents two people from making changes at the same time.
+
+#### View IAM Role (GitHub Actions Authentication)
+
+1. **Go to IAM Console**
+   - Navigate to: https://console.aws.amazon.com/iam/
+   - Or search "IAM" in the AWS Console
+
+2. **Find the Role**
+   - Click **Roles** in the left sidebar
+   - Search for: `GitHubActions-OktaTerraform`
+   - Click on the role name
+
+3. **Explore the Role**
+   - **Trust relationships** tab shows:
+     - Trusted entity: `token.actions.githubusercontent.com`
+     - Condition: Your repository name
+   - **Permissions** tab shows:
+     - Access to S3 bucket
+     - Access to DynamoDB table
+
+**What This Role Does:** GitHub Actions assumes this role (temporarily becomes this role) to access your S3 bucket and DynamoDB table. No long-term credentials needed!
+
+✅ **Great!** Now you understand what infrastructure supports your Terraform state.
+
+**Next:** You can now use Terraform with confidence that your state is safe!
 
 ---
 
