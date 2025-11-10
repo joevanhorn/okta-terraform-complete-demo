@@ -172,6 +172,9 @@ class OIGImporter:
         tf_config.append("# =============================================================================")
         tf_config.append("")
 
+        # Track used resource names to handle duplicates
+        used_names = {}
+
         for bundle in bundles:
             bundle_id = bundle.get("id") or bundle.get("bundleId")
             name = bundle.get("name", "unnamed")
@@ -185,6 +188,15 @@ class OIGImporter:
                 continue
 
             safe_name = self._sanitize_name(name)
+
+            # Handle name collisions by appending unique suffix from bundle ID
+            if safe_name in used_names:
+                # Get last 8 chars of bundle ID for uniqueness
+                id_suffix = bundle_id[-8:] if bundle_id and len(bundle_id) >= 8 else bundle_id
+                safe_name = f"{safe_name}_{id_suffix}"
+                print(f"  ⚠️  Name collision detected for '{name}' - using '{safe_name}'")
+
+            used_names[safe_name] = bundle_id
 
             # Extract bundle properties
             target = bundle.get("target", {})
