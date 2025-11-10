@@ -578,7 +578,7 @@
 # resource "okta_domain_certificate" "example" {
 #   domain_id   = okta_domain.example.id
 #   certificate = file("cert.pem")
-#   private_key = file("key.pem")
+#   certificate_key = file("key.pem")  # Certificate's private key file
 #   certificate_chain = file("chain.pem")
 # }
 
