@@ -29,6 +29,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write  # Required for AWS OIDC
 
 jobs:
   terraform-plan:
@@ -56,6 +57,13 @@ jobs:
               echo "environment=lowerdecklabs" >> $GITHUB_OUTPUT
             fi
           fi
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-TerraformPlan-${{ steps.detect-env.outputs.environment }}
+          aws-region: us-east-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

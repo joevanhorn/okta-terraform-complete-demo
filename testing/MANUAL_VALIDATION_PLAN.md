@@ -2,9 +2,9 @@
 
 This document provides a comprehensive manual validation plan for testing the Okta Terraform configuration across all environments and workflows.
 
-**Last Updated:** 2025-11-07
+**Last Updated:** 2025-11-09
 **Estimated Time:** 2-3 hours for complete validation
-**Required Access:** Okta Admin Console, GitHub Actions, Local Terminal
+**Required Access:** Okta Admin Console, GitHub Actions, Local Terminal, AWS Console
 
 ---
 
@@ -70,6 +70,14 @@ This document provides a comprehensive manual validation plan for testing the Ok
   - ✅ Pass: jq installed
   - ❌ Fail: Not installed
 
+- [ ] **AWS CLI Installed**
+  ```bash
+  aws --version
+  # Expected: aws-cli/2.0.0 or higher
+  ```
+  - ✅ Pass: AWS CLI installed and configured
+  - ❌ Fail: Not installed
+
 ### 1.2 Access Verification
 
 - [ ] **Okta Admin Console Access**
@@ -92,7 +100,15 @@ This document provides a comprehensive manual validation plan for testing the Ok
 
 ### 1.3 Secrets Validation
 
-- [ ] **LowerDeckLabs Secrets Present**
+- [ ] **Repository Secret - AWS Role**
+  - Check in GitHub: Settings → Secrets and variables → Actions
+  - Required repository secret:
+    - `AWS_ROLE_ARN`
+  - ✅ Pass: Secret exists with valid ARN format
+  - ❌ Fail: Missing or invalid format
+  - **Expected Format:** `arn:aws:iam::ACCOUNT_ID:role/GitHubActions-OktaTerraform`
+
+- [ ] **LowerDeckLabs Environment Secrets Present**
   - Check in GitHub: Settings → Environments → LowerDeckLabs
   - Required secrets:
     - `OKTA_API_TOKEN`
@@ -661,11 +677,152 @@ This document provides a comprehensive manual validation plan for testing the Ok
 
 ## 6. State Management Validation
 
-### 6.1 State File Integrity
+### 6.1 AWS Backend Infrastructure
+
+**Objective:** Verify AWS backend infrastructure is properly configured
+
+- [ ] **Verify S3 Bucket Exists**
+  ```bash
+  aws s3 ls s3://okta-terraform-demo/
+  # Expected: Bucket exists and is accessible
+  ```
+  - ✅ Pass: Bucket accessible
+  - ❌ Fail: AccessDenied or bucket doesn't exist
+
+- [ ] **Check S3 Bucket Versioning**
+  ```bash
+  aws s3api get-bucket-versioning --bucket okta-terraform-demo
+  # Expected: "Status": "Enabled"
+  ```
+  - ✅ Pass: Versioning enabled
+  - ❌ Fail: Versioning not enabled
+
+- [ ] **Check S3 Bucket Encryption**
+  ```bash
+  aws s3api get-bucket-encryption --bucket okta-terraform-demo
+  # Expected: AES256 or aws:kms
+  ```
+  - ✅ Pass: Encryption enabled
+  - ❌ Fail: No encryption
+
+- [ ] **Verify DynamoDB Lock Table**
+  ```bash
+  aws dynamodb describe-table --table-name okta-terraform-state-lock
+  # Expected: Table exists with LockID hash key
+  ```
+  - ✅ Pass: Table exists and configured correctly
+  - ❌ Fail: Table missing or misconfigured
+
+- [ ] **Check IAM Role for GitHub Actions**
+  ```bash
+  aws iam get-role --role-name GitHubActions-OktaTerraform
+  # Expected: Role exists
+  ```
+  - ✅ Pass: Role exists
+  - ❌ Fail: Role not found
+
+- [ ] **Verify OIDC Provider**
+  ```bash
+  aws iam list-open-id-connect-providers | grep token.actions.githubusercontent.com
+  # Expected: Provider exists
+  ```
+  - ✅ Pass: OIDC provider configured
+  - ❌ Fail: Provider missing
+
+### 6.2 S3 State Storage
+
+**Objective:** Verify state files are properly stored in S3
+
+- [ ] **List State Files in S3**
+  ```bash
+  aws s3 ls s3://okta-terraform-demo/Okta-GitOps/ --recursive
+  # Expected: State files for each environment
+  ```
+  - ✅ Pass: State files present for configured environments
+  - ❌ Fail: Missing state files
+  - **Environments Found:** `______`
+
+- [ ] **Verify LowerDeckLabs State**
+  ```bash
+  aws s3 ls s3://okta-terraform-demo/Okta-GitOps/lowerdecklabs/terraform.tfstate
+  # Expected: File exists
+  ```
+  - ✅ Pass: State file exists
+  - ❌ Fail: State file missing
+  - **File Size:** `______`
+
+- [ ] **Download and Validate State**
+  ```bash
+  aws s3 cp s3://okta-terraform-demo/Okta-GitOps/lowerdecklabs/terraform.tfstate /tmp/state.json
+  jq '.version' /tmp/state.json
+  # Expected: 4 (Terraform state version)
+  ```
+  - ✅ Pass: Valid state file structure
+  - ❌ Fail: Corrupted or invalid state
+
+- [ ] **Check State Versions**
+  ```bash
+  aws s3api list-object-versions \
+    --bucket okta-terraform-demo \
+    --prefix Okta-GitOps/lowerdecklabs/terraform.tfstate | \
+    jq '.Versions | length'
+  # Expected: Multiple versions (versioning working)
+  ```
+  - ✅ Pass: Multiple versions exist
+  - ❌ Fail: Only one version (versioning not working)
+  - **Version Count:** `______`
+
+### 6.3 State Locking with DynamoDB
+
+**Objective:** Verify state locking prevents concurrent modifications
+
+- [ ] **Test State Lock Acquisition**
+  ```bash
+  cd environments/lowerdecklabs/terraform
+  # Terminal 1: Run this and leave waiting at "Enter a value:" prompt
+  terraform apply
+
+  # Terminal 2 (in new terminal): Try to run plan while Terminal 1 is waiting
+  terraform plan
+  # Expected: "Error acquiring the state lock"
+  ```
+  - ✅ Pass: Second command blocked by lock
+  - ❌ Fail: Second command proceeds (locking not working!)
+  - **Lock ID (if blocked):** `______`
+
+- [ ] **Verify Lock Released After Operation**
+  ```bash
+  # After canceling Terminal 1 (Ctrl+C), run in Terminal 2:
+  terraform plan
+  # Expected: Plan runs successfully
+  ```
+  - ✅ Pass: Lock released, plan succeeds
+  - ❌ Fail: Lock stuck (may need force-unlock)
+
+- [ ] **Check DynamoDB for Locks**
+  ```bash
+  aws dynamodb scan --table-name okta-terraform-state-lock
+  # While operation running: Expected to see lock item
+  # After operation: Expected empty or no items
+  ```
+  - ✅ Pass: Locks appear/disappear as expected
+  - ❌ Fail: Locks stuck or not appearing
+
+- [ ] **Test Force Unlock (If Needed)**
+  ```bash
+  # If lock is stuck from previous test:
+  terraform force-unlock <LOCK_ID>
+  # LOCK_ID from error message
+  ```
+  - ✅ Pass: Unlock succeeds
+  - ❌ Fail: Unable to unlock
+  - **Notes:** `______`
+
+### 6.4 State File Integrity
 
 **Objective:** Verify Terraform state is valid and consistent
 
-- [ ] **Validate State**
+- [ ] **Validate State via Terraform**
   ```bash
   cd environments/lowerdecklabs/terraform
   terraform state list | wc -l
@@ -675,10 +832,10 @@ This document provides a comprehensive manual validation plan for testing the Ok
   - ❌ Fail: Error or empty
   - **Resource Count:** `______`
 
-- [ ] **Check for State Corruption**
+- [ ] **Pull State from S3**
   ```bash
-  terraform state pull > /tmp/state_backup.json
-  jq '.version' /tmp/state_backup.json
+  terraform state pull > /tmp/state_validation.json
+  jq '.version' /tmp/state_validation.json
   # Expected: 4 (Terraform state version)
   ```
   - ✅ Pass: Valid state version
@@ -691,11 +848,65 @@ This document provides a comprehensive manual validation plan for testing the Ok
   ```
   - ✅ Pass: State matches Okta
   - ❌ Fail: Drift detected (may indicate state issue)
+  - **Drift Items (if any):** `______`
 
-### 6.2 State Backup
+### 6.5 GitHub Actions OIDC Authentication
 
-- [ ] **Create State Backup**
+**Objective:** Verify GitHub Actions can authenticate with AWS
+
+- [ ] **Trigger Terraform Plan Workflow**
   ```bash
+  # Make a trivial change and push
+  git checkout -b test-aws-auth
+  echo "# Test" >> environments/lowerdecklabs/terraform/README.md
+  git add .
+  git commit -m "test: Verify AWS OIDC authentication"
+  git push -u origin test-aws-auth
+
+  # Create PR
+  gh pr create --title "Test AWS Authentication" --body "Testing OIDC"
+  ```
+  - ✅ Pass: PR created successfully
+  - ❌ Fail: Push or PR creation failed
+
+- [ ] **Monitor Workflow for AWS Authentication**
+  ```bash
+  gh run list --workflow=terraform-plan.yml --limit 1
+  gh run watch <RUN_ID>
+  ```
+  - Check for step: "Configure AWS Credentials via OIDC"
+  - ✅ Pass: Authentication succeeds
+  - ❌ Fail: "Error: failed to refresh cached credentials"
+  - **Workflow Run:** `______`
+
+- [ ] **Verify Terraform Init with S3 Backend**
+  - Check workflow logs for "Terraform Init" step
+  - Expected output should show:
+    ```
+    Initializing the backend...
+    Successfully configured the backend "s3"!
+    ```
+  - ✅ Pass: Backend initialized successfully
+  - ❌ Fail: Backend initialization errors
+
+- [ ] **Verify Plan Uses Remote State**
+  - Check workflow logs for state lock acquisition
+  - Expected: Should show DynamoDB lock operation
+  - ✅ Pass: Remote state and locking working
+  - ❌ Fail: Using local state or no locking
+
+- [ ] **Clean Up Test PR**
+  ```bash
+  gh pr close --delete-branch
+  ```
+  - ✅ Pass: PR closed and branch deleted
+  - ❌ Fail: Cleanup failed
+
+### 6.6 State Backup and Recovery
+
+- [ ] **Create Manual State Backup**
+  ```bash
+  cd environments/lowerdecklabs/terraform
   terraform state pull > state_backup_$(date +%Y%m%d).json
   ls -lh state_backup_*.json
   ```
@@ -710,6 +921,38 @@ This document provides a comprehensive manual validation plan for testing the Ok
   ```
   - ✅ Pass: Valid JSON
   - ❌ Fail: Invalid JSON (exit code != 0)
+
+- [ ] **Test State Recovery from S3 Version**
+  ```bash
+  # List available versions
+  aws s3api list-object-versions \
+    --bucket okta-terraform-demo \
+    --prefix Okta-GitOps/lowerdecklabs/terraform.tfstate \
+    --query 'Versions[*].[VersionId,LastModified]' \
+    --output table
+
+  # Download specific version (for reference only - don't restore yet!)
+  VERSION_ID="<copy-version-id>"
+  aws s3api get-object \
+    --bucket okta-terraform-demo \
+    --key Okta-GitOps/lowerdecklabs/terraform.tfstate \
+    --version-id $VERSION_ID \
+    /tmp/state_old_version.json
+
+  jq '.version' /tmp/state_old_version.json
+  ```
+  - ✅ Pass: Can retrieve old versions
+  - ❌ Fail: Cannot access versions
+  - **Number of Versions:** `______`
+
+- [ ] **Verify S3 Access Logging**
+  ```bash
+  aws s3 ls s3://okta-terraform-demo-logs/state-access-logs/
+  # Expected: Log files from S3 access
+  ```
+  - ✅ Pass: Access logs being created
+  - ❌ Fail: No logs or bucket doesn't exist
+  - **Recent Log Files:** `______`
 
 ---
 
