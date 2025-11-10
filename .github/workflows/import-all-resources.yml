@@ -331,6 +331,29 @@ jobs:
           terraform init
 
           echo ""
+          echo "🧹 Cleaning up old entitlement bundle resources from state..."
+          echo "   This ensures idempotent imports by removing stale bundle definitions."
+
+          # List all entitlement bundle resources in state
+          OLD_BUNDLES=$(terraform state list | grep "okta_entitlement_bundle" || true)
+
+          if [ -n "$OLD_BUNDLES" ]; then
+            echo "   Found $(echo "$OLD_BUNDLES" | wc -l) existing entitlement bundles in state"
+
+            # Remove each old bundle from state
+            while IFS= read -r bundle; do
+              if [ -n "$bundle" ]; then
+                echo "   Removing: $bundle"
+                terraform state rm "$bundle" || echo "   (Already removed or not found)"
+              fi
+            done <<< "$OLD_BUNDLES"
+
+            echo "✅ State cleanup complete"
+          else
+            echo "   No existing entitlement bundles found in state (clean slate)"
+          fi
+
+          echo ""
           echo "📥 Importing resources into Terraform state..."
           echo "   This tells Terraform that these resources already exist in Okta."
           echo ""
