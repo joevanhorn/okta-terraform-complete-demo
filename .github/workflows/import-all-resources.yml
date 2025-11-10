@@ -40,6 +40,7 @@ jobs:
     permissions:
       contents: write
       actions: read
+      id-token: write  # Required for AWS OIDC authentication
 
     steps:
       - name: Workflow Overview
@@ -282,14 +283,99 @@ jobs:
           echo "✅ Updated JSON reference files in ${{ env.ENV_DIR }}/imports/"
 
       # ============================================================================
-      # STEP 5: Update Config Files
+      # STEP 5: Import Resources into Terraform State
       # ============================================================================
 
-      - name: "Step 5: Update Config Files"
+      - name: "Step 5: Configure AWS Credentials for Terraform"
+        if: inputs.update_terraform == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-ImportResources-${{ inputs.tenant_environment }}
+          aws-region: us-east-1
+
+      - name: "Step 5: Setup Terraform"
+        if: inputs.update_terraform == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: "Step 5: Import Resources into Terraform State"
+        if: inputs.update_terraform == 'true'
+        working-directory: ${{ env.ENV_DIR }}/terraform
+        env:
+          TF_VAR_okta_org_name: ${{ secrets.OKTA_ORG_NAME }}
+          TF_VAR_okta_base_url: ${{ secrets.OKTA_BASE_URL }}
+          TF_VAR_okta_api_token: ${{ secrets.OKTA_API_TOKEN }}
         run: |
           echo ""
           echo "=================================================================="
-          echo "STEP 5: Updating Environment Config Files"
+          echo "STEP 5: Importing Resources into Terraform State"
+          echo "=================================================================="
+
+          # Check if import script exists
+          if [ ! -f "${{ github.workspace }}/${{ env.IMPORT_DIR }}/oig-resources/import.sh" ]; then
+            echo "⚠️  No import script found - skipping state import"
+            echo "   (This is normal if no OIG resources were imported)"
+            exit 0
+          fi
+
+          # Create terraform.tfvars
+          cat > terraform.tfvars << EOF
+          okta_org_name  = "${{ secrets.OKTA_ORG_NAME }}"
+          okta_base_url  = "${{ secrets.OKTA_BASE_URL }}"
+          okta_api_token = "${{ secrets.OKTA_API_TOKEN }}"
+          EOF
+
+          echo "🔧 Initializing Terraform with S3 backend..."
+          terraform init
+
+          echo ""
+          echo "📥 Importing resources into Terraform state..."
+          echo "   This tells Terraform that these resources already exist in Okta."
+          echo ""
+
+          # Copy import script to working directory
+          cp "${{ github.workspace }}/${{ env.IMPORT_DIR }}/oig-resources/import.sh" ./import.sh
+          chmod +x ./import.sh
+
+          # Run import script (continue on errors for idempotency)
+          set +e
+          ./import.sh 2>&1 | tee import_execution.log
+          IMPORT_EXIT_CODE=$?
+          set -e
+
+          # Count successful imports
+          SUCCESSFUL_IMPORTS=$(grep -c "Import successful" import_execution.log || echo "0")
+          ALREADY_MANAGED=$(grep -c "already being managed" import_execution.log || echo "0")
+          TOTAL_IMPORTS=$((SUCCESSFUL_IMPORTS + ALREADY_MANAGED))
+
+          echo ""
+          echo "✅ Import complete!"
+          echo "   - Successfully imported: $SUCCESSFUL_IMPORTS resources"
+          echo "   - Already managed: $ALREADY_MANAGED resources"
+          echo "   - Total in state: $TOTAL_IMPORTS resources"
+          echo ""
+
+          # Clean up sensitive files
+          rm -f terraform.tfvars
+
+          # Verify state
+          echo "🔍 Verifying Terraform state..."
+          terraform state list | head -20
+          RESOURCE_COUNT=$(terraform state list | wc -l)
+          echo ""
+          echo "✅ Terraform state now contains $RESOURCE_COUNT resources"
+
+      # ============================================================================
+      # STEP 6: Update Config Files
+      # ============================================================================
+
+      - name: "Step 6: Update Config Files"
+        run: |
+          echo ""
+          echo "=================================================================="
+          echo "STEP 6: Updating Environment Config Files"
           echo "=================================================================="
           echo "Target: ${{ env.ENV_DIR }}/config/"
 
@@ -316,10 +402,10 @@ jobs:
           fi
 
       # ============================================================================
-      # STEP 6: Upload Artifacts
+      # STEP 7: Upload Artifacts
       # ============================================================================
 
-      - name: "Step 6: Upload Import Artifacts"
+      - name: "Step 7: Upload Import Artifacts"
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -330,15 +416,15 @@ jobs:
           retention-days: 180
 
       # ============================================================================
-      # STEP 7: Commit Changes (if requested)
+      # STEP 8: Commit Changes (if requested)
       # ============================================================================
 
-      - name: "Step 7: Commit Changes to Repository"
+      - name: "Step 8: Commit Changes to Repository"
         if: inputs.commit_changes == 'true' && success()
         run: |
           echo ""
           echo "=================================================================="
-          echo "STEP 7: Committing Changes to Repository"
+          echo "STEP 8: Committing Changes to Repository"
           echo "=================================================================="
 
           git config user.name "github-actions[bot]"
@@ -380,10 +466,10 @@ jobs:
           fi
 
       # ============================================================================
-      # STEP 8: Generate Summary Report
+      # STEP 9: Generate Summary Report
       # ============================================================================
 
-      - name: "Step 8: Generate Summary Report"
+      - name: "Step 9: Generate Summary Report"
         if: always()
         run: |
           echo "# Complete Tenant Import Summary" >> $GITHUB_STEP_SUMMARY
