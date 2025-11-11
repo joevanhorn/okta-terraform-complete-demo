@@ -82,7 +82,9 @@
       "Crown Jewel": [],
       "Compliance:SOX": [],
       "Compliance:GDPR": [],
-      "Compliance:PII": []
+      "Compliance:PII": [
+        "orn:oktapreview:directory:00omx5xxhePEbjFNp1d7:groups:00grb21o3cnbggglP1d7"
+      ]
     },
     "entitlement_bundles": {
       "Privileged": [],
@@ -96,7 +98,9 @@
       "Crown Jewel": [],
       "Compliance:SOX": [],
       "Compliance:GDPR": [],
-      "Compliance:PII": []
+      "Compliance:PII": [
+        "orn:oktapreview:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ba45e0fe0a00070400a4cb85f3c806a7"
+      ]
     }
   },
   "notes": [
