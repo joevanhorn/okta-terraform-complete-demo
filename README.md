@@ -102,14 +102,22 @@ This demo creates a complete OIG workflow with support for importing existing co
 - ✅ Resource inventory tracking
 - ⚠️ **Note:** OIG resources NOT supported by Terraformer (create fresh instead)
 
-### Label Management (NEW)
-- ✅ Automatic discovery and labeling of admin entitlements
-- ✅ Label mapping files synced from Okta per environment
-- ✅ Automated workflow for label assignments
-- ✅ GitHub Actions workflows for automated labeling
+### Label Management (NEW - GitOps Workflow)
+- ✅ **Two-phase validation**: PR syntax check (no secrets) + deployment validation (with secrets)
+- ✅ **Automatic PR validation**: Validates JSON and ORN formats on pull requests
+- ✅ **Auto dry-run on merge**: Shows what will change before applying
+- ✅ **Manual apply with approval**: Requires manual trigger for actual deployment
+- ✅ **Complete audit trail**: All label changes tracked in Git with code review
+- ✅ **Automatic discovery and labeling** of admin entitlements
+- ✅ **Label mapping files** synced from Okta per environment
 - ✅ Currently managing 2 governance labels in LowerDeckLabs
 
-See **[environments/lowerdecklabs/config/label_mappings.json](./environments/lowerdecklabs/config/label_mappings.json)** for example configuration.
+**GitOps Flow:**
+```
+PR → Syntax Validation → Merge → Auto Dry-Run → Review → Manual Apply
+```
+
+See **[environments/lowerdecklabs/config/label_mappings.json](./environments/lowerdecklabs/config/label_mappings.json)** for example configuration and **[docs/GITOPS_WORKFLOW.md](./docs/GITOPS_WORKFLOW.md)** for detailed workflow documentation.
 
 ## 📋 Prerequisites
 

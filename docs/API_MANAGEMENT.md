@@ -129,6 +129,256 @@ def export_resource_owners_only(manager: OktaAPIManager, resource_orns: List[str
 
 ---
 
+## 🔐 GitOps Label Validation Workflow
+
+### Overview
+
+This repository implements a two-phase GitOps workflow for label management that separates syntax validation from API validation:
+
+**Phase 1: PR Validation (Syntax Check)**
+- Workflow: `.github/workflows/validate-label-mappings.yml`
+- Triggers on: PRs that modify `label_mappings.json`
+- No Okta API calls (no secrets required)
+- Validates JSON syntax and ORN formats
+- Posts validation results as PR comment
+
+**Phase 2: Deployment (API Validation)**
+- Workflow: `.github/workflows/lowerdecklabs-apply-labels-from-config.yml`
+- Triggers on: Push to main (auto dry-run) or manual dispatch
+- Uses environment secrets for Okta API access
+- Automatic dry-run on merge to main
+- Manual apply with `dry_run=false` input
+
+### GitOps Flow Diagram
+
+```
+Developer edits label_mappings.json
+  ↓
+Create Pull Request
+  ↓
+[Automatic] Syntax Validation Workflow
+  - Validate JSON syntax
+  - Check ORN formats
+  - Post PR comment with results
+  ↓
+Code Review & Approval
+  ↓
+Merge to Main
+  ↓
+[Automatic] Deployment Workflow (dry-run mode)
+  - Connect to Okta API
+  - Validate labels exist
+  - Show what would be created/assigned
+  - Post workflow summary
+  ↓
+Review Dry-Run Results
+  ↓
+[Manual] Trigger Apply
+  - Run workflow with dry_run=false
+  - Apply labels to Okta
+  - Complete audit trail in Git
+```
+
+### Validation Script Usage
+
+The `validate_label_config.py` script can be run standalone or via GitHub Actions:
+
+**Standalone Usage:**
+
+```bash
+# Validate a label configuration file
+python3 scripts/validate_label_config.py \
+  environments/lowerdecklabs/config/label_mappings.json
+```
+
+**Expected Output:**
+```
+✅ Required structure present
+
+**Configuration Summary:**
+- Labels defined: 2
+- Assignment categories: 2
+- Total resource assignments: 15
+
+**Labels:**
+- Privileged
+- Crown Jewel
+
+**ORN Validation:**
+✅ All ORNs have valid format
+```
+
+**Error Example:**
+```bash
+# Missing required keys
+❌ Missing required keys: assignments
+
+# Invalid ORN format
+❌ Invalid ORN formats found:
+  - apps/Privileged: badformat:okta:app:123
+```
+
+**Exit Codes:**
+- `0` - Validation passed
+- `1` - Validation failed (syntax or structure errors)
+
+### GitHub Actions Integration
+
+#### Workflow 1: PR Validation
+
+**File:** `.github/workflows/validate-label-mappings.yml`
+
+**Triggers:**
+```yaml
+on:
+  pull_request:
+    paths:
+      - 'environments/*/config/label_mappings.json'
+    types: [opened, synchronize, reopened]
+```
+
+**Key Features:**
+- No environment secrets required (syntax-only validation)
+- Permissions: `contents: read`, `pull-requests: write`
+- Posts results as PR comment with next steps
+- Fails PR if validation errors found
+
+**What It Validates:**
+1. JSON syntax using `python3 -m json.tool`
+2. Required structure (labels, assignments keys)
+3. ORN format (all start with `orn:`)
+4. Configuration summary (label count, assignment count)
+
+**PR Comment Example:**
+```markdown
+## 🏷️ Label Mappings Validation
+
+Configuration file validation has completed for this PR.
+
+### GitOps Workflow
+When this PR is merged:
+1. ✅ Configuration will be merged to main branch
+2. 🔍 Label application workflow will run automatically in **dry-run mode**
+3. 📊 Dry-run results will be available in workflow summary
+4. 🔐 Manual approval required to apply labels (run workflow with `dry_run=false`)
+
+This ensures all label changes have:
+- ✓ Code review (via PR)
+- ✓ Automated validation (this workflow)
+- ✓ Dry-run preview (automatic on merge)
+- ✓ Manual approval (before applying)
+```
+
+#### Workflow 2: Label Deployment
+
+**File:** `.github/workflows/lowerdecklabs-apply-labels-from-config.yml`
+
+**Triggers:**
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode'
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+  push:
+    branches:
+      - main
+    paths:
+      - 'environments/lowerdecklabs/config/label_mappings.json'
+```
+
+**Key Features:**
+- Uses environment: `LowerDeckLabs` (with Okta API secrets)
+- Permissions: `contents: write`, `actions: read`
+- Auto dry-run on push to main
+- Manual apply via workflow dispatch
+- Uploads artifacts (logs and results JSON)
+
+**Automatic Behavior:**
+- **On push to main:** Runs in dry-run mode (shows what would be done)
+- **On workflow dispatch:** Uses `dry_run` input parameter
+
+**Dry-Run vs Apply:**
+
+| Mode | Triggered By | Dry Run | Makes Changes |
+|------|-------------|---------|---------------|
+| Auto Dry-Run | Push to main | ✅ Yes | ❌ No |
+| Manual Dry-Run | Workflow dispatch (dry_run=true) | ✅ Yes | ❌ No |
+| Manual Apply | Workflow dispatch (dry_run=false) | ❌ No | ✅ Yes |
+
+### Best Practices
+
+1. **Always Create PRs for Label Changes**
+   - Never commit directly to main
+   - Let validation workflow catch errors early
+   - Get code review for governance changes
+
+2. **Review Dry-Run Results Before Applying**
+   - Check labels to be created
+   - Verify assignments look correct
+   - Ensure no errors in dry-run
+
+3. **Use Descriptive Commit Messages**
+   ```bash
+   git commit -m "feat: Label CRM app as Crown Jewel
+
+   Adding Crown Jewel label to Salesforce CRM app for
+   enhanced governance and access review filtering."
+   ```
+
+4. **Sync Configuration After Manual Changes**
+   - If labels are created manually in Okta UI
+   - Run sync script to update label_mappings.json
+   - Commit the synced configuration
+
+5. **Monitor Workflow Runs**
+   ```bash
+   # Watch PR validation
+   gh run watch <RUN_ID>
+
+   # Check deployment status
+   gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml
+   ```
+
+### Troubleshooting
+
+**Issue: PR validation fails with JSON syntax error**
+
+**Solution:**
+```bash
+# Validate JSON locally before pushing
+python3 -m json.tool \
+  environments/lowerdecklabs/config/label_mappings.json
+```
+
+**Issue: ORN format validation fails**
+
+**Solution:**
+- Ensure all ORNs start with `orn:`
+- Format: `orn:okta:{resource-type}:{org}:{type}:{id}`
+- Example: `orn:okta:idp:lowerdecklabs:apps:oauth2:0oa123`
+
+**Issue: Dry-run succeeds but apply fails**
+
+**Solution:**
+- Check Okta API token has governance permissions
+- Verify environment secrets are correct
+- Check for rate limiting in workflow logs
+- Review error details in uploaded artifacts
+
+**Issue: Workflow doesn't trigger on PR**
+
+**Solution:**
+- Verify file path matches: `environments/*/config/label_mappings.json`
+- Check PR includes changes to label_mappings.json
+- Ensure workflow file exists in `.github/workflows/`
+
+---
+
 ## 🏗️ Architecture
 
 ```
@@ -182,12 +432,21 @@ Terraform resources that:
 - Manage lifecycle (create/update/destroy)
 - Pass credentials securely
 
-### 3. Configuration File (`api_config.json`)
+### 3. Configuration File (`label_mappings.json`)
 
 JSON configuration containing:
 - Label definitions
 - Resource owner assignments
 - Label-to-resource mappings
+
+### 4. Validation Script (`validate_label_config.py`)
+
+Standalone Python script that validates label configuration files:
+- Checks JSON syntax
+- Validates required structure (labels, assignments keys)
+- Validates ORN formats
+- Provides configuration summary
+- Used by GitOps PR validation workflow
 
 ## 🚀 Quick Start
 

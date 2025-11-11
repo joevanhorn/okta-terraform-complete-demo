@@ -173,6 +173,10 @@ python3 scripts/apply_resource_owners.py \
 python3 scripts/sync_label_mappings.py \
   --output environments/lowerdecklabs/config/label_mappings.json
 
+# Validate label configuration (used by PR validation workflow)
+python3 scripts/validate_label_config.py \
+  environments/lowerdecklabs/config/label_mappings.json
+
 # Find admin entitlements
 python3 scripts/find_admin_resources.py
 
@@ -302,10 +306,16 @@ s3://okta-terraform-demo/
 - `lowerdecklabs-apply-owners.yml` - Sync resource owners
 - `lowerdecklabs-apply-admin-labels.yml` - Auto-label admin resources
 - `lowerdecklabs-export-oig.yml` - Export OIG configs to JSON
+- `validate-label-mappings.yml` - PR validation for label configuration (syntax-only, no secrets)
+- `lowerdecklabs-apply-labels-from-config.yml` - Deploy labels to Okta (auto dry-run on merge, manual apply)
 
 **Authentication:**
 - **Okta:** GitHub Environments with `OKTA_API_TOKEN`, `OKTA_ORG_NAME`, `OKTA_BASE_URL`
 - **AWS:** OIDC authentication via `AWS_ROLE_ARN` secret (no long-lived credentials)
+
+**Label Validation Workflows:**
+- **PR Validation:** No environment needed (syntax check only)
+- **Deployment:** Uses LowerDeckLabs environment (API calls with secrets)
 
 ---
 
@@ -418,6 +428,47 @@ environment:
 ```
 
 This ensures correct secrets are used for the tenant.
+
+### 8. Label Validation Uses Two-Phase GitOps Approach
+
+**Critical Understanding:**
+
+Labels are managed via a two-phase workflow that respects environment protection:
+
+**Phase 1: PR Validation (No Secrets)**
+```yaml
+# validate-label-mappings.yml
+# NO environment specified
+# NO Okta API calls
+# Validates syntax and ORN formats only
+```
+
+**Phase 2: Deployment (With Secrets)**
+```yaml
+# lowerdecklabs-apply-labels-from-config.yml
+environment: LowerDeckLabs
+# Uses Okta API secrets
+# Auto dry-run on merge to main
+# Manual apply via workflow dispatch
+```
+
+**Why Two Workflows?**
+- GitHub Environment protection blocks PR triggers
+- Syntax validation doesn't need Okta secrets
+- API validation requires environment secrets
+- Separation prevents secret exposure via PRs
+
+**Flow:**
+```
+PR → Syntax validation (no secrets) →
+Merge → Auto dry-run (with secrets) →
+Manual trigger → Apply (with secrets)
+```
+
+**Never:**
+- Don't add `pull_request` trigger to deployment workflow
+- Don't add `environment` to validation workflow
+- Don't skip the dry-run step
 
 ---
 
@@ -750,11 +801,15 @@ When working in this repository:
 8. **Use AI-assisted generation for demos** - faster and more consistent
 9. **Import from Okta regularly** - detect drift from manual changes
 10. **Resource owners and labels need Python scripts** - not in Terraform provider
+11. **Label workflows use two-phase validation** - PR syntax check (no secrets) + deployment (with secrets)
+12. **Always create PRs for label changes** - automatic validation catches errors early
+13. **Review dry-run before apply** - automatic on merge, manual apply required
 
 This repository is designed for **sales engineers creating customer demos**, so focus on:
 - Clear, understandable demo scenarios
 - Rapid environment creation (AI-assisted)
 - GitOps best practices demonstration
-- OIG feature showcasing
+- OIG feature showcasing (including label management workflow)
 - AWS backend for production-ready state management
 - Easy-to-fork and customize structure
+- Two-phase validation for governance changes

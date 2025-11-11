@@ -722,15 +722,423 @@ Configure in: Settings > Environments
 
 ---
 
+## Label Management GitOps Workflow
+
+### Overview
+
+Governance labels are managed through a dedicated GitOps workflow that provides validation, dry-runs, and manual approval before applying changes to Okta.
+
+### Workflow Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│              Label Management GitOps Flow                 │
+└──────────────────────────────────────────────────────────┘
+
+  Developer
+     │
+     ├─ Edit label_mappings.json
+     │  (Add/modify label assignments)
+     │
+     ├─ Create Feature Branch
+     │  git checkout -b feature/add-privileged-labels
+     │
+     ├─ Commit and Push
+     │  git commit -m "feat: Label admin apps as Privileged"
+     │
+     ▼
+┌──────────────────────────────────────────────────────────┐
+│           Phase 1: Pull Request Validation               │
+│                                                           │
+│  Workflow: validate-label-mappings.yml                   │
+│  Trigger: PR that modifies label_mappings.json           │
+│  Secrets: NONE (syntax-only validation)                  │
+│                                                           │
+│  ✅ Validate JSON syntax                                 │
+│  ✅ Check required structure (labels, assignments)       │
+│  ✅ Validate ORN formats (must start with orn:)         │
+│  ✅ Post validation results as PR comment                │
+│                                                           │
+└──────────────────────────────────────────────────────────┘
+     │
+     ├─ Code Review
+     ├─ Approval
+     ├─ Merge to Main
+     │
+     ▼
+┌──────────────────────────────────────────────────────────┐
+│          Phase 2: Automatic Dry-Run on Merge             │
+│                                                           │
+│  Workflow: lowerdecklabs-apply-labels-from-config.yml    │
+│  Trigger: Push to main (label_mappings.json changed)     │
+│  Environment: LowerDeckLabs (with Okta API secrets)      │
+│  Mode: DRY RUN (no changes made)                         │
+│                                                           │
+│  🔍 Connect to Okta API                                  │
+│  🔍 Validate labels exist or show what would be created  │
+│  🔍 Show assignment operations that would be performed   │
+│  🔍 Upload results as workflow artifacts                 │
+│                                                           │
+└──────────────────────────────────────────────────────────┘
+     │
+     ├─ Review Dry-Run Results
+     ├─ Verify no errors
+     ├─ Confirm changes look correct
+     │
+     ▼
+┌──────────────────────────────────────────────────────────┐
+│            Phase 3: Manual Apply Trigger                 │
+│                                                           │
+│  Workflow: lowerdecklabs-apply-labels-from-config.yml    │
+│  Trigger: Manual workflow dispatch                       │
+│  Environment: LowerDeckLabs (with Okta API secrets)      │
+│  Mode: APPLY (makes changes to Okta)                     │
+│                                                           │
+│  Command:                                                 │
+│  gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+│    -f dry_run=false                                       │
+│                                                           │
+│  ✅ Create labels in Okta                                │
+│  ✅ Assign labels to resources                           │
+│  ✅ Upload results as workflow artifacts                 │
+│  ✅ Complete audit trail in Git                          │
+│                                                           │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Key Benefits
+
+1. **Code Review for Governance Changes**
+   - All label changes go through PR review
+   - Validates configuration before merging
+   - Team visibility into governance changes
+
+2. **Separation of Concerns**
+   - PR validation: Syntax check (no secrets needed)
+   - Deployment: API validation (uses environment secrets)
+   - Respects GitHub Environment protection rules
+
+3. **Safety Through Automation**
+   - Automatic dry-run on merge shows impact
+   - Manual approval required for actual changes
+   - No accidental deployments to production
+
+4. **Complete Audit Trail**
+   - Git history shows who changed what and when
+   - PR discussions capture rationale
+   - Workflow logs provide execution details
+
+### Step-by-Step: Adding a Label Assignment
+
+#### 1. Create Feature Branch
+
+```bash
+git checkout -b feature/label-crm-as-privileged
+```
+
+#### 2. Edit Label Configuration
+
+```bash
+vim environments/lowerdecklabs/config/label_mappings.json
+```
+
+Add the resource ORN to the appropriate label assignment:
+
+```json
+{
+  "labels": {
+    "Privileged": {
+      "type": "single_value",
+      "description": "High-privilege applications"
+    }
+  },
+  "assignments": {
+    "apps": {
+      "Privileged": [
+        "orn:okta:idp:lowerdecklabs:apps:saml2:0oa123EXISTING",
+        "orn:okta:idp:lowerdecklabs:apps:oauth2:0oa456NEWAPP"
+      ]
+    }
+  }
+}
+```
+
+#### 3. Commit and Push
+
+```bash
+git add environments/lowerdecklabs/config/label_mappings.json
+git commit -m "feat: Label CRM app as Privileged
+
+Adding Privileged label to CRM application for enhanced
+governance and access review filtering."
+
+git push -u origin feature/label-crm-as-privileged
+```
+
+#### 4. Create Pull Request
+
+```bash
+gh pr create \
+  --title "Label CRM app as Privileged" \
+  --body "Marking the CRM application as privileged to include it in quarterly admin access reviews."
+```
+
+#### 5. Automatic PR Validation
+
+GitHub Actions automatically:
+- Runs `validate-label-mappings.yml` workflow
+- Validates JSON syntax
+- Checks ORN formats
+- Posts results as PR comment
+
+**What to check:**
+- ✅ Green checkmark on PR (validation passed)
+- ✅ PR comment shows configuration summary
+- ✅ No validation errors
+
+#### 6. Code Review and Merge
+
+- Get approval from teammate
+- Ensure all conversations resolved
+- Merge PR to main
+
+#### 7. Automatic Dry-Run
+
+On merge to main, GitHub Actions automatically:
+- Runs `lowerdecklabs-apply-labels-from-config.yml` in dry-run mode
+- Connects to Okta API (using environment secrets)
+- Shows what would be created/assigned
+- Uploads results as artifacts
+
+**What to review:**
+- Workflow summary shows dry-run mode
+- Labels to create count
+- Assignments to apply count
+- No errors in execution
+
+#### 8. Manual Apply (After Review)
+
+```bash
+# Trigger apply workflow manually
+gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+  -f dry_run=false
+
+# Monitor execution
+gh run watch
+
+# Download artifacts for review
+gh run download <RUN_ID>
+```
+
+**What happens:**
+- Labels created in Okta (if they don't exist)
+- Label assignments applied to resources
+- Results uploaded as workflow artifacts
+- Complete log available for audit
+
+#### 9. Verify in Okta
+
+Navigate to Okta Admin Console:
+- Identity Governance → Labels
+- Verify label exists and assignments are correct
+- Check resources show the applied label
+
+### Configuration File Structure
+
+The `label_mappings.json` file has this structure:
+
+```json
+{
+  "labels": {
+    "LabelName": {
+      "type": "single_value" | "multi_value",
+      "description": "Description of the label",
+      "labelId": "00l123..." (populated by sync script),
+      "values": {
+        "ValueName": {
+          "description": "Description of the value",
+          "labelValueId": "00v456..." (populated by sync script)
+        }
+      }
+    }
+  },
+  "assignments": {
+    "apps": {
+      "LabelName": ["orn:okta:...", "orn:okta:..."],
+      "LabelName:ValueName": ["orn:okta:..."]
+    },
+    "groups": {
+      "LabelName": ["orn:okta:...", "orn:okta:..."]
+    },
+    "entitlements": {
+      "LabelName": ["orn:okta:...", "orn:okta:..."]
+    }
+  }
+}
+```
+
+**Key Points:**
+- `labels`: Define label names, types, and values
+- `assignments`: Map labels to resource ORNs
+- `labelId` and `labelValueId`: Auto-populated by sync script
+- Multi-value labels use `LabelName:ValueName` format in assignments
+
+### Workflows Reference
+
+#### Workflow 1: validate-label-mappings.yml
+
+**Purpose:** Validate label configuration on PRs
+
+**Triggers:**
+- Pull request events (opened, synchronize, reopened)
+- Only when `label_mappings.json` is modified
+
+**Permissions:**
+- `contents: read` - Read repository files
+- `pull-requests: write` - Post PR comments
+
+**Environment:** None (no secrets needed)
+
+**What It Does:**
+1. Checks out PR code
+2. Sets up Python
+3. Finds changed label mapping files
+4. Validates JSON syntax
+5. Runs `validate_label_config.py` script
+6. Posts validation results as PR comment
+7. Exits with error if validation fails (blocks merge)
+
+#### Workflow 2: lowerdecklabs-apply-labels-from-config.yml
+
+**Purpose:** Apply labels to Okta (with dry-run support)
+
+**Triggers:**
+- Push to main (when `label_mappings.json` changes) - Auto dry-run
+- Manual workflow dispatch - With dry_run choice
+
+**Permissions:**
+- `contents: write` - Commit if needed
+- `actions: read` - Read workflow info
+
+**Environment:** LowerDeckLabs (with Okta API secrets)
+
+**What It Does:**
+1. Checks out code
+2. Sets up Python
+3. Displays label configuration
+4. Determines dry-run mode:
+   - Push to main: Always dry-run
+   - Manual dispatch: Uses input parameter
+5. Runs `apply_labels_from_config.py` script
+6. Parses and uploads results
+7. Posts summary to workflow
+
+**Inputs (Manual Dispatch):**
+- `dry_run`: Choice of 'true' or 'false' (default: 'true')
+
+### Environment Protection Strategy
+
+The deployment workflow (`lowerdecklabs-apply-labels-from-config.yml`) uses GitHub Environment protection:
+
+**Why No Pull Request Trigger:**
+- GitHub Environment protection applies to ALL workflow runs
+- PR workflows can't access environment secrets (by design)
+- Validation must happen without secrets (syntax-only)
+
+**Solution:**
+- PR validation: Separate workflow, no environment, no secrets
+- Deployment: Uses environment, has secrets, only runs on main or manual
+
+**This Prevents:**
+- External contributors accessing environment secrets via PRs
+- Accidental deployments from unreviewed code
+- Bypassing environment protection rules
+
+### Best Practices
+
+1. **Small, Focused Changes**
+   - One label operation per PR
+   - Clear commit messages explaining why
+   - Easy to review and rollback
+
+2. **Always Review Dry-Run**
+   - Never skip straight to apply
+   - Verify counts match expectations
+   - Check for unexpected operations
+
+3. **Sync After Manual Changes**
+   ```bash
+   # If labels created manually in Okta
+   python3 scripts/sync_label_mappings.py \
+     --output environments/lowerdecklabs/config/label_mappings.json
+
+   git add environments/lowerdecklabs/config/label_mappings.json
+   git commit -m "chore: Sync label IDs from Okta"
+   ```
+
+4. **Monitor Workflow Runs**
+   ```bash
+   # List recent label workflow runs
+   gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml
+
+   # Watch a specific run
+   gh run watch <RUN_ID>
+
+   # Download artifacts for offline review
+   gh run download <RUN_ID>
+   ```
+
+5. **Document Label Taxonomy**
+   - Maintain documentation of label meanings
+   - Document when each label should be used
+   - Keep label descriptions up to date
+
+### Troubleshooting
+
+**Issue: PR validation workflow doesn't run**
+
+**Cause:** File path doesn't match workflow trigger
+
+**Solution:**
+- Ensure file is at: `environments/*/config/label_mappings.json`
+- Check PR includes changes to this file
+- Verify workflow exists: `.github/workflows/validate-label-mappings.yml`
+
+**Issue: Dry-run shows errors**
+
+**Cause:** Invalid ORNs, missing labels, or API issues
+
+**Solution:**
+1. Check workflow logs for specific error
+2. Validate ORNs are correct format
+3. Ensure labels exist (or script will create them)
+4. Verify API token has governance permissions
+
+**Issue: Apply works but labels don't show in Okta**
+
+**Cause:** UI cache or sync delay
+
+**Solution:**
+- Clear browser cache
+- Wait 1-2 minutes for UI to sync
+- Verify via API query:
+  ```bash
+  curl -X GET "https://lowerdecklabs.oktapreview.com/governance/api/v1/labels" \
+    -H "Authorization: SSWS $OKTA_API_TOKEN"
+  ```
+
+---
+
 ## Related Documentation
 
-- **[Manual Validation Plan](../testing/MANUAL_VALIDATION_PLAN.md)** - Testing checklist
-- **[Demo Build Guide](../testing/DEMO_BUILD_GUIDE.md)** - Step-by-step tutorials
+- **[Manual Validation Plan](../testing/MANUAL_VALIDATION_PLAN.md)** - Testing checklist (Section 5.4.3 for label workflows)
+- **[Demo Build Guide](../testing/DEMO_BUILD_GUIDE.md)** - Step-by-step tutorials (Level 5 for OIG and labels)
+- **[API Management Guide](./API_MANAGEMENT.md)** - GitOps label validation workflow details
 - **[Terraform Resources](TERRAFORM_RESOURCES.md)** - Resource reference
 - **[Main README](../README.md)** - Repository overview
 
 ---
 
-**Last Updated:** 2025-11-08
+**Last Updated:** 2025-11-10
 
 **Questions?** Review the troubleshooting section or check workflow run logs in the Actions tab.

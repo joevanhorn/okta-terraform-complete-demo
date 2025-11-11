@@ -1232,6 +1232,11 @@ OIG (Okta Identity Governance) helps you manage who has access to what in your o
    - Every app/group has an owner
    - Owners get notified about access requests
 
+4. **Governance Labels** - Tag and categorize resources
+   - Example: Label sensitive apps as "Privileged" or "Crown Jewel"
+   - Use labels to filter resources in access reviews
+   - Managed via GitOps workflow (see below)
+
 **Hands-On: Working with OIG Resources**
 
 This repository includes automated workflows for importing OIG resources:
@@ -1296,6 +1301,101 @@ OIG demo:
 - OIG requires Okta Identity Governance license
 - Some OIG features are API-only (can't be managed in Terraform)
 - This repo handles those with Python scripts in `scripts/`
+
+**GitOps Workflow for Labels (NEW):**
+
+This repository uses a modern GitOps approach for managing governance labels:
+
+**The Old Way (Manual):**
+1. Log into Okta Admin Console
+2. Navigate to Identity Governance → Labels
+3. Manually create labels and assign to resources
+4. Repeat for every change
+5. No audit trail, no version control
+
+**The GitOps Way (Automated):**
+1. Edit `environments/lowerdecklabs/config/label_mappings.json`
+2. Create a Pull Request
+3. Automatic validation runs (syntax and ORN format check)
+4. Merge to main → Automatic dry-run shows what will change
+5. Manual approval → Apply labels to Okta
+6. Complete audit trail in Git
+
+**How to Use the Label GitOps Workflow:**
+
+1. **View Current Labels:**
+   ```bash
+   cat environments/lowerdecklabs/config/label_mappings.json | jq '.labels'
+   ```
+
+2. **Add a New Label Assignment:**
+   ```bash
+   # Edit the configuration file
+   vim environments/lowerdecklabs/config/label_mappings.json
+
+   # Example: Add "Privileged" label to an app
+   # Under "assignments" → "apps" → "Privileged", add the app ORN:
+   # "orn:okta:idp:lowerdecklabs:apps:oauth2:0oa123456789"
+   ```
+
+3. **Create Pull Request with Your Changes:**
+   ```bash
+   git checkout -b feature/add-privileged-label
+   git add environments/lowerdecklabs/config/label_mappings.json
+   git commit -m "feat: Label CRM app as Privileged"
+   git push -u origin feature/add-privileged-label
+
+   gh pr create --title "Add Privileged label to CRM app" \
+     --body "Marking the CRM application as privileged for governance"
+   ```
+
+4. **Automatic PR Validation:**
+   - GitHub Actions runs `validate-label-mappings.yml` workflow
+   - Validates JSON syntax (no syntax errors)
+   - Validates ORN formats (all start with `orn:`)
+   - Posts validation results as PR comment
+   - NO Okta API calls needed (syntax check only)
+
+5. **Review and Merge:**
+   - Review the validation results
+   - Get approval from teammate
+   - Merge PR to main
+
+6. **Automatic Dry-Run:**
+   - On merge to main, `lowerdecklabs-apply-labels-from-config.yml` runs
+   - Automatically runs in **dry-run mode** (no changes made)
+   - Connects to Okta API and validates labels exist
+   - Shows what would be created/assigned
+   - Posts results to workflow summary
+
+7. **Manual Apply:**
+   ```bash
+   # After reviewing dry-run results, manually trigger apply
+   gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+     -f dry_run=false
+   ```
+
+**Why This Matters:**
+
+Traditional way:
+- "Let me log into Okta and manually label 20 apps..."
+- No history of what changed or why
+- Easy to miss apps or make mistakes
+- Customer: "How do you track governance changes?"
+
+GitOps way:
+- "All label changes go through code review"
+- Complete audit trail in Git
+- Automated validation catches errors before they reach Okta
+- Customer: "Wow, infrastructure as code for governance labels!"
+
+**Try It Now:**
+
+1. View the current label configuration
+2. Add the "Privileged" label to a test app
+3. Create a PR and watch the validation run
+4. Merge and see the automatic dry-run
+5. Apply the changes to Okta
 
 #### Level 6: AI-Assisted Demo Building (Optional - Speed Boost!)
 
