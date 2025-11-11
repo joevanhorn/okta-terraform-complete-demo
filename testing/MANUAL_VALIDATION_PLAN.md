@@ -724,58 +724,165 @@ This document provides a comprehensive manual validation plan for testing the Ok
   - ✅ Pass: Results JSON has all expected fields
   - ❌ Fail: Missing fields or errors array not empty
 
-#### 5.4.3 GitHub Actions Workflow Validation
+#### 5.4.3 GitOps Label Validation Workflow
 
-- [ ] **Trigger Workflow on PR**
+The repository uses a two-phase GitOps approach for label management:
+
+**Phase 1: PR Validation (Syntax Check)**
+- Validates JSON syntax and ORN formats on PRs
+- No Okta API calls required (no secrets needed)
+- Posts validation results as PR comments
+
+**Phase 2: Deployment Validation (API Check)**
+- Runs automatically on merge to main (dry-run mode)
+- Manual dispatch for actual deployment (dry_run=false)
+- Uses environment secrets for API validation
+
+**GitOps Flow:**
+```
+PR with label changes → Syntax validation (automatic)
+  ↓
+Merge to main → API validation dry-run (automatic)
+  ↓
+Review results → Manual apply (workflow dispatch with dry_run=false)
+```
+
+##### Phase 1: PR Validation Testing
+
+- [ ] **Create Test PR with Label Changes**
   ```bash
-  # Create test PR with label changes
+  # Create feature branch with label changes
   git checkout -b test/label-validation
-  # Edit environments/lowerdecklabs/config/label_mappings.json
-  # Add a test assignment or new label value
+
+  # Edit label configuration (add a test label or assignment)
+  vim environments/lowerdecklabs/config/label_mappings.json
+
+  # Example change: Add a new label value or resource assignment
+  # {
+  #   "labels": {
+  #     "Privileged": {
+  #       "values": ["Admin", "SuperAdmin", "NewTestValue"]  # Added NewTestValue
+  #     }
+  #   }
+  # }
+
   git add environments/lowerdecklabs/config/label_mappings.json
-  git commit -m "test: Validate label workflow"
+  git commit -m "test: Add new label value for validation testing"
   git push -u origin test/label-validation
-  gh pr create --title "Test Label Validation" --body "Testing label workflow"
+
+  # Create PR
+  gh pr create \
+    --title "Test: Label Validation Workflow" \
+    --body "Testing the GitOps label validation workflow with PR validation"
   ```
   - ✅ Pass: PR created successfully
   - ❌ Fail: PR creation failed
 
-- [ ] **Monitor Workflow Run**
+- [ ] **Monitor PR Validation Workflow**
   ```bash
-  gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml --limit 1
+  # List recent workflow runs
+  gh run list --workflow=validate-label-mappings.yml --limit 3
+
+  # Watch the most recent run
   gh run watch <RUN_ID>
   ```
-  - ✅ Pass: Workflow completes successfully in dry-run mode
-  - ❌ Fail: Workflow fails
-  - **Expected:** PR comment shows preview of label changes
+  - ✅ Pass: Workflow triggers automatically when PR created
+  - ❌ Fail: Workflow doesn't trigger or fails to start
+  - **Expected:** Runs on pull_request event when label_mappings.json changed
 
-- [ ] **Verify PR Comment**
-  - Check PR for automated comment with:
-    - Labels to create count
-    - Labels already existing count
-    - Label assignments to apply count
-    - Errors count
-    - Full log in expandable section
-  - ✅ Pass: Comment present with all expected information
-  - ❌ Fail: Comment missing or incomplete
+- [ ] **Verify PR Validation Results**
+  - Check PR for automated comment from workflow:
+    - ✅ Valid JSON syntax indicator
+    - ✅ Valid ORN format indicator
+    - ✅ Configuration summary (labels defined, assignments, resources)
+    - ✅ Next steps guidance (merge → dry-run → apply)
+  - ✅ Pass: Comment posted with all validation details
+  - ❌ Fail: No comment or incomplete validation
+  - **Note:** This validation runs WITHOUT Okta API secrets (syntax only)
 
-#### 5.4.4 Label Application (If Approved)
-
-**Warning:** Only perform this step if you want to actually apply label changes to Okta
-
-- [ ] **Merge PR (Optional)**
+- [ ] **Test Invalid JSON Scenario**
   ```bash
-  gh pr merge test/label-validation --squash
+  # Create another branch with intentionally broken JSON
+  git checkout -b test/invalid-label-json
+
+  # Break the JSON (add trailing comma or remove bracket)
+  echo '{ "labels": { "test": "missing_bracket"' > \
+    environments/lowerdecklabs/config/label_mappings.json
+
+  git add environments/lowerdecklabs/config/label_mappings.json
+  git commit -m "test: Invalid JSON for validation testing"
+  git push -u origin test/invalid-label-json
+
+  gh pr create --title "Test: Invalid JSON Detection" --body "Testing validation error handling"
+  ```
+  - ✅ Pass: Workflow detects and reports JSON syntax error
+  - ❌ Fail: Invalid JSON not detected
+  - **Cleanup:** Close PR and delete branch after verification
+
+- [ ] **Test Invalid ORN Format Scenario**
+  ```bash
+  # Create branch with invalid ORN
+  git checkout main && git pull
+  git checkout -b test/invalid-orn-format
+
+  # Edit to add invalid ORN (missing 'orn:' prefix)
+  vim environments/lowerdecklabs/config/label_mappings.json
+  # Add assignment with: "badformat:okta:app:123" instead of "orn:okta:..."
+
+  git add environments/lowerdecklabs/config/label_mappings.json
+  git commit -m "test: Invalid ORN format for validation"
+  git push -u origin test/invalid-orn-format
+
+  gh pr create --title "Test: Invalid ORN Detection" --body "Testing ORN format validation"
+  ```
+  - ✅ Pass: Workflow detects and reports invalid ORN format
+  - ❌ Fail: Invalid ORN not detected
+  - **Cleanup:** Close PR and delete branch after verification
+
+##### Phase 2: Deployment Validation Testing
+
+- [ ] **Merge Valid PR to Main**
+  ```bash
+  # Merge the valid test PR from Phase 1
+  gh pr merge test/label-validation --squash --delete-branch
   ```
   - ✅ Pass: PR merged successfully
   - ❌ Fail: Merge conflicts or errors
 
-- [ ] **Manual Workflow Trigger**
+- [ ] **Verify Automatic Dry-Run Execution**
   ```bash
+  # Deployment workflow should trigger automatically on push to main
+  gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml --limit 3
+
+  # Monitor the automatic dry-run
+  gh run watch <RUN_ID>
+  ```
+  - ✅ Pass: Workflow runs automatically in dry-run mode
+  - ❌ Fail: Workflow doesn't trigger or fails
+  - **Expected:** Triggered by push to main, uses environment secrets, runs with dry_run=true
+
+- [ ] **Review Dry-Run Results**
+  - Check workflow summary for:
+    - Mode indicator: "DRY RUN (no changes made)"
+    - Labels to create count
+    - Labels already existing count
+    - Label assignments to apply count
+    - Errors count (should be 0)
+    - Full operation log
+  - ✅ Pass: Dry-run shows what would be done without errors
+  - ❌ Fail: Errors in dry-run or missing information
+
+##### Phase 3: Manual Deployment Testing
+
+**Warning:** Only perform if you want to actually apply label changes to Okta
+
+- [ ] **Manual Workflow Dispatch for Apply**
+  ```bash
+  # Manually trigger with dry_run=false to apply changes
   gh workflow run lowerdecklabs-apply-labels-from-config.yml \
     -f dry_run=false
   ```
-  - ✅ Pass: Workflow triggered
+  - ✅ Pass: Workflow triggered successfully
   - ❌ Fail: Failed to trigger
 
 - [ ] **Monitor Apply Workflow**
@@ -783,29 +890,96 @@ This document provides a comprehensive manual validation plan for testing the Ok
   gh run watch <RUN_ID>
   ```
   - ✅ Pass: Workflow completes successfully, labels applied
-  - ❌ Fail: Workflow fails
+  - ❌ Fail: Workflow fails during apply
   - **Expected Duration:** 1-2 minutes
+  - **Expected Mode:** "APPLY (labels applied to Okta)"
 
 - [ ] **Verify in Okta Admin Console**
   - Navigate to: Identity Governance → Labels
-  - Check for new labels or label values
+  - Check for new labels or label values created
   - Navigate to labeled resources
-  - Verify assignments
+  - Verify assignments are correct
   - ✅ Pass: Labels visible in Okta UI, assignments correct
   - ❌ Fail: Labels not found or assignments incorrect
 
-- [ ] **Sync Back to Config**
+- [ ] **Verify Workflow Artifacts**
   ```bash
-  python3 ../../scripts/sync_label_mappings.py \
-    --output ../config/label_mappings.json
+  # Download workflow artifacts for review
+  gh run download <RUN_ID>
 
-  git diff ../config/label_mappings.json
-  # Should show labelId and labelValueId fields populated
+  # Review results
+  cat label-application-results-*/label_application_results.json | jq '.'
+  cat label-application-results-*/apply.log
   ```
-  - ✅ Pass: Config updated with IDs from Okta
-  - ❌ Fail: Sync failed or IDs not populated
+  - ✅ Pass: Artifacts contain detailed results and logs
+  - ❌ Fail: Missing artifacts or incomplete data
 
-#### 5.4.5 API Methods Validation
+##### Validation Script Testing
+
+- [ ] **Test Standalone Validation Script**
+  ```bash
+  # Run the validation script directly
+  python3 scripts/validate_label_config.py \
+    environments/lowerdecklabs/config/label_mappings.json
+  ```
+  - Expected output:
+    - ✅ Required structure present
+    - Configuration summary (labels, assignments, resources)
+    - Label list
+    - ✅ All ORNs have valid format
+  - ✅ Pass: Script validates configuration successfully
+  - ❌ Fail: Script errors or validation failures
+
+- [ ] **Test Validation Script with Invalid File**
+  ```bash
+  # Create temporary invalid config
+  echo '{"invalid": "config"}' > /tmp/bad_config.json
+
+  python3 scripts/validate_label_config.py /tmp/bad_config.json
+
+  # Should exit with error code
+  echo "Exit code: $?"
+  ```
+  - ✅ Pass: Script detects missing required keys and exits with error
+  - ❌ Fail: Script doesn't detect invalid structure
+
+##### Workflow Integration Testing
+
+- [ ] **Verify Environment Protection**
+  - Deployment workflow uses `environment: LowerDeckLabs`
+  - Environment has Okta API secrets configured
+  - PR validation workflow does NOT use environment (no secrets needed)
+  - ✅ Pass: Correct environment usage for each workflow
+  - ❌ Fail: Environment misconfiguration
+
+- [ ] **Test Workflow Path Triggers**
+  ```bash
+  # Verify workflows only trigger on correct file changes
+  git checkout -b test/non-label-change
+
+  # Change a different file
+  echo "# Test" >> README.md
+  git add README.md
+  git commit -m "test: Non-label change"
+  git push -u origin test/non-label-change
+
+  gh pr create --title "Test: Non-Label Change" --body "Should NOT trigger label validation"
+  ```
+  - ✅ Pass: Label validation workflow does NOT run
+  - ❌ Fail: Workflow runs for non-label changes
+  - **Cleanup:** Close PR and delete branch
+
+- [ ] **Verify Workflow Permissions**
+  - Check `.github/workflows/validate-label-mappings.yml` permissions:
+    - `contents: read` - Can read repository
+    - `pull-requests: write` - Can post PR comments
+  - Check `.github/workflows/lowerdecklabs-apply-labels-from-config.yml` permissions:
+    - `contents: write` - Can commit if needed
+    - `actions: read` - Can read workflow info
+  - ✅ Pass: Minimal necessary permissions configured
+  - ❌ Fail: Excessive or insufficient permissions
+
+#### 5.4.4 API Methods Validation
 
 - [ ] **Test create_label_with_values()**
   ```bash
