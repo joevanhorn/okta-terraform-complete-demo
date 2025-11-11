@@ -69,10 +69,10 @@
       "Privileged": [],
       "Crown Jewel": [],
       "Compliance:SOX": [
-        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oamxiwg4zsrWaeJF1d7",
-        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oan4ssz4lmqTnQry1d7",
-        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oaq4iodcifSLp30Q1d7",
-        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oan6affwpltdcCci1d7"
+        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:saml:0oamxiwg4zsrWaeJF1d7",
+        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:saml:0oaq4iodcifSLp30Q1d7",
+        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:browser_plugin:0oan4ssz4lmqTnQry1d7",
+        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:saml:0oamxc34dudXXjGJT1d7"
       ],
       "Compliance:GDPR": [],
       "Compliance:PII": []
@@ -123,7 +123,7 @@
     "  - Or use GitHub Actions workflow: 'LowerDeckLabs - Apply Labels from Config'",
     "",
     "ORN Format:",
-    "  - Apps: orn:okta:application:{orgId}:apps:{appId}",
+    "  - Apps: orn:okta:idp:{orgId}:apps:{appType}:{appId} (appType: saml, oidc, browser_plugin, etc.)",
     "  - Groups: orn:okta:directory:{orgId}:groups:{groupId}",
     "  - Entitlement Bundles: orn:okta:governance:{orgId}:entitlement-bundles:{bundleId}",
     "",
