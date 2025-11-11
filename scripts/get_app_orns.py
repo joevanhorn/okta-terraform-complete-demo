@@ -77,10 +77,10 @@ def main():
     )
 
     app_ids = [
-        '0oamxiwg4zsrWaeJF1d7',  # Salesforce
-        '0oan4ssz4lmqTnQry1d7',  # Successfactors
+        '0oamxiwg4zsrWaeJF1d7',  # Salesforce.com
         '0oaq4iodcifSLp30Q1d7',  # Workday
-        '0oan6affwpltdcCci1d7',  # SAP
+        '0oan4ssz4lmqTnQry1d7',  # SuccessFactors
+        '0oamxc34dudXXjGJT1d7',  # SalesDar
     ]
 
     print("Getting correct ORNs for applications...\n")
