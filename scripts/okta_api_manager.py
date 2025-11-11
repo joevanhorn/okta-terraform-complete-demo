@@ -309,7 +309,109 @@ class OktaAPIManager:
         response = self._make_request("DELETE", url, json=payload)
         print(f"Removed label '{label_name}' from {len(resource_orns)} resources")
         return response.json()
-    
+
+    def create_label_with_values(self, name: str, description: str, values: List[Dict]) -> Dict:
+        """
+        Create a governance label with multiple values in a single API call.
+
+        Args:
+            name: Label key name (e.g., "Compliance")
+            description: Label description
+            values: List of value dicts, each with 'name' and optional 'metadata'
+                    Example: [{"name": "SOX", "metadata": {"additionalProperties": {"backgroundColor": "blue"}}}]
+
+        Returns:
+            Label object with labelId and array of values with labelValueIds
+
+        Example:
+            manager.create_label_with_values(
+                "Compliance",
+                "Compliance framework",
+                [
+                    {"name": "SOX", "metadata": {"additionalProperties": {"backgroundColor": "blue"}}},
+                    {"name": "GDPR", "metadata": {"additionalProperties": {"backgroundColor": "blue"}}},
+                    {"name": "PII", "metadata": {"additionalProperties": {"backgroundColor": "blue"}}}
+                ]
+            )
+        """
+        url = f"{self.base_url}/governance/api/v1/labels"
+        payload = {
+            "name": name,
+            "description": description or f"Governance label: {name}",
+            "values": values
+        }
+
+        try:
+            response = self._make_request("POST", url, json=payload)
+            result = response.json()
+            print(f"Created label '{name}' with {len(values)} values")
+            for value in result.get("values", []):
+                print(f"  - {value.get('name')}: {value.get('labelValueId')}")
+            return result
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 409:
+                print(f"Label '{name}' already exists")
+                return {"name": name, "exists": True}
+            raise
+
+    def get_label_value_id(self, label_name: str, value_name: str) -> Optional[str]:
+        """
+        Get labelValueId for a specific label value.
+
+        Args:
+            label_name: Label key name (e.g., "Compliance")
+            value_name: Label value name (e.g., "SOX")
+
+        Returns:
+            labelValueId or None if not found
+
+        Example:
+            sox_value_id = manager.get_label_value_id("Compliance", "SOX")
+        """
+        labels_response = self.list_labels()
+        for label in labels_response.get("data", []):
+            if label.get("name") == label_name:
+                values = label.get("values", [])
+                for value in values:
+                    if value.get("name") == value_name:
+                        return value.get("labelValueId")
+        return None
+
+    def assign_label_values_to_resources(self, label_value_ids: List[str], resource_orns: List[str]) -> Dict:
+        """
+        Assign specific label values to resources using the /resource-labels/assign endpoint.
+
+        This is the correct way to assign label values to resources - you assign
+        labelValueIds (not labelIds) to resource ORNs.
+
+        Args:
+            label_value_ids: List of labelValueIds to assign
+            resource_orns: List of resource ORNs
+
+        Returns:
+            API response
+
+        Example:
+            # Assign SOX label value to 4 applications
+            sox_value_id = manager.get_label_value_id("Compliance", "SOX")
+            manager.assign_label_values_to_resources(
+                [sox_value_id],
+                [
+                    "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oamxiwg4zsrWaeJF1d7",
+                    "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oan4ssz4lmqTnQry1d7"
+                ]
+            )
+        """
+        url = f"{self.base_url}/governance/api/v1/resource-labels/assign"
+        payload = {
+            "resourceOrns": resource_orns,
+            "labelValueIds": label_value_ids
+        }
+
+        response = self._make_request("POST", url, json=payload)
+        print(f"Assigned {len(label_value_ids)} label value(s) to {len(resource_orns)} resource(s)")
+        return response.json()
+
     # ==================== Helper Methods ====================
 
     def build_user_orn(self, user_id: str) -> str:

@@ -4,45 +4,131 @@
   "labels": {
     "Privileged": {
       "labelId": "lbc11keklyNa6KhMi1d7",
-      "labelValueId": "lbl11keklzHO41LJ11d7",
       "description": "Privileged label",
-      "color": "red",
-      "metadata": {
-        "backgroundColor": "red"
+      "type": "single_value",
+      "values": {
+        "Privileged": {
+          "labelValueId": "lbl11keklzHO41LJ11d7",
+          "description": "Privileged label",
+          "color": "red",
+          "metadata": {
+            "backgroundColor": "red"
+          }
+        }
       }
     },
     "Crown Jewel": {
       "labelId": "lbc11keklwxBrRatm1d7",
-      "labelValueId": "lbl11keklx0TEYCmp1d7",
       "description": "Crown Jewel label",
-      "color": "green",
-      "metadata": {
-        "backgroundColor": "green"
+      "type": "single_value",
+      "values": {
+        "Crown Jewel": {
+          "labelValueId": "lbl11keklx0TEYCmp1d7",
+          "description": "Crown Jewel label",
+          "color": "green",
+          "metadata": {
+            "backgroundColor": "green"
+          }
+        }
+      }
+    },
+    "Compliance": {
+      "labelId": "",
+      "description": "Compliance framework label for regulatory requirements (SOX, GDPR, PII)",
+      "type": "multi_value",
+      "values": {
+        "SOX": {
+          "labelValueId": "",
+          "description": "Sarbanes-Oxley Act compliance",
+          "color": "blue",
+          "metadata": {
+            "backgroundColor": "blue"
+          }
+        },
+        "GDPR": {
+          "labelValueId": "",
+          "description": "General Data Protection Regulation compliance",
+          "color": "blue",
+          "metadata": {
+            "backgroundColor": "blue"
+          }
+        },
+        "PII": {
+          "labelValueId": "",
+          "description": "Personally Identifiable Information",
+          "color": "blue",
+          "metadata": {
+            "backgroundColor": "blue"
+          }
+        }
       }
     }
   },
   "assignments": {
-    "entitlement_bundles": {
-      "Privileged": [],
-      "Crown Jewel": []
-    },
     "apps": {
       "Privileged": [],
-      "Crown Jewel": []
+      "Crown Jewel": [],
+      "Compliance:SOX": [
+        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oamxiwg4zsrWaeJF1d7",
+        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oan4ssz4lmqTnQry1d7",
+        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oaq4iodcifSLp30Q1d7",
+        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oan6affwpltdcCci1d7"
+      ],
+      "Compliance:GDPR": [],
+      "Compliance:PII": []
     },
     "groups": {
       "Privileged": [],
-      "Crown Jewel": []
+      "Crown Jewel": [],
+      "Compliance:SOX": [],
+      "Compliance:GDPR": [],
+      "Compliance:PII": []
+    },
+    "entitlement_bundles": {
+      "Privileged": [],
+      "Crown Jewel": [],
+      "Compliance:SOX": [],
+      "Compliance:GDPR": [],
+      "Compliance:PII": []
     },
     "other": {
       "Privileged": [],
-      "Crown Jewel": []
+      "Crown Jewel": [],
+      "Compliance:SOX": [],
+      "Compliance:GDPR": [],
+      "Compliance:PII": []
     }
   },
   "notes": [
     "This file is the source of truth for label assignments",
-    "To add a new label assignment, submit a PR adding the ORN to the appropriate array",
-    "Run 'make sync-labels' or the GitHub Actions workflow to apply changes to Okta",
-    "Run 'make import-labels' to sync this file from Okta"
+    "",
+    "Label Structure:",
+    "  - Each label can have multiple values (hierarchical structure)",
+    "  - Single-value labels (Privileged, Crown Jewel) have one value matching the label name",
+    "  - Multi-value labels (Compliance) have multiple distinct values (SOX, GDPR, PII)",
+    "",
+    "To add a new label:",
+    "  1. Add label definition to 'labels' section with its values",
+    "  2. labelId/labelValueId can be empty - will be created during apply",
+    "  3. Add resource ORNs to appropriate assignment arrays using 'Label:Value' format",
+    "  4. Submit PR with changes",
+    "  5. Run 'Apply Labels from Config' workflow with dry_run=true to preview",
+    "  6. Merge PR and run workflow with dry_run=false to apply",
+    "",
+    "To sync this file FROM Okta:",
+    "  - Run: python3 scripts/sync_label_mappings.py --output environments/lowerdecklabs/config/label_mappings.json",
+    "",
+    "To apply labels TO Okta:",
+    "  - Run: python3 scripts/apply_labels_from_config.py --config environments/lowerdecklabs/config/label_mappings.json --dry-run",
+    "  - Or use GitHub Actions workflow: 'LowerDeckLabs - Apply Labels from Config'",
+    "",
+    "ORN Format:",
+    "  - Apps: orn:okta:application:{orgId}:apps:{appId}",
+    "  - Groups: orn:okta:directory:{orgId}:groups:{groupId}",
+    "  - Entitlement Bundles: orn:okta:governance:{orgId}:entitlement-bundles:{bundleId}",
+    "",
+    "Assignment Format:",
+    "  - For single-value labels: use label name (e.g., 'Privileged')",
+    "  - For multi-value labels: use 'Label:Value' format (e.g., 'Compliance:SOX', 'Compliance:GDPR')"
   ]
 }
