@@ -408,9 +408,20 @@ class OktaAPIManager:
             "labelValueIds": label_value_ids
         }
 
-        response = self._make_request("POST", url, json=payload)
-        print(f"Assigned {len(label_value_ids)} label value(s) to {len(resource_orns)} resource(s)")
-        return response.json()
+        try:
+            response = self._make_request("POST", url, json=payload)
+            print(f"Assigned {len(label_value_ids)} label value(s) to {len(resource_orns)} resource(s)")
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            # Print error details for debugging
+            error_detail = ""
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_detail = f"\nResponse body: {e.response.text}"
+                except:
+                    pass
+            print(f"Error assigning labels: {e}{error_detail}")
+            raise
 
     # ==================== Helper Methods ====================
 
