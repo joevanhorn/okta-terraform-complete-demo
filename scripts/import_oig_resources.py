@@ -103,6 +103,23 @@ class OIGImporter:
         except Exception:
             return False
 
+    def fetch_entitlements_for_resource(self, resource_id: str, resource_type: str = "APPLICATION") -> List[Dict]:
+        """Fetch individual entitlements for a specific resource (app/group/etc)"""
+        try:
+            url = f"{self.base_url}/governance/api/v1/entitlements"
+            # Build filter: parent.externalId eq "resourceId" AND parent.type eq "resourceType"
+            filter_expr = f'parent.externalId eq "{resource_id}" AND parent.type eq "{resource_type}"'
+            params = {
+                "filter": filter_expr,
+                "limit": 200
+            }
+            response = self._make_request("GET", url, params=params)
+            entitlements = response.json().get("data", [])
+            return entitlements
+        except Exception as e:
+            print(f"  ⚠️  Could not fetch entitlements for resource {resource_id}: {e}")
+            return []
+
     def fetch_reviews(self) -> List[Dict]:
         """Fetch all access review campaigns"""
         print("Fetching access review campaigns...")
