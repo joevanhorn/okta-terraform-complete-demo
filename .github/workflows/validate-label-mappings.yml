@@ -57,60 +57,55 @@ jobs:
               continue
             fi
 
-            # Check required fields exist
-            python3 << 'PYEOF' "$file" >> $GITHUB_STEP_SUMMARY
+            # Check required fields and ORN format
+            python3 -c "
 import json
 import sys
 
-with open(sys.argv[1], 'r') as f:
+with open('$file', 'r') as f:
     config = json.load(f)
 
+# Check required keys
 required_keys = ['labels', 'assignments']
 missing = [k for k in required_keys if k not in config]
-
 if missing:
-    print(f"❌ Missing required keys: {', '.join(missing)}")
+    print('❌ Missing required keys: ' + ', '.join(missing))
     sys.exit(1)
 
-print(f"✅ Required structure present")
-print(f"")
-print(f"**Configuration Summary:**")
-print(f"- Labels defined: {len(config.get('labels', {}))}")
-print(f"- Assignment categories: {len(config.get('assignments', {}))}")
+print('✅ Required structure present')
+print('')
+print('**Configuration Summary:**')
+print(f'- Labels defined: {len(config.get(\"labels\", {}))}')
+print(f'- Assignment categories: {len(config.get(\"assignments\", {}))}')
 
 # Count total assignments
-total_assignments = 0
-for category, labels in config.get('assignments', {}).items():
-    for label, orns in labels.items():
-        total_assignments += len(orns)
-
-print(f"- Total resource assignments: {total_assignments}")
-print(f"")
+total = sum(len(orns) for cat in config.get('assignments', {}).values() for orns in cat.values())
+print(f'- Total resource assignments: {total}')
+print('')
 
 # List labels
-print(f"**Labels:**")
-for label_name in config.get('labels', {}).keys():
-    print(f"- {label_name}")
-print(f"")
+print('**Labels:**')
+for label in config.get('labels', {}).keys():
+    print(f'- {label}')
+print('')
 
 # Check ORN format
-print(f"**ORN Validation:**")
-invalid_orns = []
+print('**ORN Validation:**')
+invalid = []
 for category, labels in config.get('assignments', {}).items():
     for label, orns in labels.items():
         for orn in orns:
             if not orn.startswith('orn:'):
-                invalid_orns.append(f"{category}/{label}: {orn}")
+                invalid.append(f'{category}/{label}: {orn}')
 
-if invalid_orns:
-    print(f"❌ Invalid ORN formats found:")
-    for invalid in invalid_orns[:10]:  # Show first 10
-        print(f"  - {invalid}")
+if invalid:
+    print('❌ Invalid ORN formats found:')
+    for inv in invalid[:10]:
+        print(f'  - {inv}')
     sys.exit(1)
 else:
-    print(f"✅ All ORNs have valid format")
-
-PYEOF
+    print('✅ All ORNs have valid format')
+" >> $GITHUB_STEP_SUMMARY
 
             if [ $? -ne 0 ]; then
               VALIDATION_PASSED=false
