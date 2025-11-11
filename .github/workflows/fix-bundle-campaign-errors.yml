@@ -1,0 +1,258 @@
+name: Fix Entitlement Bundle Campaign Errors
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundles_to_fix:
+        description: 'Which bundles to fix'
+        required: true
+        type: choice
+        default: 'all_13'
+        options:
+          - 'all_13'
+          - 'custom'
+      custom_bundles:
+        description: 'Custom bundle names (comma-separated, e.g., purchasing,datadog_read_only)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (show what would be done without doing it)'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  ENVIRONMENT: lowerdecklabs
+  ENV_DIR: environments/lowerdecklabs
+
+permissions:
+  id-token: write   # Required for AWS OIDC
+  contents: read
+
+jobs:
+  fix-campaign-errors:
+    name: Fix Bundle Campaign Association Errors
+    runs-on: ubuntu-latest
+    environment: LowerDeckLabs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-FixBundleCampaigns
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Terraform Init
+        working-directory: ${{ env.ENV_DIR }}/terraform
+        run: terraform init
+
+      - name: Define Bundles to Fix
+        id: bundles
+        run: |
+          if [ "${{ inputs.bundles_to_fix }}" == "all_13" ]; then
+            cat > bundles_to_fix.txt << 'EOF'
+          okta_entitlement_bundle.purchasing:enb13o2ewjNG3y8LM1d7
+          okta_entitlement_bundle.datadog_read_only:enb12zbvfgMan9Qak1d7
+          okta_entitlement_bundle.datadog_standard:enb12zbvfc1Rwq0uN1d7
+          okta_entitlement_bundle.datadog_admin_role:enb12zcvwl8qvb6Xv1d7
+          okta_entitlement_bundle.request_report_of_my_company_s_users:enb12x0qhaHpOxq6C1d7
+          okta_entitlement_bundle.developer_bundle:enb12pob86e9ExVBm1d7
+          okta_entitlement_bundle.asset_administrator:enb12pob80LpIChdk1d7
+          okta_entitlement_bundle.it_service_desk_agent_bundle:enb12pmq4gjryR0E31d7
+          okta_entitlement_bundle.b2b_marketing_role:enb10ufnbov67EfIn1d7
+          okta_entitlement_bundle.example_bundle:enb10nq3zlAGkuY4F1d7
+          okta_entitlement_bundle.customer_trial_finance:enbywatjlhTpz7SPd1d6
+          okta_entitlement_bundle.customer_content_management:enbywatjaevWrlrOJ1d6
+          okta_entitlement_bundle.sales_associate:enbywatj5ljTAfV0O1d6
+          EOF
+          else
+            # Parse custom bundles and look up IDs from terraform config
+            echo "Custom bundle mode not yet implemented"
+            exit 1
+          fi
+
+          echo "count=$(wc -l < bundles_to_fix.txt)" >> $GITHUB_OUTPUT
+
+      - name: Display Bundles to Fix
+        run: |
+          echo "## Bundles to Fix" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Total bundles: ${{ steps.bundles.outputs.count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat bundles_to_fix.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Remove Bundles from State
+        if: inputs.dry_run == false
+        working-directory: ${{ env.ENV_DIR }}/terraform
+        env:
+          TF_VAR_okta_org_name: ${{ secrets.OKTA_ORG_NAME }}
+          TF_VAR_okta_base_url: ${{ secrets.OKTA_BASE_URL }}
+          TF_VAR_okta_api_token: ${{ secrets.OKTA_API_TOKEN }}
+        run: |
+          echo "🗑️  Removing bundles from Terraform state..."
+          while IFS=: read -r resource_name bundle_id; do
+            echo "   Removing: $resource_name"
+            terraform state rm "$resource_name" || echo "   (Not in state or already removed)"
+          done < ../../bundles_to_fix.txt
+          echo "✅ State cleanup complete"
+
+      - name: Remove Bundles from State (Dry Run)
+        if: inputs.dry_run == true
+        run: |
+          echo "## Dry Run: Would Remove from State" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          while IFS=: read -r resource_name bundle_id; do
+            echo "terraform state rm $resource_name" >> $GITHUB_STEP_SUMMARY
+          done < bundles_to_fix.txt
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Re-import Bundles
+        if: inputs.dry_run == false
+        working-directory: ${{ env.ENV_DIR }}/terraform
+        env:
+          TF_VAR_okta_org_name: ${{ secrets.OKTA_ORG_NAME }}
+          TF_VAR_okta_base_url: ${{ secrets.OKTA_BASE_URL }}
+          TF_VAR_okta_api_token: ${{ secrets.OKTA_API_TOKEN }}
+        run: |
+          echo "📥 Re-importing bundles with fresh state..."
+
+          IMPORT_LOG="import_results.log"
+          : > "$IMPORT_LOG"
+
+          while IFS=: read -r resource_name bundle_id; do
+            echo "   Importing: $resource_name (ID: $bundle_id)"
+            if terraform import "$resource_name" "$bundle_id" >> "$IMPORT_LOG" 2>&1; then
+              echo "      ✅ Success"
+            else
+              echo "      ❌ Failed - check logs"
+              tail -5 "$IMPORT_LOG"
+            fi
+          done < ../../bundles_to_fix.txt
+
+          echo "✅ Import complete"
+
+      - name: Re-import Bundles (Dry Run)
+        if: inputs.dry_run == true
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Dry Run: Would Import" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          while IFS=: read -r resource_name bundle_id; do
+            echo "terraform import $resource_name $bundle_id" >> $GITHUB_STEP_SUMMARY
+          done < bundles_to_fix.txt
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Verify State
+        if: inputs.dry_run == false
+        working-directory: ${{ env.ENV_DIR }}/terraform
+        env:
+          TF_VAR_okta_org_name: ${{ secrets.OKTA_ORG_NAME }}
+          TF_VAR_okta_base_url: ${{ secrets.OKTA_BASE_URL }}
+          TF_VAR_okta_api_token: ${{ secrets.OKTA_API_TOKEN }}
+        run: |
+          echo "🔍 Verifying state..."
+          BUNDLE_COUNT=$(terraform state list | grep "okta_entitlement_bundle" | wc -l)
+          echo "Total bundles in state: $BUNDLE_COUNT"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## State Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Total bundles in state: **$BUNDLE_COUNT**" >> $GITHUB_STEP_SUMMARY
+          echo "- Expected: **31**" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$BUNDLE_COUNT" -eq 31 ]; then
+            echo "✅ All bundles accounted for" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Bundle count mismatch" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Test Terraform Plan
+        if: inputs.dry_run == false
+        working-directory: ${{ env.ENV_DIR }}/terraform
+        env:
+          TF_VAR_okta_org_name: ${{ secrets.OKTA_ORG_NAME }}
+          TF_VAR_okta_base_url: ${{ secrets.OKTA_BASE_URL }}
+          TF_VAR_okta_api_token: ${{ secrets.OKTA_API_TOKEN }}
+        run: |
+          echo "🧪 Testing terraform plan..."
+
+          if terraform plan -detailed-exitcode > plan_output.txt 2>&1; then
+            PLAN_EXIT=$?
+          else
+            PLAN_EXIT=$?
+          fi
+
+          # Check for campaign errors
+          if grep -q "Error reading campaign" plan_output.txt; then
+            echo "❌ Still getting campaign errors!" | tee -a $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            grep -A 5 "Error reading campaign" plan_output.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No campaign errors detected!" | tee -a $GITHUB_STEP_SUMMARY
+          fi
+
+          # Show plan summary
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Terraform Plan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ $PLAN_EXIT -eq 0 ]; then
+            echo "✅ **No changes** - infrastructure matches code" >> $GITHUB_STEP_SUMMARY
+          elif [ $PLAN_EXIT -eq 2 ]; then
+            echo "ℹ️ **Changes detected** - review plan output" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>Plan Output</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`terraform" >> $GITHUB_STEP_SUMMARY
+            tail -100 plan_output.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Plan failed** - see logs" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            tail -50 plan_output.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.dry_run }}" == "true" ]; then
+            echo "## ⚠️ Dry Run Mode" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This was a dry run. No changes were made to Terraform state." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To apply these changes, run again with **dry_run = false**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ Fix Complete" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Bundles have been re-imported successfully." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review the terraform plan output above" >> $GITHUB_STEP_SUMMARY
+            echo "2. If plan looks good, you can now use these bundles normally" >> $GITHUB_STEP_SUMMARY
+            echo "3. Document this issue: see \`docs/TROUBLESHOOTING_ENTITLEMENT_BUNDLES.md\`" >> $GITHUB_STEP_SUMMARY
+          fi

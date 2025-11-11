@@ -1,0 +1,48 @@
+{
+  "description": "Label ID mappings synced from Okta OIG",
+  "last_synced": "2025-11-11T00:27:09.159062Z",
+  "labels": {
+    "Privileged": {
+      "labelId": "lbc11keklyNa6KhMi1d7",
+      "labelValueId": "lbl11keklzHO41LJ11d7",
+      "description": "Privileged label",
+      "color": "red",
+      "metadata": {
+        "backgroundColor": "red"
+      }
+    },
+    "Crown Jewel": {
+      "labelId": "lbc11keklwxBrRatm1d7",
+      "labelValueId": "lbl11keklx0TEYCmp1d7",
+      "description": "Crown Jewel label",
+      "color": "green",
+      "metadata": {
+        "backgroundColor": "green"
+      }
+    }
+  },
+  "assignments": {
+    "entitlement_bundles": {
+      "Privileged": [],
+      "Crown Jewel": []
+    },
+    "apps": {
+      "Privileged": [],
+      "Crown Jewel": []
+    },
+    "groups": {
+      "Privileged": [],
+      "Crown Jewel": []
+    },
+    "other": {
+      "Privileged": [],
+      "Crown Jewel": []
+    }
+  },
+  "notes": [
+    "This file is the source of truth for label assignments",
+    "To add a new label assignment, submit a PR adding the ORN to the appropriate array",
+    "Run 'make sync-labels' or the GitHub Actions workflow to apply changes to Okta",
+    "Run 'make import-labels' to sync this file from Okta"
+  ]
+}
