@@ -35,12 +35,25 @@ def get_app_orn(manager: OktaAPIManager, app_id: str) -> str:
     org_data = org_response.json()
     org_numeric_id = org_data.get('id')
 
-    # ORN format: orn:okta:idp:{orgId}:apps:{appName}:{appId}
+    # Determine partition from base_url domain
+    # okta.com -> okta
+    # oktapreview.com -> oktapreview
+    # okta-emea.com -> okta-emea
+    if 'oktapreview.com' in manager.base_url:
+        partition = 'oktapreview'
+    elif 'okta-emea.com' in manager.base_url:
+        partition = 'okta-emea'
+    elif 'trexcloud.com' in manager.base_url:
+        partition = 'trexcloud'
+    else:
+        partition = 'okta'
+
+    # ORN format: orn:{partition}:idp:{orgId}:apps:{appName}:{appId}
     # The appName is from the 'name' field, not the label
     # Normalize app name: lowercase and replace spaces/special chars with underscores
     normalized_app_name = app_name.lower().replace(' ', '_').replace('.', '_').replace('-', '_')
 
-    orn = f"orn:okta:idp:{org_numeric_id}:apps:{normalized_app_name}:{app_id}"
+    orn = f"orn:{partition}:idp:{org_numeric_id}:apps:{normalized_app_name}:{app_id}"
 
     return orn, app_label, sign_on_mode, app_name
 
