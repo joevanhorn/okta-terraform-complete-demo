@@ -1,0 +1,50 @@
+name: Get App ORNs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-orns:
+    name: Get Correct App ORNs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Get App ORNs
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "Running get_app_orns.py..."
+          chmod +x scripts/get_app_orns.py
+          python3 scripts/get_app_orns.py | tee orns_output.txt
+
+      - name: Show Summary
+        if: always()
+        run: |
+          echo "## App ORNs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat orns_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-orns
+          path: orns_output.txt
+          retention-days: 7
