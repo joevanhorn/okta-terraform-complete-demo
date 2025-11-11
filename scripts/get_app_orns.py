@@ -61,7 +61,20 @@ def get_app_orn(manager: OktaAPIManager, app_id: str) -> str:
     return orn, app_label, sign_on_mode
 
 def main():
-    manager = OktaAPIManager()
+    # Get credentials from environment
+    org_name = os.environ.get("OKTA_ORG_NAME")
+    base_url = os.environ.get("OKTA_BASE_URL", "okta.com")
+    api_token = os.environ.get("OKTA_API_TOKEN")
+
+    if not org_name or not api_token:
+        print("Error: OKTA_ORG_NAME and OKTA_API_TOKEN must be set")
+        sys.exit(1)
+
+    manager = OktaAPIManager(
+        org_name=org_name,
+        base_url=base_url,
+        api_token=api_token
+    )
 
     app_ids = [
         '0oamxiwg4zsrWaeJF1d7',  # Salesforce
