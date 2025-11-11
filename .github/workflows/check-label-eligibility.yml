@@ -1,0 +1,51 @@
+name: Check Label Eligibility
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-eligibility:
+    name: Check App Label Eligibility
+    runs-on: ubuntu-latest
+    environment: LowerDeckLabs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Check Label Eligibility
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "Checking which apps can have labels assigned..."
+          chmod +x scripts/check_label_eligibility.py
+          python3 scripts/check_label_eligibility.py | tee eligibility_output.txt
+
+      - name: Show Summary
+        if: always()
+        run: |
+          echo "## Label Eligibility Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat eligibility_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: label-eligibility
+          path: eligibility_output.txt
+          retention-days: 7
