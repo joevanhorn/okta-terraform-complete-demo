@@ -96,7 +96,8 @@ class OIGImporter:
     def validate_bundle_readable(self, bundle_id: str) -> bool:
         """Test if a bundle can be individually retrieved (not all listed bundles are readable)"""
         try:
-            url = f"{self.base_url}/governance/api/v1/entitlements/{bundle_id}"
+            # Correct endpoint: entitlement-bundles (not entitlements)
+            url = f"{self.base_url}/governance/api/v1/entitlement-bundles/{bundle_id}"
             response = self._make_request("GET", url)
             return response.status_code == 200
         except Exception:
