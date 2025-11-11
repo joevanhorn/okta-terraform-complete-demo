@@ -93,6 +93,15 @@ class OIGImporter:
             print(f"  ⚠️  Could not fetch entitlement bundles: {e}")
             return []
 
+    def validate_bundle_readable(self, bundle_id: str) -> bool:
+        """Test if a bundle can be individually retrieved (not all listed bundles are readable)"""
+        try:
+            url = f"{self.base_url}/governance/api/v1/entitlements/{bundle_id}"
+            response = self._make_request("GET", url)
+            return response.status_code == 200
+        except Exception:
+            return False
+
     def fetch_reviews(self) -> List[Dict]:
         """Fetch all access review campaigns"""
         print("Fetching access review campaigns...")
@@ -182,6 +191,12 @@ class OIGImporter:
             # Skip app-managed bundles if they shouldn't be in Terraform
             if ":apps:" in orn and bundle_type != "MANUAL":
                 print(f"  Skipping app-managed bundle: {name}")
+                continue
+
+            # Validate bundle can be individually retrieved
+            # Some bundles are listed but return 404 when accessed individually
+            if not self.validate_bundle_readable(bundle_id):
+                print(f"  ⚠️  Skipping unreadable bundle (404): {name} (ID: {bundle_id})")
                 continue
 
             safe_name = self._sanitize_name(name)
