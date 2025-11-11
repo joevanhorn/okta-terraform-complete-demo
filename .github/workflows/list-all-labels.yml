@@ -1,0 +1,51 @@
+name: List All Labels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list-labels:
+    name: List All Labels
+    runs-on: ubuntu-latest
+    environment: LowerDeckLabs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: List All Labels
+        env:
+          OKTA_API_TOKEN: ${{ secrets.OKTA_API_TOKEN }}
+          OKTA_ORG_NAME: ${{ secrets.OKTA_ORG_NAME }}
+          OKTA_BASE_URL: ${{ secrets.OKTA_BASE_URL }}
+        run: |
+          echo "Listing all labels from Okta governance API..."
+          chmod +x scripts/list_all_labels.py
+          python3 scripts/list_all_labels.py | tee labels_output.txt
+
+      - name: Show Summary
+        if: always()
+        run: |
+          echo "## All Labels in Okta" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat labels_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: all-labels
+          path: labels_output.txt
+          retention-days: 7
