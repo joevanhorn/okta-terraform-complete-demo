@@ -408,6 +408,10 @@ class OktaAPIManager:
             "labelValueIds": label_value_ids
         }
 
+        print(f"DEBUG: API Request Details:")
+        print(f"  URL: {url}")
+        print(f"  Payload: {json.dumps(payload, indent=2)}")
+
         try:
             response = self._make_request("POST", url, json=payload)
             print(f"Assigned {len(label_value_ids)} label value(s) to {len(resource_orns)} resource(s)")
@@ -421,6 +425,7 @@ class OktaAPIManager:
                 except:
                     pass
             print(f"Error assigning labels: {e}{error_detail}")
+            print(f"DEBUG: Failed payload was: {json.dumps(payload, indent=2)}")
             raise
 
     # ==================== Helper Methods ====================

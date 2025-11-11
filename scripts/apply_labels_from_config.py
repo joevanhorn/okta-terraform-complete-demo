@@ -217,6 +217,11 @@ class LabelApplier:
 
         try:
             print(f"  📦 Assigning '{display_name}' to {len(resource_orns)} resources...")
+            print(f"     Label value ID: {label_value_id}")
+            print(f"     Resource ORNs:")
+            for orn in resource_orns:
+                print(f"       - {orn}")
+
             self.manager.assign_label_values_to_resources(
                 label_value_ids=[label_value_id],
                 resource_orns=resource_orns
@@ -225,6 +230,21 @@ class LabelApplier:
             return len(resource_orns)
         except Exception as e:
             print(f"  ❌ Error assigning '{display_name}': {e}")
+            print(f"     Label value ID used: {label_value_id}")
+            print(f"     Number of resource ORNs: {len(resource_orns)}")
+            print(f"     Resource ORNs:")
+            for orn in resource_orns:
+                print(f"       - {orn}")
+
+            # Print response details if available
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"     HTTP Status: {e.response.status_code}")
+                try:
+                    error_body = e.response.json()
+                    print(f"     Error body: {json.dumps(error_body, indent=6)}")
+                except:
+                    print(f"     Response text: {e.response.text}")
+
             self.stats["errors"].append(f"Failed to assign '{display_name}': {e}")
             return 0
 
