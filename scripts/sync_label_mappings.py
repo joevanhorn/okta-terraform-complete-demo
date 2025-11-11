@@ -5,6 +5,11 @@ sync_label_mappings.py
 Syncs label mappings from Okta OIG to the local config/label_mappings.json file.
 This keeps the repository's label configuration up-to-date with the Okta environment.
 
+Now supports hierarchical label structure:
+- Labels with multiple values (e.g., Compliance: SOX, GDPR, PII)
+- Labels with single values (e.g., Privileged, Crown Jewel)
+- Assignment tracking by label value, not just label
+
 Usage:
     python3 scripts/sync_label_mappings.py
     python3 scripts/sync_label_mappings.py --output config/label_mappings.json
@@ -68,24 +73,38 @@ class LabelMappingSync:
             return []
 
     def build_mappings(self, labels: List[Dict], assignments: List[Dict]) -> Dict:
-        """Build the label mappings structure"""
+        """Build the hierarchical label mappings structure"""
         print("\nBuilding label mappings...")
 
-        # Build label metadata
+        # Build hierarchical label metadata
         label_metadata = {}
+        label_value_to_label = {}  # Map labelValueId -> (labelName, valueName)
+
         for label in labels:
             name = label.get("name")
             label_id = label.get("labelId")
             values = label.get("values", [])
-            label_value_id = values[0].get("labelValueId") if values else None
 
-            # Extract color from metadata
-            color = None
-            bg_color = None
-            if values:
-                metadata = values[0].get("metadata", {})
+            # Determine if this is a single-value or multi-value label
+            label_type = "single_value" if len(values) == 1 and values[0].get("name") == name else "multi_value"
+
+            # Build values structure
+            values_dict = {}
+            for value in values:
+                value_name = value.get("name")
+                value_id = value.get("labelValueId")
+                description = value.get("description", f"{value_name} label value")
+
+                # Store mapping for later assignment processing
+                label_value_to_label[value_id] = (name, value_name)
+
+                # Extract color from metadata
+                color = None
+                bg_color = None
+                metadata = value.get("metadata", {})
                 additional_props = metadata.get("additionalProperties", {})
                 bg_color = additional_props.get("backgroundColor")
+
                 # Map background color to simple color name
                 color_map = {
                     "red": "red",
@@ -97,23 +116,38 @@ class LabelMappingSync:
                 }
                 color = color_map.get(bg_color, bg_color)
 
+                values_dict[value_name] = {
+                    "labelValueId": value_id,
+                    "description": description,
+                    "color": color,
+                    "metadata": {
+                        "backgroundColor": bg_color
+                    } if bg_color else {}
+                }
+
             label_metadata[name] = {
                 "labelId": label_id,
-                "labelValueId": label_value_id,
                 "description": label.get("description", f"{name} label"),
-                "color": color,
-                "metadata": {
-                    "backgroundColor": bg_color
-                } if bg_color else {}
+                "type": label_type,
+                "values": values_dict
             }
-            print(f"  • {name}: {label_id} → {label_value_id}")
 
-        # Build assignments by label and resource type
-        assignments_by_label = {}
+            print(f"  • {name} ({label_type}): {label_id}")
+            for value_name in values_dict.keys():
+                print(f"      - {value_name}: {values_dict[value_name]['labelValueId']}")
+
+        # Build assignments by label value and resource type
+        # Format: assignments[resource_type][Label:Value] = [ORN1, ORN2, ...]
+        assignments_by_type = {
+            "apps": {},
+            "groups": {},
+            "entitlement_bundles": {},
+            "other": {}
+        }
+
         for assignment in assignments:
             resource = assignment.get("resource", {})
             resource_orn = resource.get("orn", "")
-            resource_type = resource.get("type", "")
 
             # Determine resource category
             if "entitlement-bundles" in resource_orn:
@@ -125,22 +159,31 @@ class LabelMappingSync:
             else:
                 category = "other"
 
-            # Get labels for this resource
-            for label in assignment.get("labels", []):
-                label_name = label.get("name")
+            # Get label values for this resource
+            for label_value in assignment.get("labels", []):
+                label_value_id = label_value.get("labelValueId")
 
-                if label_name not in assignments_by_label:
-                    assignments_by_label[label_name] = {
-                        "entitlement_bundles": [],
-                        "apps": [],
-                        "groups": [],
-                        "other": []
-                    }
+                # Look up which label and value this belongs to
+                if label_value_id in label_value_to_label:
+                    label_name, value_name = label_value_to_label[label_value_id]
 
-                if resource_orn and resource_orn not in assignments_by_label[label_name][category]:
-                    assignments_by_label[label_name][category].append(resource_orn)
+                    # Determine assignment key format
+                    label_info = label_metadata.get(label_name, {})
+                    if label_info.get("type") == "single_value":
+                        # Single-value labels use simple name
+                        assignment_key = label_name
+                    else:
+                        # Multi-value labels use "Label:Value" format
+                        assignment_key = f"{label_name}:{value_name}"
 
-        print(f"  ✅ Built assignments for {len(assignments_by_label)} labels")
+                    # Add to assignments
+                    if assignment_key not in assignments_by_type[category]:
+                        assignments_by_type[category][assignment_key] = []
+
+                    if resource_orn and resource_orn not in assignments_by_type[category][assignment_key]:
+                        assignments_by_type[category][assignment_key].append(resource_orn)
+
+        print(f"  ✅ Built assignments structure")
 
         # Build final structure
         mappings = {
@@ -148,24 +191,42 @@ class LabelMappingSync:
             "last_synced": datetime.utcnow().isoformat() + "Z",
             "labels": label_metadata,
             "assignments": {
-                "entitlement_bundles": {},
-                "apps": {},
-                "groups": {},
-                "other": {}
+                category: {key: sorted(orns) for key, orns in assignments_by_type[category].items()}
+                for category in ["apps", "groups", "entitlement_bundles", "other"]
             },
             "notes": [
                 "This file is the source of truth for label assignments",
-                "To add a new label assignment, submit a PR adding the ORN to the appropriate array",
-                "Run 'make sync-labels' or the GitHub Actions workflow to apply changes to Okta",
-                "Run 'make import-labels' to sync this file from Okta"
+                "",
+                "Label Structure:",
+                "  - Each label can have multiple values (hierarchical structure)",
+                "  - Single-value labels (Privileged, Crown Jewel) have one value matching the label name",
+                "  - Multi-value labels (Compliance) have multiple distinct values (SOX, GDPR, PII)",
+                "",
+                "To add a new label:",
+                "  1. Add label definition to 'labels' section with its values",
+                "  2. labelId/labelValueId can be empty - will be created during apply",
+                "  3. Add resource ORNs to appropriate assignment arrays using 'Label:Value' format",
+                "  4. Submit PR with changes",
+                "  5. Run 'Apply Labels from Config' workflow with dry_run=true to preview",
+                "  6. Merge PR and run workflow with dry_run=false to apply",
+                "",
+                "To sync this file FROM Okta:",
+                "  - Run: python3 scripts/sync_label_mappings.py --output environments/lowerdecklabs/config/label_mappings.json",
+                "",
+                "To apply labels TO Okta:",
+                "  - Run: python3 scripts/apply_labels_from_config.py --config environments/lowerdecklabs/config/label_mappings.json --dry-run",
+                "  - Or use GitHub Actions workflow: 'LowerDeckLabs - Apply Labels from Config'",
+                "",
+                "ORN Format:",
+                "  - Apps: orn:okta:application:{orgId}:apps:{appId}",
+                "  - Groups: orn:okta:directory:{orgId}:groups:{groupId}",
+                "  - Entitlement Bundles: orn:okta:governance:{orgId}:entitlement-bundles:{bundleId}",
+                "",
+                "Assignment Format:",
+                "  - For single-value labels: use label name (e.g., 'Privileged')",
+                "  - For multi-value labels: use 'Label:Value' format (e.g., 'Compliance:SOX', 'Compliance:GDPR')"
             ]
         }
-
-        # Populate assignments
-        for label_name in label_metadata.keys():
-            for category in ["entitlement_bundles", "apps", "groups", "other"]:
-                orns = assignments_by_label.get(label_name, {}).get(category, [])
-                mappings["assignments"][category][label_name] = sorted(orns)
 
         return mappings
 
@@ -203,9 +264,19 @@ class LabelMappingSync:
         print("SYNC SUMMARY")
         print("="*80)
         print(f"  Labels synced: {len(mappings['labels'])}")
-        print(f"  Entitlement bundle assignments: {sum(len(orns) for orns in mappings['assignments']['entitlement_bundles'].values())}")
-        print(f"  App assignments: {sum(len(orns) for orns in mappings['assignments']['apps'].values())}")
-        print(f"  Group assignments: {sum(len(orns) for orns in mappings['assignments']['groups'].values())}")
+
+        total_assignments = sum(
+            len(orns)
+            for category in mappings['assignments'].values()
+            for orns in category.values()
+        )
+        print(f"  Total assignments: {total_assignments}")
+
+        for category in ["apps", "groups", "entitlement_bundles", "other"]:
+            count = sum(len(orns) for orns in mappings['assignments'][category].values())
+            if count > 0:
+                print(f"    - {category}: {count}")
+
         print(f"  Output file: {output_file}")
         print("="*80)
 
