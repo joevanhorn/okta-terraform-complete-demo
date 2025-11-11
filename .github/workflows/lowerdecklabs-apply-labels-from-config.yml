@@ -48,7 +48,7 @@ jobs:
             echo "Dry Run: true (automatic for PRs)"
           elif [ "${{ github.event_name }}" == "push" ]; then
             echo "Trigger: Push to main branch"
-            echo "Dry Run: false (GitOps auto-apply)"
+            echo "Dry Run: true (validation only - manual apply required)"
             echo "Commit: ${{ github.sha }}"
           else
             echo "Trigger: Manual workflow dispatch"
@@ -98,8 +98,8 @@ jobs:
             DRY_RUN="true"
             echo "Running in DRY RUN mode (pull request)"
           elif [ "${{ github.event_name }}" == "push" ]; then
-            DRY_RUN="false"
-            echo "Running in APPLY mode (GitOps auto-apply on merge to main)"
+            DRY_RUN="true"
+            echo "Running in DRY RUN mode (push to main - manual apply required)"
           elif [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
             DRY_RUN="true"
             echo "Running in DRY RUN mode (manual)"
@@ -186,12 +186,14 @@ jobs:
 
             </details>
 
-            ### ✅ GitOps Auto-Apply
+            ### ✅ Next Steps
 
-            **This PR uses GitOps workflow:**
-            - ✓ Dry run completed (shown above)
-            - ⏭️ **Merging to main will automatically apply these labels to Okta**
-            - No manual workflow trigger needed!
+            **After merging this PR:**
+            1. ✓ Dry run validation will run automatically
+            2. 🔐 **Manual workflow dispatch required** to apply labels
+            3. Run workflow with \`dry_run=false\` to apply changes to Okta
+
+            This ensures all label changes have PR review + manual approval for traceability and rollback capability.
 
             *Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}*
             `;
@@ -234,9 +236,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.results.outputs.dry_run }}" == "true" ] && [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "ℹ️  **Next Step:** Merge this PR to automatically apply labels to Okta" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️  **Next Step:** Merge this PR, then manually trigger workflow to apply" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "GitOps workflow will auto-apply when merged to main." >> $GITHUB_STEP_SUMMARY
+            echo "After merge, run workflow with \`dry_run=false\` for actual apply." >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.results.outputs.dry_run }}" == "true" ]; then
             echo "ℹ️  **Next Step:** Re-run this workflow with \`dry_run=false\` to apply labels" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.results.outputs.dry_run }}" == "false" ]; then
