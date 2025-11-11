@@ -26,39 +26,23 @@ def get_app_orn(manager: OktaAPIManager, app_id: str) -> str:
 
     sign_on_mode = app_data.get('signOnMode', '').lower()
     app_label = app_data.get('label', 'Unknown')
+    app_name = app_data.get('name', '')
 
-    # Map signOnMode to app type for ORN
-    app_type_map = {
-        'saml_2_0': 'saml',
-        'saml2': 'saml',
-        'openid_connect': 'oidc',
-        'oidc': 'oidc',
-        'ws_federation': 'ws-federation',
-        'auto': 'auto'
-    }
-
-    app_type = app_type_map.get(sign_on_mode, sign_on_mode)
-
-    # Extract org ID from base URL
-    # Format: https://lowerdecklabs.oktapreview.com -> lowerdecklabs
-    org_id = manager.base_url.split('//')[-1].split('.')[0]
-
-    # But we actually need the numeric org ID (e.g., 00omx5xxhePEbjFNp1d7)
-    # Try to get it from the app data
-    if 'id' in app_data:
-        # The org ID is embedded in resource URLs
-        pass
-
-    # Actually, let's get org ID from the /api/v1/org endpoint
+    # Get org ID from the /api/v1/org endpoint
     org_url = f"{manager.base_url}/api/v1/org"
     org_response = manager.session.get(org_url)
     org_response.raise_for_status()
     org_data = org_response.json()
     org_numeric_id = org_data.get('id')
 
-    orn = f"orn:okta:idp:{org_numeric_id}:apps:{app_type}:{app_id}"
+    # ORN format: orn:okta:idp:{orgId}:apps:{appName}:{appId}
+    # The appName is from the 'name' field, not the label
+    # Normalize app name: lowercase and replace spaces/special chars with underscores
+    normalized_app_name = app_name.lower().replace(' ', '_').replace('.', '_').replace('-', '_')
 
-    return orn, app_label, sign_on_mode
+    orn = f"orn:okta:idp:{org_numeric_id}:apps:{normalized_app_name}:{app_id}"
+
+    return orn, app_label, sign_on_mode, app_name
 
 def main():
     # Get credentials from environment
@@ -89,9 +73,10 @@ def main():
     orns = []
     for app_id in app_ids:
         try:
-            orn, label, sign_on_mode = get_app_orn(manager, app_id)
+            orn, label, sign_on_mode, app_name = get_app_orn(manager, app_id)
             orns.append(orn)
             print(f"{label} ({app_id})")
+            print(f"  App Name: {app_name}")
             print(f"  Sign-On Mode: {sign_on_mode}")
             print(f"  ORN: {orn}")
             print()
