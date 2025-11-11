@@ -58,11 +58,11 @@ jobs:
             fi
 
             # Check required fields and ORN format
-            python3 -c "
+            cat > /tmp/validate.py << 'EOF'
 import json
 import sys
 
-with open('$file', 'r') as f:
+with open(sys.argv[1], 'r') as f:
     config = json.load(f)
 
 # Check required keys
@@ -75,8 +75,8 @@ if missing:
 print('✅ Required structure present')
 print('')
 print('**Configuration Summary:**')
-print(f'- Labels defined: {len(config.get(\"labels\", {}))}')
-print(f'- Assignment categories: {len(config.get(\"assignments\", {}))}')
+print(f'- Labels defined: {len(config.get("labels", {}))}')
+print(f'- Assignment categories: {len(config.get("assignments", {}))}')
 
 # Count total assignments
 total = sum(len(orns) for cat in config.get('assignments', {}).values() for orns in cat.values())
@@ -105,7 +105,8 @@ if invalid:
     sys.exit(1)
 else:
     print('✅ All ORNs have valid format')
-" >> $GITHUB_STEP_SUMMARY
+EOF
+            python3 /tmp/validate.py "$file" >> $GITHUB_STEP_SUMMARY
 
             if [ $? -ne 0 ]; then
               VALIDATION_PASSED=false
