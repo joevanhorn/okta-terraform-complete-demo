@@ -264,10 +264,17 @@ Find the ORN for the resource you want to label:
 curl -X GET "https://{org}.okta.com/api/v1/apps" \
   -H "Authorization: SSWS {token}"
 
-# Get org ID (from base URL)
-ORG_ID="00omx5..."
-APP_ID="0oamxiw..."
-ORN="orn:okta:application:${ORG_ID}:apps:${APP_ID}"
+# Construct ORN using correct format:
+# orn:{partition}:idp:{orgId}:apps:{appName}:{appId}
+#
+# partition: oktapreview (for oktapreview.com), okta (for okta.com),
+#            okta-emea (for okta-emea.com), trexcloud (for trexcloud.com)
+# orgId: Numeric org ID from Admin URL (00omx5xxhePEbjFNp1d7)
+# appName: Normalized app name (lowercase, spaces→underscores, special chars→underscores)
+# appId: App ID from API (0oamxiwg4zsrWaeJF1d7)
+
+# Example:
+ORN="orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7"
 ```
 
 ### Step 2: Add to Assignments
@@ -279,13 +286,15 @@ Edit the `assignments` section:
   "assignments": {
     "apps": {
       "Compliance:SOX": [
-        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oamxiwg4zsrWaeJF1d7",
-        "orn:okta:application:00omx5xxhePEbjFNp1d7:apps:0oan4ssz4lmqTnQry1d7"
+        "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7",
+        "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:workday:0oaq4iodcifSLp30Q1d7",
+        "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:successfactors:0oan4ssz4lmqTnQry1d7",
+        "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo_lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7"
       ]
     },
     "groups": {
       "Compliance:PII": [
-        "orn:okta:directory:00omx5xxhePEbjFNp1d7:groups:00g..."
+        "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:groups:00g..."
       ]
     }
   }

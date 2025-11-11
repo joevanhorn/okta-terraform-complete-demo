@@ -255,6 +255,91 @@ Terraformer generates a complete Terraform project for each resource type, inclu
 
 ---
 
+### 7. Repository Secrets vs Environment Secrets Confusion
+
+**Issue:** Workflows using repository-level Okta secrets instead of environment-specific secrets caused resources to be created in the wrong Okta org.
+
+**Error Symptom:**
+- Labels appeared to exist in one org but not when queried from another org
+- Different label IDs returned from different workflows
+- API operations succeeded but changes weren't visible in expected org
+
+**Example:**
+```
+# Workflow A (using repository secrets)
+Privileged: lbc138jztfcso9bo61d7  # Org X
+
+# Workflow B (using environment secrets: LowerDeckLabs)
+Privileged: lbc11keklyNa6KhMi1d7  # Org Y (correct)
+```
+
+**Root Cause:**
+The `lowerdecklabs-apply-labels-from-config.yml` workflow was configured to use repository secrets instead of the `LowerDeckLabs` environment:
+
+```yaml
+# WRONG - Uses repository secrets
+jobs:
+  apply-labels:
+    runs-on: ubuntu-latest
+    # Note: Uses repository secrets instead of environment secrets
+
+# CORRECT - Uses environment secrets
+jobs:
+  apply-labels:
+    runs-on: ubuntu-latest
+    environment: LowerDeckLabs  # ← This was missing
+```
+
+**Problem:**
+- Repository secrets (`OKTA_API_TOKEN`, `OKTA_ORG_NAME`, `OKTA_BASE_URL`) pointed to a different Okta org
+- Environment secrets (under `LowerDeckLabs`) pointed to the correct org
+- Workflows without `environment:` field defaulted to repository secrets
+- This caused resources to be created/modified in the wrong org
+
+**Solution:**
+1. **Removed repository-level Okta secrets** to prevent confusion:
+   ```bash
+   gh secret delete OKTA_API_TOKEN
+   gh secret delete OKTA_BASE_URL
+   gh secret delete OKTA_ORG_NAME
+   ```
+
+2. **Updated all workflows** to explicitly use environment-specific secrets:
+   ```yaml
+   jobs:
+     apply-labels:
+       environment: LowerDeckLabs  # Required
+   ```
+
+3. **Kept only environment-agnostic repository secrets:**
+   - `AWS_ROLE_ARN` (for Terraform state backend)
+   - `CLAUDE_CODE_OAUTH_TOKEN` (for Claude Code integration)
+
+**Lesson Learned:**
+- **Never store org-specific Okta secrets at repository level**
+- **Always use GitHub Environments** for org-specific secrets
+- **Each environment directory should have matching GitHub Environment:**
+  ```
+  environments/lowerdecklabs/  ← Directory
+  GitHub Environment: LowerDeckLabs  ← Secrets
+  ```
+- **All workflows must explicitly declare `environment:`** field to use correct secrets
+
+**Files Affected:**
+- `.github/workflows/lowerdecklabs-apply-labels-from-config.yml:28` - Added `environment: LowerDeckLabs`
+- Repository secrets - Removed `OKTA_API_TOKEN`, `OKTA_BASE_URL`, `OKTA_ORG_NAME`
+
+**Validation:**
+```bash
+# List repository secrets (should only see AWS_ROLE_ARN and CLAUDE_CODE_OAUTH_TOKEN)
+gh secret list
+
+# List environment secrets
+gh secret list -e LowerDeckLabs
+```
+
+---
+
 ## Best Practices Discovered
 
 ### 1. Template String Handling
@@ -316,6 +401,46 @@ terraform plan  # Should show no changes
 # Add new resource to .tf file
 terraform plan
 terraform apply
+```
+
+### 6. GitHub Secrets Management
+**CRITICAL: Use Environment-Specific Secrets for Multi-Tenant Setups**
+
+```bash
+# ❌ WRONG - Repository-level secrets for Okta
+gh secret set OKTA_API_TOKEN -b "..."
+gh secret set OKTA_ORG_NAME -b "lowerdecklabs"
+gh secret set OKTA_BASE_URL -b "oktapreview.com"
+
+# ✅ CORRECT - Environment-level secrets
+gh secret set OKTA_API_TOKEN -b "..." -e LowerDeckLabs
+gh secret set OKTA_ORG_NAME -b "demo-lowerdecklabs" -e LowerDeckLabs
+gh secret set OKTA_BASE_URL -b "oktapreview.com" -e LowerDeckLabs
+```
+
+**Repository secrets should only contain:**
+- Infrastructure secrets (AWS_ROLE_ARN, etc.)
+- Tool tokens (CLAUDE_CODE_OAUTH_TOKEN, etc.)
+
+**Environment secrets should contain:**
+- Org-specific API tokens
+- Org-specific configuration
+
+**Workflow configuration:**
+```yaml
+jobs:
+  job-name:
+    runs-on: ubuntu-latest
+    environment: LowerDeckLabs  # ← Always specify for org-specific jobs
+```
+
+**Verification:**
+```bash
+# Repository secrets - should NOT include Okta secrets
+gh secret list
+
+# Environment secrets - should include Okta secrets
+gh secret list -e LowerDeckLabs
 ```
 
 ---
