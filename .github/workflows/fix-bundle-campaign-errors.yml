@@ -106,7 +106,7 @@ jobs:
           while IFS=: read -r resource_name bundle_id; do
             echo "   Removing: $resource_name"
             terraform state rm "$resource_name" || echo "   (Not in state or already removed)"
-          done < ../../bundles_to_fix.txt
+          done < ${{ github.workspace }}/bundles_to_fix.txt
           echo "✅ State cleanup complete"
 
       - name: Remove Bundles from State (Dry Run)
@@ -141,7 +141,7 @@ jobs:
               echo "      ❌ Failed - check logs"
               tail -5 "$IMPORT_LOG"
             fi
-          done < ../../bundles_to_fix.txt
+          done < ${{ github.workspace }}/bundles_to_fix.txt
 
           echo "✅ Import complete"
 
