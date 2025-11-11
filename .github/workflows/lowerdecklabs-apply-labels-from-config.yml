@@ -21,8 +21,8 @@ jobs:
     name: Apply Labels to Okta Resources
     runs-on: ubuntu-latest
 
-    environment:
-      name: LowerDeckLabs
+    # Note: Uses repository secrets instead of environment secrets to allow PR runs
+    # PRs always run in dry-run mode (no changes to Okta)
 
     permissions:
       contents: write
