@@ -1,6 +1,62 @@
 {
   "entitlements": [
     {
+      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb13o2ewjNG3y8LM1d7",
+      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_marketti_1:0oamxbw5sdvxDgPry1d7",
+      "target": {
+        "externalId": "0oamxbw5sdvxDgPry1d7",
+        "type": "APPLICATION"
+      },
+      "status": "ACTIVE",
+      "entitlements": [
+        {
+          "values": [
+            {
+              "id": "entygyvclarzLpS4C1d6",
+              "name": "Premier",
+              "externalValue": "premier",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entygyvclarzLpS4C1d6"
+            }
+          ],
+          "id": "espygyvcjwIY1awIQ1d6",
+          "name": "License",
+          "externalValue": "license",
+          "description": "License level for the customer based on current contract",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        },
+        {
+          "values": [
+            {
+              "id": "entyln2a9rCVBtG9c1d6",
+              "name": "Purchaser",
+              "externalValue": "q_purchaser",
+              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a9rCVBtG9c1d6"
+            }
+          ],
+          "id": "espyln2a6CE8GxcYz1d6",
+          "name": "Roles",
+          "externalValue": "roles",
+          "multiValue": true,
+          "required": false,
+          "dataType": "array"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enb13o2ewjNG3y8LM1d7",
+          "hints": {}
+        }
+      },
+      "name": "Purchasing",
+      "id": "enb13o2ewjNG3y8LM1d7",
+      "createdBy": "00umx5xxnoi9Yy40i1d7",
+      "created": "2025-11-10T22:51:19Z",
+      "lastUpdated": "2025-11-10T22:51:19Z",
+      "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+    },
+    {
       "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enb12zbvfgMan9Qak1d7",
       "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:datadog:0oanitkncxGbbNwrl1d7",
       "target": {
@@ -756,62 +812,6 @@
       "createdBy": "00un405cteWNUz71P1d7",
       "created": "2025-06-13T20:29:03Z",
       "lastUpdated": "2025-06-13T20:29:03Z",
-      "lastUpdatedBy": "00un405cteWNUz71P1d7"
-    },
-    {
-      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-bundles:enbyln29kDyuJ581F1d6",
-      "targetResourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_marketti_1:0oamxbw5sdvxDgPry1d7",
-      "target": {
-        "externalId": "0oamxbw5sdvxDgPry1d7",
-        "type": "APPLICATION"
-      },
-      "status": "ACTIVE",
-      "entitlements": [
-        {
-          "values": [
-            {
-              "id": "entygyvclarzLpS4C1d6",
-              "name": "Premier",
-              "externalValue": "premier",
-              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entygyvclarzLpS4C1d6"
-            }
-          ],
-          "id": "espygyvcjwIY1awIQ1d6",
-          "name": "License",
-          "externalValue": "license",
-          "description": "License level for the customer based on current contract",
-          "multiValue": true,
-          "required": false,
-          "dataType": "array"
-        },
-        {
-          "values": [
-            {
-              "id": "entyln2a9rCVBtG9c1d6",
-              "name": "Purchaser",
-              "externalValue": "q_purchaser",
-              "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a9rCVBtG9c1d6"
-            }
-          ],
-          "id": "espyln2a6CE8GxcYz1d6",
-          "name": "Roles",
-          "externalValue": "roles",
-          "multiValue": true,
-          "required": false,
-          "dataType": "array"
-        }
-      ],
-      "_links": {
-        "self": {
-          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/entitlement-bundles/enbyln29kDyuJ581F1d6",
-          "hints": {}
-        }
-      },
-      "name": "Purchasing",
-      "id": "enbyln29kDyuJ581F1d6",
-      "createdBy": "00un405cteWNUz71P1d7",
-      "created": "2025-06-13T20:05:13Z",
-      "lastUpdated": "2025-06-13T20:28:47Z",
       "lastUpdatedBy": "00un405cteWNUz71P1d7"
     },
     {
