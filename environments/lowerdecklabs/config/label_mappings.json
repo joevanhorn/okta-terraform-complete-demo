@@ -69,9 +69,6 @@
       "Privileged": [],
       "Crown Jewel": [],
       "Compliance:SOX": [
-        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7",
-        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:workday:0oaq4iodcifSLp30Q1d7",
-        "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:successfactors:0oan4ssz4lmqTnQry1d7",
         "orn:okta:idp:00omx5xxhePEbjFNp1d7:apps:demo_lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7"
       ],
       "Compliance:GDPR": [],
