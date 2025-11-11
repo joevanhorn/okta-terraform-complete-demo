@@ -657,6 +657,10 @@ This document provides a comprehensive manual validation plan for testing the Ok
 
 ### 5.4 Governance Labels (API-Only)
 
+**Objective:** Verify hierarchical label management system
+
+#### 5.4.1 Sync Labels from Okta
+
 - [ ] **Sync Governance Labels**
   ```bash
   python3 ../../scripts/sync_label_mappings.py \
@@ -665,13 +669,199 @@ This document provides a comprehensive manual validation plan for testing the Ok
   - ✅ Pass: Completes successfully
   - ❌ Fail: Script errors
 
-- [ ] **Validate Labels**
+- [ ] **Validate Hierarchical Structure**
   ```bash
   jq '.labels | length' ../config/label_mappings.json
-  # Expected: 2 (or current count)
+  # Expected: 3 (Privileged, Crown Jewel, Compliance)
+
+  jq '.labels.Compliance.type' ../config/label_mappings.json
+  # Expected: "multi_value"
+
+  jq '.labels.Compliance.values | keys' ../config/label_mappings.json
+  # Expected: ["SOX", "GDPR", "PII"]
   ```
-  - ✅ Pass: Labels present
-  - ❌ Fail: Empty or error
+  - ✅ Pass: Hierarchical structure correct, multi-value labels supported
+  - ❌ Fail: Flat structure or missing values
+
+- [ ] **Validate Assignment Format**
+  ```bash
+  jq '.assignments.apps | keys' ../config/label_mappings.json
+  # Expected: Includes "Compliance:SOX", "Compliance:GDPR", "Compliance:PII"
+  ```
+  - ✅ Pass: Uses "Label:Value" format for multi-value labels
+  - ❌ Fail: Wrong format
+
+#### 5.4.2 Apply Labels to Okta (Dry Run)
+
+- [ ] **Test Dry Run Mode**
+  ```bash
+  python3 ../../scripts/apply_labels_from_config.py \
+    --config ../config/label_mappings.json \
+    --dry-run
+  ```
+  - ✅ Pass: Completes without errors, shows what would be done
+  - ❌ Fail: Errors during dry run
+
+- [ ] **Verify Dry Run Output**
+  - Check console output for:
+    - Labels that would be created
+    - Label values that would be created
+    - Assignments that would be applied
+  - ✅ Pass: Output shows expected operations
+  - ❌ Fail: Unexpected operations or errors
+
+- [ ] **Check Results JSON**
+  ```bash
+  jq '.' label_application_results.json
+  # Expected fields:
+  # - dry_run: true
+  # - labels_created: number
+  # - labels_skipped: number
+  # - label_values_created: number
+  # - assignments_applied: number
+  # - errors: []
+  ```
+  - ✅ Pass: Results JSON has all expected fields
+  - ❌ Fail: Missing fields or errors array not empty
+
+#### 5.4.3 GitHub Actions Workflow Validation
+
+- [ ] **Trigger Workflow on PR**
+  ```bash
+  # Create test PR with label changes
+  git checkout -b test/label-validation
+  # Edit environments/lowerdecklabs/config/label_mappings.json
+  # Add a test assignment or new label value
+  git add environments/lowerdecklabs/config/label_mappings.json
+  git commit -m "test: Validate label workflow"
+  git push -u origin test/label-validation
+  gh pr create --title "Test Label Validation" --body "Testing label workflow"
+  ```
+  - ✅ Pass: PR created successfully
+  - ❌ Fail: PR creation failed
+
+- [ ] **Monitor Workflow Run**
+  ```bash
+  gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml --limit 1
+  gh run watch <RUN_ID>
+  ```
+  - ✅ Pass: Workflow completes successfully in dry-run mode
+  - ❌ Fail: Workflow fails
+  - **Expected:** PR comment shows preview of label changes
+
+- [ ] **Verify PR Comment**
+  - Check PR for automated comment with:
+    - Labels to create count
+    - Labels already existing count
+    - Label assignments to apply count
+    - Errors count
+    - Full log in expandable section
+  - ✅ Pass: Comment present with all expected information
+  - ❌ Fail: Comment missing or incomplete
+
+#### 5.4.4 Label Application (If Approved)
+
+**Warning:** Only perform this step if you want to actually apply label changes to Okta
+
+- [ ] **Merge PR (Optional)**
+  ```bash
+  gh pr merge test/label-validation --squash
+  ```
+  - ✅ Pass: PR merged successfully
+  - ❌ Fail: Merge conflicts or errors
+
+- [ ] **Manual Workflow Trigger**
+  ```bash
+  gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+    -f dry_run=false
+  ```
+  - ✅ Pass: Workflow triggered
+  - ❌ Fail: Failed to trigger
+
+- [ ] **Monitor Apply Workflow**
+  ```bash
+  gh run watch <RUN_ID>
+  ```
+  - ✅ Pass: Workflow completes successfully, labels applied
+  - ❌ Fail: Workflow fails
+  - **Expected Duration:** 1-2 minutes
+
+- [ ] **Verify in Okta Admin Console**
+  - Navigate to: Identity Governance → Labels
+  - Check for new labels or label values
+  - Navigate to labeled resources
+  - Verify assignments
+  - ✅ Pass: Labels visible in Okta UI, assignments correct
+  - ❌ Fail: Labels not found or assignments incorrect
+
+- [ ] **Sync Back to Config**
+  ```bash
+  python3 ../../scripts/sync_label_mappings.py \
+    --output ../config/label_mappings.json
+
+  git diff ../config/label_mappings.json
+  # Should show labelId and labelValueId fields populated
+  ```
+  - ✅ Pass: Config updated with IDs from Okta
+  - ❌ Fail: Sync failed or IDs not populated
+
+#### 5.4.5 API Methods Validation
+
+- [ ] **Test create_label_with_values()**
+  ```bash
+  # Create test script to verify API method
+  cat > /tmp/test_label_api.py <<'EOF'
+  import sys
+  sys.path.insert(0, '/home/joevanhorn/projects/okta-terraform-complete-demo')
+  from scripts.okta_api_manager import OktaAPIManager
+
+  manager = OktaAPIManager()
+
+  # Test creating multi-value label
+  result = manager.create_label_with_values(
+      name="TestValidation",
+      description="Validation test label",
+      values=[
+          {"name": "Value1", "description": "Test value 1"},
+          {"name": "Value2", "description": "Test value 2"}
+      ]
+  )
+
+  print(f"Label created: {result.get('labelId')}")
+  print(f"Values: {len(result.get('values', []))}")
+  EOF
+
+  python3 /tmp/test_label_api.py
+  ```
+  - ✅ Pass: Label created with multiple values
+  - ❌ Fail: API error or wrong structure
+
+- [ ] **Test get_label_value_id()**
+  ```python
+  value_id = manager.get_label_value_id("Compliance", "SOX")
+  print(f"SOX value ID: {value_id}")
+  # Expected: Returns valid labelValueId
+  ```
+  - ✅ Pass: Returns correct labelValueId
+  - ❌ Fail: Returns None or wrong ID
+
+- [ ] **Test assign_label_values_to_resources()**
+  ```python
+  # Test assigning label value to test resource
+  sox_id = manager.get_label_value_id("Compliance", "SOX")
+  manager.assign_label_values_to_resources(
+      label_value_ids=[sox_id],
+      resource_orns=["orn:okta:application:..."]
+  )
+  # Expected: Assignment successful
+  ```
+  - ✅ Pass: Assignment succeeds
+  - ❌ Fail: API error or assignment fails
+
+- [ ] **Cleanup Test Label**
+  - Manually delete "TestValidation" label in Okta Admin Console
+  - ✅ Pass: Cleanup successful
+  - ❌ Fail: Unable to delete
 
 ---
 
