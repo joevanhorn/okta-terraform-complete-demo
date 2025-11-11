@@ -113,6 +113,45 @@ jobs:
             grep "Plan:" plan_output.txt || grep "No changes" plan_output.txt || echo "See full output below"
           fi
 
+      - name: Check for Campaign Association Errors
+        if: steps.plan.outcome == 'failure'
+        working-directory: environments/${{ steps.detect-env.outputs.environment }}/terraform
+        run: |
+          if [ -f plan_output.txt ] && grep -q "Error reading campaign" plan_output.txt; then
+            echo "::error::Detected entitlement bundle campaign association errors"
+            echo ""
+            echo "## ⚠️ Campaign Association Errors Detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some entitlement bundles have stale campaign associations from deleted access review campaigns." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### How to Fix:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Run the fix workflow:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "gh workflow run fix-bundle-campaign-errors.yml -f dry_run=false -f bundles_to_fix=all_13" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Or manually via GitHub Actions UI:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to Actions → Fix Entitlement Bundle Campaign Errors" >> $GITHUB_STEP_SUMMARY
+            echo "2. Click 'Run workflow'" >> $GITHUB_STEP_SUMMARY
+            echo "3. Select bundles_to_fix: **all_13**" >> $GITHUB_STEP_SUMMARY
+            echo "4. Set dry_run: **false**" >> $GITHUB_STEP_SUMMARY
+            echo "5. Click 'Run workflow'" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### More Information:" >> $GITHUB_STEP_SUMMARY
+            echo "See [\`docs/TROUBLESHOOTING_ENTITLEMENT_BUNDLES.md\`](../blob/main/docs/TROUBLESHOOTING_ENTITLEMENT_BUNDLES.md) for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Affected Bundles:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            grep -B 2 "Error reading campaign" plan_output.txt | grep "okta_entitlement_bundle" | sed 's/^.*okta_entitlement_bundle\./- /' | sed 's/,$//' >> $GITHUB_STEP_SUMMARY || true
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+            # Set output for later steps
+            echo "campaign_errors=true" >> $GITHUB_OUTPUT
+          else
+            echo "campaign_errors=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload Plan
         uses: actions/upload-artifact@v4
         if: always()
