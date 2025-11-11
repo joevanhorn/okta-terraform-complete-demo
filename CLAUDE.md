@@ -579,7 +579,13 @@ gh workflow run import-all-resources.yml \
 6. **Labels API returns 405 errors**
    - Solution: Use `labelId` not `name` in URLs, see `scripts/archive/README.md`
 
+7. **"Error reading campaign" during terraform plan**
+   - **Root Cause:** Provider bug - entitlement bundles have stale campaign associations from deleted access review campaigns
+   - **Solution:** Run fix workflow: `gh workflow run fix-bundle-campaign-errors.yml -f dry_run=false -f bundles_to_fix=all_13`
+   - **Prevention:** Use `terraform plan -refresh=false` or `-target` to skip affected bundles until fixed
+
 **For detailed troubleshooting, see:**
+- `docs/TROUBLESHOOTING_ENTITLEMENT_BUNDLES.md` - Campaign association errors and fixes
 - `docs/LESSONS_LEARNED.md` - Known issues and solutions
 - `docs/LABELS_API_VALIDATION.md` - Labels API investigation results
 
