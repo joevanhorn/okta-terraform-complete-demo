@@ -48,33 +48,84 @@ class OktaAPIManager:
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+
+        # Rate limit tracking
+        self.rate_limit_remaining = None
+        self.rate_limit_reset = None
+        self.rate_limit_warning_threshold = 10  # Warn when fewer than this many requests remain
     
+    def _update_rate_limit_info(self, response: requests.Response):
+        """Update rate limit tracking from response headers"""
+        try:
+            self.rate_limit_remaining = int(response.headers.get('X-Rate-Limit-Remaining', 0))
+            self.rate_limit_reset = int(response.headers.get('X-Rate-Limit-Reset', 0))
+
+            # Warn if approaching rate limit
+            if self.rate_limit_remaining is not None and self.rate_limit_remaining <= self.rate_limit_warning_threshold:
+                print(f"  ⚠️  Rate limit warning: {self.rate_limit_remaining} requests remaining")
+        except (ValueError, TypeError):
+            pass  # Headers might not be integers or might be missing
+
+    def _wait_for_rate_limit_reset(self):
+        """Wait until rate limit reset time if we're close to the limit"""
+        if self.rate_limit_remaining is not None and self.rate_limit_remaining <= 1:
+            if self.rate_limit_reset:
+                wait_time = max(self.rate_limit_reset - time.time() + 1, 1)  # Add 1 second buffer
+                print(f"  ⏳ Rate limit nearly exhausted. Waiting {wait_time:.0f} seconds for reset...")
+                time.sleep(wait_time)
+
     def _make_request(self, method: str, url: str, **kwargs) -> requests.Response:
-        """Make API request with retry logic"""
-        max_retries = 3
-        retry_delay = 2
-        
+        """Make API request with rate limit awareness and retry logic"""
+        max_retries = 5  # Increased for rate limit retries
+        base_retry_delay = 1
+
+        # Check if we should wait before making the request
+        self._wait_for_rate_limit_reset()
+
         for attempt in range(max_retries):
             try:
                 response = self.session.request(method, url, **kwargs)
-                
-                # Handle rate limiting
+
+                # Update rate limit tracking from response headers
+                self._update_rate_limit_info(response)
+
+                # Handle rate limiting (429)
                 if response.status_code == 429:
-                    retry_after = int(response.headers.get('X-Rate-Limit-Reset', time.time() + 60))
-                    wait_time = max(retry_after - time.time(), 1)
-                    print(f"Rate limited. Waiting {wait_time} seconds...")
+                    # Use X-Rate-Limit-Reset header for accurate wait time
+                    reset_time = int(response.headers.get('X-Rate-Limit-Reset', time.time() + 60))
+                    wait_time = max(reset_time - time.time() + 1, 1)  # Add 1 second buffer
+
+                    print(f"  ⚠️  Rate limited (429). Waiting {wait_time:.0f} seconds until reset...")
                     time.sleep(wait_time)
                     continue
-                
+
                 response.raise_for_status()
                 return response
-                
+
+            except requests.exceptions.HTTPError as e:
+                # Don't retry on 4xx errors (except 429 which is handled above)
+                if 400 <= e.response.status_code < 500 and e.response.status_code != 429:
+                    raise
+
+                if attempt == max_retries - 1:
+                    raise
+
+                # Exponential backoff for other errors
+                wait_time = base_retry_delay * (2 ** attempt)
+                print(f"  ⚠️  Request failed (attempt {attempt + 1}/{max_retries}): {e}")
+                print(f"     Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+
             except requests.exceptions.RequestException as e:
                 if attempt == max_retries - 1:
                     raise
-                print(f"Request failed (attempt {attempt + 1}/{max_retries}): {e}")
-                time.sleep(retry_delay * (attempt + 1))
-        
+
+                # Exponential backoff
+                wait_time = base_retry_delay * (2 ** attempt)
+                print(f"  ⚠️  Request failed (attempt {attempt + 1}/{max_retries}): {e}")
+                print(f"     Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+
         raise Exception("Max retries exceeded")
     
     # ==================== Resource Owners ====================
