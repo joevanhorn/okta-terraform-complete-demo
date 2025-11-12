@@ -1,0 +1,104 @@
+Fetching labels from: https://demo-lowerdecklabs.oktapreview.com/governance/api/v1/labels
+
+Raw API Response:
+{
+  "data": [
+    {
+      "labelId": "lbc11keklyNa6KhMi1d7",
+      "name": "Privileged",
+      "values": [
+        {
+          "labelValueId": "lbl11keklzHO41LJ11d7",
+          "name": "Privileged",
+          "metadata": {
+            "additionalProperties": {
+              "backgroundColor": "red"
+            }
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/labels/lbc11keklyNa6KhMi1d7",
+          "hints": {}
+        }
+      }
+    },
+    {
+      "labelId": "lbc11keklwxBrRatm1d7",
+      "name": "Crown Jewel",
+      "values": [
+        {
+          "labelValueId": "lbl11keklx0TEYCmp1d7",
+          "name": "Crown Jewel",
+          "metadata": {
+            "additionalProperties": {
+              "backgroundColor": "green"
+            }
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/labels/lbc11keklwxBrRatm1d7",
+          "hints": {}
+        }
+      }
+    },
+    {
+      "labelId": "lbc13o4bquwF4T9Qz1d7",
+      "name": "Compliance",
+      "values": [
+        {
+          "labelValueId": "lbl13o4bqvW2WOaji1d7",
+          "name": "SOX"
+        },
+        {
+          "labelValueId": "lbl13o4bqw0WcS1S51d7",
+          "name": "GDPR"
+        },
+        {
+          "labelValueId": "lbl13o4bqxlzuIAYI1d7",
+          "name": "PII"
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/labels/lbc13o4bquwF4T9Qz1d7",
+          "hints": {}
+        }
+      }
+    }
+  ],
+  "_links": {
+    "self": {
+      "href": "https://demo-lowerdecklabs-admin.oktapreview.com/governance/api/v1/labels",
+      "hints": {}
+    }
+  }
+}
+
+================================================================================
+
+Found 3 labels:
+
+Label: Privileged
+  ID: lbc11keklyNa6KhMi1d7
+  Description: N/A
+  Values:
+    - Privileged: lbl11keklzHO41LJ11d7
+
+Label: Crown Jewel
+  ID: lbc11keklwxBrRatm1d7
+  Description: N/A
+  Values:
+    - Crown Jewel: lbl11keklx0TEYCmp1d7
+
+Label: Compliance
+  ID: lbc13o4bquwF4T9Qz1d7
+  Description: N/A
+  Values:
+    - SOX: lbl13o4bqvW2WOaji1d7
+    - GDPR: lbl13o4bqw0WcS1S51d7
+    - PII: lbl13o4bqxlzuIAYI1d7
+

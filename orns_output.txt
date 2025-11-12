@@ -1,0 +1,32 @@
+Getting correct ORNs for applications...
+
+================================================================================
+Salesforce.com (0oamxiwg4zsrWaeJF1d7)
+  App Name: salesforce
+  Sign-On Mode: saml_2_0
+  ORN: orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7
+
+Workday (0oaq4iodcifSLp30Q1d7)
+  App Name: workday
+  Sign-On Mode: saml_2_0
+  ORN: orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:workday:0oaq4iodcifSLp30Q1d7
+
+SuccessFactors (0oan4ssz4lmqTnQry1d7)
+  App Name: successfactors
+  Sign-On Mode: browser_plugin
+  ORN: orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:successfactors:0oan4ssz4lmqTnQry1d7
+
+Salesday (0oamxc34dudXXjGJT1d7)
+  App Name: demo-lowerdecklabs_salesday_1
+  Sign-On Mode: saml_2_0
+  ORN: orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo_lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7
+
+================================================================================
+
+JSON array for label_mappings.json:
+[
+  "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7",
+  "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:workday:0oaq4iodcifSLp30Q1d7",
+  "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:successfactors:0oan4ssz4lmqTnQry1d7",
+  "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo_lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7"
+]

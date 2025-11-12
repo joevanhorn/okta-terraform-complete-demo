@@ -144,10 +144,10 @@ gh workflow run import-all-resources.yml \
 gh workflow run terraform-apply-with-approval.yml
 
 # Sync and apply resource owners
-gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+gh workflow run apply-owners.yml -f environment=lowerdecklabs -f dry_run=false
 
 # Auto-label admin entitlements
-gh workflow run lowerdecklabs-apply-admin-labels.yml -f dry_run=false
+gh workflow run apply-admin-labels.yml -f environment=lowerdecklabs -f dry_run=false
 ```
 
 ### Python Scripts (API Management)
@@ -303,11 +303,11 @@ s3://okta-terraform-demo/
 - `import-all-resources.yml` - Import entire tenant to code
 - `terraform-plan.yml` - Run plan on PR and push to main (with AWS OIDC)
 - `terraform-apply-with-approval.yml` - Apply with manual approval gate (with AWS OIDC)
-- `lowerdecklabs-apply-owners.yml` - Sync resource owners
-- `lowerdecklabs-apply-admin-labels.yml` - Auto-label admin resources
-- `lowerdecklabs-export-oig.yml` - Export OIG configs to JSON
+- `apply-owners.yml` - Sync resource owners (requires environment parameter)
+- `apply-admin-labels.yml` - Auto-label admin resources (requires environment parameter)
+- `export-oig.yml` - Export OIG configs to JSON (requires environment parameter)
 - `validate-label-mappings.yml` - PR validation for label configuration (syntax-only, no secrets)
-- `lowerdecklabs-apply-labels-from-config.yml` - Deploy labels to Okta (auto dry-run on merge, manual apply)
+- `apply-labels-from-config.yml` - Deploy labels to Okta (auto dry-run on merge, manual apply, requires environment parameter)
 
 **Authentication:**
 - **Okta:** GitHub Environments with `OKTA_API_TOKEN`, `OKTA_ORG_NAME`, `OKTA_BASE_URL`
@@ -445,8 +445,8 @@ Labels are managed via a two-phase workflow that respects environment protection
 
 **Phase 2: Deployment (With Secrets)**
 ```yaml
-# lowerdecklabs-apply-labels-from-config.yml
-environment: LowerDeckLabs
+# apply-labels-from-config.yml
+environment: LowerDeckLabs  # Specified via input parameter
 # Uses Okta API secrets
 # Auto dry-run on merge to main
 # Manual apply via workflow dispatch
@@ -632,7 +632,7 @@ gh workflow run import-all-resources.yml \
 
 7. **"Error reading campaign" during terraform plan**
    - **Root Cause:** Provider bug - entitlement bundles have stale campaign associations from deleted access review campaigns
-   - **Solution:** Run fix workflow: `gh workflow run fix-bundle-campaign-errors.yml -f dry_run=false -f bundles_to_fix=all_13`
+   - **Solution:** Run fix workflow: `gh workflow run fix-bundle-campaign-errors.yml -f environment=lowerdecklabs -f dry_run=false -f bundles_to_fix=all_13`
    - **Prevention:** Use `terraform plan -refresh=false` or `-target` to skip affected bundles until fixed
 
 **For detailed troubleshooting, see:**

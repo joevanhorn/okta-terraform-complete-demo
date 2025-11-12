@@ -1,8 +1,17 @@
-name: LowerDeckLabs - Setup OIG Governance
+name: Setup OIG Governance
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
       create_examples:
         description: 'Create example governance resources'
         required: false
@@ -19,21 +28,18 @@ jobs:
     name: Setup OIG Governance Resources
     runs-on: ubuntu-latest
 
-    # Use the LowerDeckLabs environment with protection rules
-    environment:
-      name: LowerDeckLabs
+    environment: ${{ inputs.environment }}
 
-    # Read-only operation - validates and creates PR
     permissions:
       contents: write
       pull-requests: write
       actions: read
 
     steps:
-      - name: 🔒 Safety Check
+      - name: Safety Check
         run: |
           echo "=================================================="
-          echo "  LOWERDECKLABS OIG GOVERNANCE SETUP"
+          echo "  OIG GOVERNANCE SETUP"
           echo "=================================================="
           echo ""
           echo "ℹ️  This workflow creates Terraform files for OIG resources"
@@ -41,7 +47,7 @@ jobs:
           echo "✅ Creates PR for review before applying"
           echo "❌ Does NOT modify your Okta tenant directly"
           echo ""
-          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Environment: ${{ inputs.environment }}"
           echo "Operation: Create OIG governance Terraform files"
           echo "=================================================="
           echo ""
@@ -85,14 +91,14 @@ jobs:
       - name: Create governance directory structure
         run: |
           echo "Creating governance directory structure..."
-          mkdir -p production-ready/governance
+          mkdir -p environments/${{ inputs.environment }}/terraform/governance
 
           echo "✅ Directory structure created"
-          tree production-ready/governance || ls -la production-ready/governance
+          tree environments/${{ inputs.environment }}/terraform/governance || ls -la environments/${{ inputs.environment }}/terraform/governance
 
       - name: Create governance README
         run: |
-          cat > production-ready/governance/README.md <<'EOF'
+          cat > environments/${{ inputs.environment }}/terraform/governance/README.md <<'EOF'
           # OIG Governance Resources
 
           This directory contains Terraform configurations for Okta Identity Governance (OIG) resources.
@@ -138,7 +144,7 @@ jobs:
 
           **How to identify:**
           1. Run the OIG export workflow
-          2. Check `oig-exports/lowerdecklabs/latest.json`
+          2. Check `../../imports/oig/latest.json`
           3. Look at the `_category` field for each entitlement
 
           ## 📋 Prerequisites
@@ -147,7 +153,7 @@ jobs:
 
           1. **OIG is enabled** in your Okta tenant
           2. **Entitlement Management enabled** for apps (if using entitlements)
-             - See `../OIG_PREREQUISITES.md` for detailed setup
+             - See `../../../OIG_PREREQUISITES.md` for detailed setup
           3. **API token has governance scopes**
           4. **Provider version is v6.1.0+** (check `../provider.tf`)
 
@@ -155,15 +161,15 @@ jobs:
 
           ### Creating Resources
 
-          1. **Copy examples** from `../RESOURCE_EXAMPLES.tf`
+          1. **Copy examples** from example files below
           2. **Create resource files** in this directory
           3. **Validate** the configuration
           4. **Plan** to review changes
           5. **Apply** after review
 
           ```bash
-          # From production-ready/ directory
-          cd governance/
+          # From this directory
+          cd environments/${{ inputs.environment }}/terraform/governance/
 
           # Validate
           terraform validate
@@ -201,10 +207,8 @@ jobs:
 
           ## 📚 Resources
 
-          - **Complete Examples:** `../RESOURCE_EXAMPLES.tf`
-          - **Support Matrix:** `../TERRAFORM_RESOURCE_SUPPORT.md`
-          - **OIG Prerequisites:** `../../OIG_PREREQUISITES.md`
-          - **API Exports:** `../../oig-exports/` (for app-managed entitlements)
+          - **OIG Prerequisites:** `../../../OIG_PREREQUISITES.md`
+          - **API Exports:** `../../imports/oig/` (for app-managed entitlements)
           - **Official Docs:** https://registry.terraform.io/providers/okta/okta/latest/docs
 
           ## 🔧 Directory Structure
@@ -224,14 +228,14 @@ jobs:
 
           ### State Management
 
-          This directory shares the same state file as the parent `production-ready/` directory. All resources are managed together.
+          This directory shares the same state file as the parent terraform directory. All resources are managed together.
 
           ### Manual Entitlements Only
 
           The `okta_principal_entitlements` resource can ONLY manage manual/custom entitlements. App-managed entitlements (synced from Salesforce, Workday, etc.) are:
           - ❌ **Cannot be created** in Terraform
           - ❌ **Cannot be modified** in Terraform
-          - ✅ **Can be documented** via API exports (`oig-exports/`)
+          - ✅ **Can be documented** via API exports (`../../imports/oig/`)
 
           ### Resource Categorization
 
@@ -270,7 +274,7 @@ jobs:
           echo "Creating example governance resource files..."
 
           # Create entitlements example (commented out)
-          cat > production-ready/governance/entitlements.tf <<'EOF'
+          cat > environments/${{ inputs.environment }}/terraform/governance/entitlements.tf <<'EOF'
           # =============================================================================
           # MANUAL ENTITLEMENTS
           # =============================================================================
@@ -282,7 +286,7 @@ jobs:
           #
           # To identify which entitlements are manual:
           # 1. Run the OIG export workflow
-          # 2. Check oig-exports/lowerdecklabs/latest.json
+          # 2. Check ../../imports/oig/latest.json
           # 3. Look for "_category": "manual"
           #
           # =============================================================================
@@ -309,17 +313,17 @@ jobs:
           # App-managed entitlements CANNOT be created here. They are:
           # - Synced from provisioning-enabled applications (Salesforce, Workday, etc.)
           # - Read-only - structure and values controlled by the app
-          # - Documented in: ../../oig-exports/lowerdecklabs/latest.json
+          # - Documented in: ../../imports/oig/latest.json
           #
           # To view app-managed entitlements:
-          # cat ../../oig-exports/lowerdecklabs/latest.json | \
+          # cat ../../imports/oig/latest.json | \
           #   jq '.entitlements[] | select(._category == "app-managed")'
           #
           # =============================================================================
           EOF
 
           # Create reviews example (commented out)
-          cat > production-ready/governance/reviews.tf <<'EOF'
+          cat > environments/${{ inputs.environment }}/terraform/governance/reviews.tf <<'EOF'
           # =============================================================================
           # ACCESS CERTIFICATION CAMPAIGNS (REVIEWS)
           # =============================================================================
@@ -360,7 +364,7 @@ jobs:
           EOF
 
           # Create requests example (commented out)
-          cat > production-ready/governance/requests.tf <<'EOF'
+          cat > environments/${{ inputs.environment }}/terraform/governance/requests.tf <<'EOF'
           # =============================================================================
           # ACCESS REQUEST MANAGEMENT
           # =============================================================================
@@ -397,7 +401,7 @@ jobs:
           EOF
 
           # Create catalog example (commented out)
-          cat > production-ready/governance/catalog.tf <<'EOF'
+          cat > environments/${{ inputs.environment }}/terraform/governance/catalog.tf <<'EOF'
           # =============================================================================
           # RESOURCE CATALOG
           # =============================================================================
@@ -429,7 +433,7 @@ jobs:
           EOF
 
           # Create resource sets example (commented out)
-          cat > production-ready/governance/resource_sets.tf <<'EOF'
+          cat > environments/${{ inputs.environment }}/terraform/governance/resource_sets.tf <<'EOF'
           # =============================================================================
           # RESOURCE SETS (Delegated Administration)
           # =============================================================================
@@ -468,12 +472,12 @@ jobs:
           echo "✅ Example governance resource files created"
           echo ""
           echo "Files created:"
-          ls -la production-ready/governance/*.tf
+          ls -la environments/${{ inputs.environment }}/terraform/governance/*.tf
 
       - name: Validate Terraform configuration
         run: |
           echo "Validating Terraform configuration..."
-          cd production-ready
+          cd environments/${{ inputs.environment }}/terraform
 
           terraform init
           terraform validate
@@ -485,12 +489,13 @@ jobs:
         run: |
           echo "Generating setup summary..."
 
-          SUMMARY_FILE="production-ready/governance/SETUP_SUMMARY.md"
+          SUMMARY_FILE="environments/${{ inputs.environment }}/terraform/governance/SETUP_SUMMARY.md"
 
-          cat > ${SUMMARY_FILE} <<'EOF'
+          cat > ${SUMMARY_FILE} <<EOF
           # OIG Governance Setup Summary
 
           **Date:** $(date)
+          **Environment:** ${{ inputs.environment }}
           **Okta Org:** ${OKTA_ORG_NAME}
           **Workflow Run:** #${{ github.run_number }}
 
@@ -500,15 +505,15 @@ jobs:
 
           ### Files Created
 
-          ```
-          production-ready/governance/
+          \`\`\`
+          environments/${{ inputs.environment }}/terraform/governance/
           ├── README.md                # Complete governance documentation
           ├── entitlements.tf         # Manual entitlements (examples commented out)
           ├── reviews.tf              # Access certification campaigns
           ├── requests.tf             # Access request workflows
           ├── catalog.tf              # Resource catalog
           └── resource_sets.tf        # Resource sets for admin roles
-          ```
+          \`\`\`
 
           ### What's Included
 
@@ -523,28 +528,28 @@ jobs:
           ### 1. Review Example Files
 
           All example resources are **commented out** by default. Review each file:
-          - `entitlements.tf` - Manual entitlements only
-          - `reviews.tf` - Access certification campaigns
-          - `requests.tf` - Access request workflows
-          - `catalog.tf` - Resource catalog configuration
-          - `resource_sets.tf` - Delegated administration
+          - \`entitlements.tf\` - Manual entitlements only
+          - \`reviews.tf\` - Access certification campaigns
+          - \`requests.tf\` - Access request workflows
+          - \`catalog.tf\` - Resource catalog configuration
+          - \`resource_sets.tf\` - Delegated administration
 
           ### 2. Identify Manual Entitlements
 
           Before creating entitlements, identify which are manual vs app-managed:
 
-          ```bash
+          \`\`\`bash
           # Run OIG export workflow or use existing export
-          cat ../../oig-exports/lowerdecklabs/latest.json | \
+          cat ../../imports/oig/latest.json | \\
             jq '.entitlements[] | select(._category == "manual") | {name, id}'
-          ```
+          \`\`\`
 
           ### 3. Create Your First Resource
 
           Uncomment an example and customize:
 
-          ```bash
-          cd production-ready/governance
+          \`\`\`bash
+          cd environments/${{ inputs.environment }}/terraform/governance
 
           # Edit the file (uncomment and customize)
           nano reviews.tf
@@ -557,13 +562,11 @@ jobs:
 
           # Apply (after review)
           terraform apply
-          ```
+          \`\`\`
 
           ### 4. Reference Documentation
 
-          - **All resource examples:** `../RESOURCE_EXAMPLES.tf`
-          - **Support matrix:** `../TERRAFORM_RESOURCE_SUPPORT.md`
-          - **Prerequisites:** `../../OIG_PREREQUISITES.md`
+          - **Prerequisites:** \`../../../OIG_PREREQUISITES.md\`
           - **Official docs:** https://registry.terraform.io/providers/okta/okta/latest/docs
 
           ## ⚠️ Important Reminders
@@ -573,11 +576,11 @@ jobs:
           - ✅ **Manual entitlements** - Can be managed in Terraform
           - ❌ **App-managed entitlements** - READ-ONLY (Salesforce, Workday, etc.)
 
-          Use the `_category` field in OIG exports to identify which is which.
+          Use the \`_category\` field in OIG exports to identify which is which.
 
           ### State Management
 
-          All governance resources share the same Terraform state as `production-ready/`. They're managed together.
+          All governance resources share the same Terraform state as the parent directory. They're managed together.
 
           ### No Automatic Apply
 
@@ -588,14 +591,13 @@ jobs:
 
           ## 📚 Additional Resources
 
-          - **OIG Export:** `../../oig-exports/lowerdecklabs/latest.json`
-          - **Categorized Entitlements:** See `_category` field in exports
-          - **API Manager:** `../../scripts/okta_api_manager.py`
-          - **Workflows:** `.github/workflows/`
+          - **OIG Export:** \`../../imports/oig/latest.json\`
+          - **Categorized Entitlements:** See \`_category\` field in exports
+          - **Workflows:** \`.github/workflows/\`
 
           ---
 
-          **Workflow:** LowerDeckLabs OIG Governance Setup
+          **Workflow:** OIG Governance Setup
           **Run ID:** ${{ github.run_id }}
           **Triggered by:** ${{ github.actor }}
           EOF
@@ -609,7 +611,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
-            feat(governance): Add OIG governance directory structure
+            feat(governance): Add OIG governance directory structure for ${{ inputs.environment }}
 
             - Create governance/ directory for OIG resources
             - Add comprehensive README with usage instructions
@@ -618,23 +620,23 @@ jobs:
             - All examples are commented out (no resources created)
 
             Next steps:
-            1. Review example files in production-ready/governance/
+            1. Review example files in environments/${{ inputs.environment }}/terraform/governance/
             2. Identify manual entitlements using OIG exports
             3. Uncomment and customize resources as needed
             4. Validate → Plan → Apply
-
-            🤖 Auto-generated by workflow
-          branch: governance-setup
+          branch: governance-setup-${{ inputs.environment }}
           delete-branch: true
-          title: "feat(governance): Setup OIG governance directory structure"
+          title: "feat(governance): Setup OIG governance directory for ${{ inputs.environment }}"
           body: |
             ## 🎯 OIG Governance Setup
 
             This PR creates the directory structure and example files for managing Okta Identity Governance (OIG) resources with Terraform.
 
+            **Environment:** ${{ inputs.environment }}
+
             ### What's Included
 
-            - ✅ `production-ready/governance/` directory
+            - ✅ `environments/${{ inputs.environment }}/terraform/governance/` directory
             - ✅ Comprehensive README with usage instructions
             - ✅ Example files for all OIG resource types (commented out)
             - ✅ Documentation for manual vs app-managed entitlements
@@ -643,7 +645,7 @@ jobs:
             ### Files Created
 
             ```
-            production-ready/governance/
+            environments/${{ inputs.environment }}/terraform/governance/
             ├── README.md
             ├── entitlements.tf
             ├── reviews.tf
@@ -660,27 +662,27 @@ jobs:
 
             ### Next Steps After Merge
 
-            1. Review example files in `production-ready/governance/`
-            2. Identify manual entitlements using OIG exports (`oig-exports/lowerdecklabs/latest.json`)
+            1. Review example files in `environments/${{ inputs.environment }}/terraform/governance/`
+            2. Identify manual entitlements using OIG exports (`environments/${{ inputs.environment }}/imports/oig/latest.json`)
             3. Uncomment and customize resources as needed
             4. Run: `terraform validate` → `terraform plan` → `terraform apply`
 
             ### Resources
 
-            - Complete examples: `production-ready/RESOURCE_EXAMPLES.tf`
-            - Support matrix: `production-ready/TERRAFORM_RESOURCE_SUPPORT.md`
             - Prerequisites: `OIG_PREREQUISITES.md`
 
             ---
-
-            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          labels: |
+            enhancement
+            governance
+            ${{ inputs.environment }}
 
       - name: Post summary to workflow
         if: always()
         run: |
-          echo "## 🎯 LowerDeckLabs OIG Governance Setup" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 OIG Governance Setup" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** LowerDeckLabs (Primary Demo Tenant)" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "**Operation:** Setup OIG Governance Directory" >> $GITHUB_STEP_SUMMARY
           echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -703,7 +705,7 @@ jobs:
           echo "### 📦 Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "1. Review PR and merge" >> $GITHUB_STEP_SUMMARY
-          echo "2. Identify manual entitlements in oig-exports/" >> $GITHUB_STEP_SUMMARY
+          echo "2. Identify manual entitlements in imports/oig/" >> $GITHUB_STEP_SUMMARY
           echo "3. Uncomment and customize resources" >> $GITHUB_STEP_SUMMARY
           echo "4. Validate → Plan → Apply" >> $GITHUB_STEP_SUMMARY
 

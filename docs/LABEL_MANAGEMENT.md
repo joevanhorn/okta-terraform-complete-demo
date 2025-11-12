@@ -382,11 +382,13 @@ Follow same process as adding new labels.
 **Via GitHub CLI:**
 ```bash
 # Dry run
-gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+gh workflow run apply-labels-from-config.yml \
+  -f environment=lowerdecklabs \
   -f dry_run=true
 
 # Apply changes
-gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+gh workflow run apply-labels-from-config.yml \
+  -f environment=lowerdecklabs \
   -f dry_run=false
 ```
 
@@ -556,7 +558,7 @@ gh pr create --title "Add Compliance Label" --body "Adds SOX compliance label"
 
 **5. Apply to Okta:**
 ```bash
-gh workflow run lowerdecklabs-apply-labels-from-config.yml -f dry_run=false
+gh workflow run apply-labels-from-config.yml -f environment=lowerdecklabs -f dry_run=false
 ```
 
 ### Example 2: Sync Labels from Okta

@@ -1,8 +1,17 @@
-name: LowerDeckLabs - Export OIG Resources
+name: Export OIG Resources
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
       export_labels:
         description: 'Export governance labels'
         required: false
@@ -29,8 +38,7 @@ jobs:
     name: Export OIG API-Only Resources
     runs-on: ubuntu-latest
 
-    environment:
-      name: LowerDeckLabs
+    environment: ${{ inputs.environment }}
 
     permissions:
       contents: write
@@ -40,10 +48,10 @@ jobs:
       - name: Safety Check
         run: |
           echo "=================================================="
-          echo "  LOWERDECKLABS OIG EXPORT - READ-ONLY OPERATION"
+          echo "  OIG EXPORT - READ-ONLY OPERATION"
           echo "=================================================="
           echo ""
-          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Environment: ${{ inputs.environment }}"
           echo "Operation: Export OIG API-only resources"
           echo "Export Labels: ${{ inputs.export_labels }}"
           echo "Export Owners: ${{ inputs.export_owners }}"
@@ -88,9 +96,9 @@ jobs:
       - name: Create export directory
         run: |
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          echo "EXPORT_DIR=lowerdecklabs_oig_export_${TIMESTAMP}" >> $GITHUB_ENV
+          echo "EXPORT_DIR=${{ inputs.environment }}_oig_export_${TIMESTAMP}" >> $GITHUB_ENV
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
-          mkdir -p lowerdecklabs_oig_export_${TIMESTAMP}
+          mkdir -p ${{ inputs.environment }}_oig_export_${TIMESTAMP}
 
       - name: Export OIG resources
         id: export_oig
@@ -100,7 +108,7 @@ jobs:
           chmod +x scripts/okta_api_manager.py
 
           # Build command with conditional flags
-          CMD="python3 scripts/okta_api_manager.py --action export --org-name \"${OKTA_ORG_NAME}\" --base-url \"${OKTA_BASE_URL}\" --api-token \"${OKTA_API_TOKEN}\" --output \"${EXPORT_DIR}/lowerdecklabs_oig_export.json\""
+          CMD="python3 scripts/okta_api_manager.py --action export --org-name \"${OKTA_ORG_NAME}\" --base-url \"${OKTA_BASE_URL}\" --api-token \"${OKTA_API_TOKEN}\" --output \"${EXPORT_DIR}/${{ inputs.environment }}_oig_export.json\""
 
           # Add export-labels flag if enabled
           if [ "${{ inputs.export_labels }}" = "true" ]; then
@@ -136,7 +144,7 @@ jobs:
       - name: Parse export results
         id: parse_results
         run: |
-          EXPORT_FILE="${EXPORT_DIR}/lowerdecklabs_oig_export.json"
+          EXPORT_FILE="${EXPORT_DIR}/${{ inputs.environment }}_oig_export.json"
           if [ -f "$EXPORT_FILE" ]; then
             LABELS_COUNT=$(jq '.labels | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
             OWNERS_COUNT=$(jq '.resource_owners | length' "$EXPORT_FILE" 2>/dev/null || echo "0")
@@ -154,7 +162,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lowerdecklabs-oig-export-${{ env.TIMESTAMP }}
+          name: ${{ inputs.environment }}-oig-export-${{ env.TIMESTAMP }}
           path: |
             ${{ env.EXPORT_DIR }}/
             export.log
@@ -164,14 +172,14 @@ jobs:
         if: success()
         run: |
           EXPORT_DATE=$(date +%Y-%m-%d)
-          EXPORT_FILE="${EXPORT_DIR}/lowerdecklabs_oig_export.json"
-          mkdir -p oig-exports/lowerdecklabs
-          cp "${EXPORT_FILE}" "oig-exports/lowerdecklabs/${EXPORT_DATE}.json"
-          cp "${EXPORT_FILE}" "oig-exports/lowerdecklabs/latest.json"
+          EXPORT_FILE="${EXPORT_DIR}/${{ inputs.environment }}_oig_export.json"
+          mkdir -p oig-exports/${{ inputs.environment }}
+          cp "${EXPORT_FILE}" "oig-exports/${{ inputs.environment }}/${EXPORT_DATE}.json"
+          cp "${EXPORT_FILE}" "oig-exports/${{ inputs.environment }}/latest.json"
           echo "Export files copied"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add oig-exports/lowerdecklabs/
+          git add oig-exports/${{ inputs.environment }}/
           if git diff --staged --quiet; then
             echo "No changes detected"
           else
@@ -179,7 +187,7 @@ jobs:
             OWNERS_COUNT=$(jq '.resource_owners | length // 0' "${EXPORT_FILE}")
             LABELS_STATUS=$(jq -r '.export_status.labels // "unknown"' "${EXPORT_FILE}")
             OWNERS_STATUS=$(jq -r '.export_status.resource_owners // "unknown"' "${EXPORT_FILE}")
-            git commit -m "feat(oig): Export OIG - Labels: ${LABELS_COUNT}, Owners: ${OWNERS_COUNT}"
+            git commit -m "feat(oig): Export OIG (${{ inputs.environment }}) - Labels: ${LABELS_COUNT}, Owners: ${OWNERS_COUNT}"
             git push
             echo "Export committed to repository"
           fi
@@ -189,7 +197,7 @@ jobs:
         run: |
           echo "## OIG API-Only Export Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** LowerDeckLabs" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "**Operation:** API-Only Export (Read-Only)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Type | Count |" >> $GITHUB_STEP_SUMMARY

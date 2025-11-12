@@ -1,8 +1,18 @@
-name: LowerDeckLabs - Apply Admin Labels
+name: Apply Admin Labels
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Environment to apply admin labels'
+        required: true
+        default: 'lowerdecklabs'
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
       dry_run:
         description: 'Dry run mode (show what would be labeled without applying)'
         required: false
@@ -18,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: LowerDeckLabs
+      name: ${{ inputs.environment }}
 
     permissions:
       contents: write
@@ -31,7 +41,7 @@ jobs:
           echo "  APPLY PRIVILEGED LABELS TO ADMIN ENTITLEMENTS"
           echo "=================================================="
           echo ""
-          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Environment: ${{ inputs.environment }}"
           echo "Operation: Find and label admin entitlements"
           echo "Dry Run: ${{ github.event.inputs.dry_run }}"
           echo "=================================================="
@@ -102,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: admin-labels-results-${{ github.run_number }}
+          name: admin-labels-results-${{ inputs.environment }}-${{ github.run_number }}
           path: |
             apply.log
             admin_labels_results.json
@@ -112,6 +122,8 @@ jobs:
         if: always()
         run: |
           echo "## Admin Label Application Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.results.outputs.dry_run }}" == "true" ]; then

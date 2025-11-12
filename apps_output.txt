@@ -1,0 +1,27 @@
+Found 20 applications in demo-lowerdecklabs:
+====================================================================================================
+ID                        Label                                    Sign-On Mode         Status    
+====================================================================================================
+0oamx5slqzP0Bm2EL1d7      Demo Platform Management                 OPENID_CONNECT       ACTIVE    
+0oamx5xxhoWmuxbt61d7      Okta Admin Console                       OPENID_CONNECT       ACTIVE    
+0oamx5xxigUDxvGmv1d7      Okta Dashboard                           OPENID_CONNECT       ACTIVE    
+0oamx5xxn0HbK1G8X1d7      Okta Browser Plugin                      OPENID_CONNECT       ACTIVE    
+0oamx6t888mReBYHM1d7      Okta Access Certification Reviews        OPENID_CONNECT       ACTIVE    
+0oamx6tt22o3Lnp5m1d7      Okta Workflows                           OPENID_CONNECT       ACTIVE    
+0oamx6tteoyQMZyPs1d7      Okta Workflows OAuth                     OPENID_CONNECT       ACTIVE    
+0oamx6tx01Hvc1w221d7      Okta Identity Governance                 OPENID_CONNECT       ACTIVE    
+0oamx75w88BHjyArt1d7      Okta Access Requests                     OPENID_CONNECT       ACTIVE    
+0oamxbvbhsGxqXsBh1d7      Bureau720                                SAML_2_0             ACTIVE    
+0oamxbw5sdvxDgPry1d7      Quantum Catalyst Purchasing              SAML_2_0             ACTIVE    
+0oamxbz97bdPHfzbX1d7      OMail                                    SAML_2_0             ACTIVE    
+0oamxc34dudXXjGJT1d7      Salesday                                 SAML_2_0             ACTIVE    
+0oamxiwg4zsrWaeJF1d7      Salesforce.com                           SAML_2_0             ACTIVE    
+0oamz8tk2nj4bZnbI1d7      Customer Realm Request                   SAML_2_0             ACTIVE    
+0oamz91i095MDTXg71d7      Okta End User Settings                   OPENID_CONNECT       ACTIVE    
+0oamz9auut2IrF2Lt1d7      Okta Access Requests OAuth               OPENID_CONNECT       ACTIVE    
+0oamzciuu2ssQwc0g1d7      Partner Admin Portal                     OPENID_CONNECT       ACTIVE    
+0oamze4hzl4Exrwvt1d7      Realms Resouces                          BOOKMARK             ACTIVE    
+0oan4ssz4lmqTnQry1d7      SuccessFactors                           BROWSER_PLUGIN       ACTIVE    
+====================================================================================================
+
+Total: 20 applications

@@ -7,10 +7,11 @@ okta-terraform-complete-demo/
 ├── .github/
 │   ├── workflows/
 │   │   ├── import-all-resources.yml
-│   │   ├── lowerdecklabs-import-oig.yml
-│   │   ├── lowerdecklabs-export-oig.yml
-│   │   ├── lowerdecklabs-governance-setup.yml
-│   │   ├── lowerdecklabs-apply-owners.yml
+│   │   ├── export-oig.yml
+│   │   ├── governance-setup.yml
+│   │   ├── apply-owners.yml
+│   │   ├── apply-labels.yml
+│   │   ├── apply-labels-from-config.yml
 │   │   └── admin-protection.yml
 │   └── ISSUE_TEMPLATE/
 │       ├── bug_report.md
@@ -80,12 +81,13 @@ okta-terraform-complete-demo/
 - **.gitattributes** - Git attributes for line endings
 
 ### .github/workflows/
-GitHub Actions workflows for automation:
+GitHub Actions workflows for automation (environment-agnostic):
 - **import-all-resources.yml** - Import all OIG resources from any tenant environment
-- **lowerdecklabs-import-oig.yml** - Import OIG entitlement bundles and reviews
-- **lowerdecklabs-export-oig.yml** - Export OIG resources (legacy)
-- **lowerdecklabs-governance-setup.yml** - Set up governance configurations
-- **lowerdecklabs-apply-owners.yml** - Apply resource owner assignments
+- **export-oig.yml** - Export OIG resources (requires environment parameter)
+- **governance-setup.yml** - Set up governance configurations (requires environment parameter)
+- **apply-owners.yml** - Apply resource owner assignments (requires environment parameter)
+- **apply-labels.yml** - Apply governance labels (requires environment parameter)
+- **apply-labels-from-config.yml** - Deploy labels from config file (requires environment parameter)
 - **admin-protection.yml** - Protect admin users from modifications
 
 ### environments/

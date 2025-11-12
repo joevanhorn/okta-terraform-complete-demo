@@ -1,0 +1,74 @@
+{
+  "description": "Label ID mappings synced from Okta OIG",
+  "last_synced": "2025-11-11T03:57:16.252299Z",
+  "labels": {
+    "Privileged": {
+      "labelId": "lbc11keklyNa6KhMi1d7",
+      "description": "Privileged label",
+      "type": "single_value",
+      "values": {
+        "Privileged": {
+          "labelValueId": "lbl11keklzHO41LJ11d7",
+          "description": "Privileged label value",
+          "color": "red",
+          "metadata": {
+            "backgroundColor": "red"
+          }
+        }
+      }
+    },
+    "Crown Jewel": {
+      "labelId": "lbc11keklwxBrRatm1d7",
+      "description": "Crown Jewel label",
+      "type": "single_value",
+      "values": {
+        "Crown Jewel": {
+          "labelValueId": "lbl11keklx0TEYCmp1d7",
+          "description": "Crown Jewel label value",
+          "color": "green",
+          "metadata": {
+            "backgroundColor": "green"
+          }
+        }
+      }
+    }
+  },
+  "assignments": {
+    "apps": {},
+    "groups": {},
+    "entitlement_bundles": {},
+    "other": {}
+  },
+  "notes": [
+    "This file is the source of truth for label assignments",
+    "",
+    "Label Structure:",
+    "  - Each label can have multiple values (hierarchical structure)",
+    "  - Single-value labels (Privileged, Crown Jewel) have one value matching the label name",
+    "  - Multi-value labels (Compliance) have multiple distinct values (SOX, GDPR, PII)",
+    "",
+    "To add a new label:",
+    "  1. Add label definition to 'labels' section with its values",
+    "  2. labelId/labelValueId can be empty - will be created during apply",
+    "  3. Add resource ORNs to appropriate assignment arrays using 'Label:Value' format",
+    "  4. Submit PR with changes",
+    "  5. Run 'Apply Labels from Config' workflow with dry_run=true to preview",
+    "  6. Merge PR and run workflow with dry_run=false to apply",
+    "",
+    "To sync this file FROM Okta:",
+    "  - Run: python3 scripts/sync_label_mappings.py --output environments/lowerdecklabs/config/label_mappings.json",
+    "",
+    "To apply labels TO Okta:",
+    "  - Run: python3 scripts/apply_labels_from_config.py --config environments/lowerdecklabs/config/label_mappings.json --dry-run",
+    "  - Or use GitHub Actions workflow: 'LowerDeckLabs - Apply Labels from Config'",
+    "",
+    "ORN Format:",
+    "  - Apps: orn:okta:application:{orgId}:apps:{appId}",
+    "  - Groups: orn:okta:directory:{orgId}:groups:{groupId}",
+    "  - Entitlement Bundles: orn:okta:governance:{orgId}:entitlement-bundles:{bundleId}",
+    "",
+    "Assignment Format:",
+    "  - For single-value labels: use label name (e.g., 'Privileged')",
+    "  - For multi-value labels: use 'Label:Value' format (e.g., 'Compliance:SOX', 'Compliance:GDPR')"
+  ]
+}

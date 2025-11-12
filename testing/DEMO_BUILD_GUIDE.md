@@ -1265,7 +1265,7 @@ This repository includes automated workflows for importing OIG resources:
    - Generate Terraform configuration
    - Keep everything in sync
 
-   See: `.github/workflows/lowerdecklabs-import-oig.yml`
+   See: `.github/workflows/import-all-resources.yml` (replaces archived import workflows)
 
 **Example: Creating an Entitlement Bundle**
 
@@ -1371,7 +1371,8 @@ This repository uses a modern GitOps approach for managing governance labels:
 7. **Manual Apply:**
    ```bash
    # After reviewing dry-run results, manually trigger apply
-   gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+   gh workflow run apply-labels-from-config.yml \
+     -f environment=lowerdecklabs \
      -f dry_run=false
    ```
 

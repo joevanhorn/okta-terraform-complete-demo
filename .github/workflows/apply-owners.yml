@@ -1,8 +1,17 @@
-name: LowerDeckLabs - Apply Resource Owners
+name: Apply Resource Owners
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
       dry_run:
         description: 'Dry run mode (show what would be assigned without applying)'
         required: false
@@ -17,8 +26,7 @@ jobs:
     name: Apply Resource Owner Assignments
     runs-on: ubuntu-latest
 
-    environment:
-      name: LowerDeckLabs
+    environment: ${{ inputs.environment }}
 
     permissions:
       contents: write
@@ -31,7 +39,7 @@ jobs:
           echo "  APPLY RESOURCE OWNER ASSIGNMENTS"
           echo "=================================================="
           echo ""
-          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Environment: ${{ inputs.environment }}"
           echo "Operation: Apply resource owners from config"
           echo "Dry Run: ${{ github.event.inputs.dry_run }}"
           echo "=================================================="
@@ -62,11 +70,11 @@ jobs:
       - name: Check owner mappings file
         run: |
           if [ ! -f "config/owner_mappings.json" ]; then
-            echo "❌ owner_mappings.json not found"
+            echo "owner_mappings.json not found"
             echo "Run 'python3 scripts/sync_owner_mappings.py' to create it"
             exit 1
           fi
-          echo "✅ Found owner_mappings.json"
+          echo "Found owner_mappings.json"
           echo ""
           echo "Preview of owner mappings:"
           jq '.assignments | {apps: (.apps | length), groups: (.groups | length), entitlement_bundles: (.entitlement_bundles | length)}' config/owner_mappings.json
@@ -118,7 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: owner-assignment-results-${{ github.run_number }}
+          name: owner-assignment-results-${{ inputs.environment }}-${{ github.run_number }}
           path: |
             apply.log
             config/owner_mappings.json
@@ -131,11 +139,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.results.outputs.dry_run }}" == "true" ]; then
-            echo "**Mode:** 🔍 DRY RUN (no changes made)" >> $GITHUB_STEP_SUMMARY
+            echo "**Mode:** Dry Run (no changes made)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "**Mode:** ✅ APPLY (owners assigned)" >> $GITHUB_STEP_SUMMARY
+            echo "**Mode:** Apply (owners assigned)" >> $GITHUB_STEP_SUMMARY
           fi
 
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Resources Processed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -149,9 +159,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.results.outputs.success }}" == "true" ]; then
-            echo "✅ **Status:** Completed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "**Status:** Completed successfully" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **Status:** Completed with errors (see log below)" >> $GITHUB_STEP_SUMMARY
+            echo "**Status:** Completed with errors (see log below)" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -163,7 +173,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.results.outputs.dry_run }}" == "true" ]; then
-            echo "ℹ️  **Next Step:** Re-run this workflow with dry_run=false to apply owners" >> $GITHUB_STEP_SUMMARY
+            echo "**Next Step:** Re-run this workflow with dry_run=false to apply owners" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ **Next Step:** Verify owner assignments in Okta Admin Console" >> $GITHUB_STEP_SUMMARY
+            echo "**Next Step:** Verify owner assignments in Okta Admin Console" >> $GITHUB_STEP_SUMMARY
           fi
