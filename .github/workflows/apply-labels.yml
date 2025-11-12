@@ -1,8 +1,17 @@
-name: LowerDeckLabs - Apply OIG Labels
+name: Apply OIG Labels
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - lowerdecklabs
+          - production
+          - staging
+          - development
       dry_run:
         description: 'Dry run mode (preview changes without applying)'
         required: false
@@ -14,8 +23,7 @@ jobs:
     name: Apply OIG Labels to Okta
     runs-on: ubuntu-latest
 
-    environment:
-      name: LowerDeckLabs
+    environment: ${{ inputs.environment }}
 
     permissions:
       contents: write
@@ -25,10 +33,10 @@ jobs:
       - name: Safety Check
         run: |
           echo "=================================================="
-          echo "  LOWERDECKLABS - APPLY OIG LABELS"
+          echo "  APPLY OIG LABELS"
           echo "=================================================="
           echo ""
-          echo "Environment: LowerDeckLabs (Primary Demo Tenant)"
+          echo "Environment: ${{ inputs.environment }}"
           echo "Operation: Apply governance labels to resources"
           if [ "${{ inputs.dry_run }}" == "true" ]; then
             echo "Mode: DRY RUN (preview only, no changes)"
@@ -75,14 +83,14 @@ jobs:
       - name: Scan Terraform for admin resources
         run: |
           echo "Scanning Terraform configurations for admin resources..."
-          python3 scripts/find_admin_resources.py --config-dir production-ready --json > admin_resources.json
+          python3 scripts/find_admin_resources.py --config-dir environments/${{ inputs.environment }}/terraform --json > admin_resources.json
           echo "Admin resources scan complete"
           cat admin_resources.json | jq '.'
 
       - name: Display label configuration
         run: |
           echo "Current label configuration:"
-          cat config/api_config.json | jq '.labels.assignments'
+          cat environments/${{ inputs.environment }}/config/api_config.json | jq '.labels.assignments'
 
       - name: Apply labels to Okta (or dry run)
         id: apply_labels
@@ -91,11 +99,11 @@ jobs:
           echo "Starting label application..."
           if [ "${{ inputs.dry_run }}" == "true" ]; then
             echo "DRY RUN MODE - Would apply the following labels:"
-            cat config/api_config.json | jq '.labels'
+            cat environments/${{ inputs.environment }}/config/api_config.json | jq '.labels'
             echo "apply_status=dry_run_success" >> $GITHUB_OUTPUT
           else
             chmod +x scripts/okta_api_manager.py
-            python3 scripts/okta_api_manager.py --action apply --config config/api_config.json 2>&1 | tee apply.log
+            python3 scripts/okta_api_manager.py --action apply --config environments/${{ inputs.environment }}/config/api_config.json 2>&1 | tee apply.log
             APPLY_STATUS=$?
             if [ $APPLY_STATUS -eq 0 ]; then
               echo "apply_status=success" >> $GITHUB_OUTPUT
@@ -138,7 +146,7 @@ jobs:
         run: |
           echo "## OIG Label Application Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** LowerDeckLabs" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ inputs.dry_run }}" == "true" ]; then
             echo "**Mode:** Dry Run (Preview Only)" >> $GITHUB_STEP_SUMMARY
           else

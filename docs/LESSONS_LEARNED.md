@@ -274,7 +274,7 @@ Privileged: lbc11keklyNa6KhMi1d7  # Org Y (correct)
 ```
 
 **Root Cause:**
-The `lowerdecklabs-apply-labels-from-config.yml` workflow was configured to use repository secrets instead of the `LowerDeckLabs` environment:
+The label deployment workflow was configured to use repository secrets instead of environment-specific secrets:
 
 ```yaml
 # WRONG - Uses repository secrets
@@ -326,7 +326,7 @@ jobs:
 - **All workflows must explicitly declare `environment:`** field to use correct secrets
 
 **Files Affected:**
-- `.github/workflows/lowerdecklabs-apply-labels-from-config.yml:28` - Added `environment: LowerDeckLabs`
+- `.github/workflows/apply-labels-from-config.yml` - Updated to require environment input parameter
 - Repository secrets - Removed `OKTA_API_TOKEN`, `OKTA_BASE_URL`, `OKTA_ORG_NAME`
 
 **Validation:**

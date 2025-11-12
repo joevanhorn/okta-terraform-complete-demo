@@ -38,16 +38,17 @@ The modular export approach allows you to export API-only OIG resources independ
 
 **Via GitHub Actions (Recommended):**
 
-The `lowerdecklabs-export-oig.yml` workflow uses the modular export:
+The `export-oig.yml` workflow uses the modular export (requires environment parameter):
 
 ```yaml
-# .github/workflows/lowerdecklabs-export-oig.yml
+# .github/workflows/export-oig.yml
+# Run with: gh workflow run export-oig.yml -f environment=lowerdecklabs
 python3 scripts/okta_api_manager.py \
   --action export \
   --org-name $OKTA_ORG_NAME \
   --base-url $OKTA_BASE_URL \
   --api-token $OKTA_API_TOKEN \
-  --output ${EXPORT_DIR}/lowerdecklabs_oig_export.json \
+  --output ${EXPORT_DIR}/oig_export.json \
   --export-labels \
   --export-owners \
   --resource-orns <orn1> <orn2>
@@ -224,7 +225,7 @@ python3 scripts/validate_label_config.py \
 
 ### GitHub Actions Integration
 
-#### Workflow 1: PR Validation
+#### Workflow 1: PR Validation (Environment-Agnostic)
 
 **File:** `.github/workflows/validate-label-mappings.yml`
 
@@ -269,15 +270,19 @@ This ensures all label changes have:
 - ✓ Manual approval (before applying)
 ```
 
-#### Workflow 2: Label Deployment
+#### Workflow 2: Label Deployment (Environment-Specific)
 
-**File:** `.github/workflows/lowerdecklabs-apply-labels-from-config.yml`
+**File:** `.github/workflows/apply-labels-from-config.yml`
 
 **Triggers:**
 ```yaml
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment (lowerdecklabs, production, etc.)'
+        required: true
+        type: choice
       dry_run:
         description: 'Dry run mode'
         required: false
@@ -288,14 +293,15 @@ on:
     branches:
       - main
     paths:
-      - 'environments/lowerdecklabs/config/label_mappings.json'
+      - 'environments/*/config/label_mappings.json'
 ```
 
 **Key Features:**
-- Uses environment: `LowerDeckLabs` (with Okta API secrets)
+- Requires environment parameter (e.g., `lowerdecklabs`)
+- Uses corresponding GitHub Environment for secrets (e.g., `LowerDeckLabs`)
 - Permissions: `contents: write`, `actions: read`
-- Auto dry-run on push to main
-- Manual apply via workflow dispatch
+- Auto dry-run on push to main (detects environment from file path)
+- Manual apply via workflow dispatch (requires environment selection)
 - Uploads artifacts (logs and results JSON)
 
 **Automatic Behavior:**
@@ -341,7 +347,7 @@ on:
    gh run watch <RUN_ID>
 
    # Check deployment status
-   gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml
+   gh run list --workflow=apply-labels-from-config.yml
    ```
 
 ### Troubleshooting

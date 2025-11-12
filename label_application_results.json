@@ -1,0 +1,10 @@
+{
+  "dry_run": true,
+  "config_file": "environments/lowerdecklabs/config/label_mappings.json",
+  "labels_created": 0,
+  "labels_skipped": 3,
+  "label_values_created": 0,
+  "assignments_applied": 4,
+  "assignments_skipped": 0,
+  "errors": []
+}

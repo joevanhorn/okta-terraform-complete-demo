@@ -4,14 +4,15 @@ This document describes all GitHub Actions workflows in this repository.
 
 ## Active Production Workflows
 
-### LowerDeckLabs - Apply Admin Labels
-**File:** `.github/workflows/lowerdecklabs-apply-admin-labels.yml`
+### Apply Admin Labels (Environment-Agnostic)
+**File:** `.github/workflows/apply-admin-labels.yml`
 
 **Purpose:** Automatically finds and labels admin entitlements with the "Privileged" label
 
 **Trigger:** Manual (`workflow_dispatch`)
 
 **Parameters:**
+- `environment` - Target environment (lowerdecklabs, production, etc.) **REQUIRED**
 - `dry_run` - Set to `true` to preview changes without applying (default: `true`)
 
 **What It Does:**
@@ -23,22 +24,25 @@ This document describes all GitHub Actions workflows in this repository.
 **Usage:**
 ```bash
 # Dry run
-gh workflow run lowerdecklabs-apply-admin-labels.yml -f dry_run=true
+gh workflow run apply-admin-labels.yml -f environment=lowerdecklabs -f dry_run=true
 
 # Apply labels
-gh workflow run lowerdecklabs-apply-admin-labels.yml -f dry_run=false
+gh workflow run apply-admin-labels.yml -f environment=lowerdecklabs -f dry_run=false
 ```
 
 **Results:** Creates 16 admin entitlements labeled as Privileged
 
 ---
 
-### LowerDeckLabs - Validate Labels API
-**File:** `.github/workflows/lowerdecklabs-validate-labels.yml`
+### Validate Labels API (Environment-Agnostic)
+**File:** `.github/workflows/validate-labels.yml`
 
 **Purpose:** Validates the Labels API integration and verifies label assignments
 
 **Trigger:** Manual (`workflow_dispatch`)
+
+**Parameters:**
+- `environment` - Target environment (lowerdecklabs, production, etc.) **REQUIRED**
 
 **What It Does:**
 1. Tests API connection
@@ -50,7 +54,7 @@ gh workflow run lowerdecklabs-apply-admin-labels.yml -f dry_run=false
 
 **Usage:**
 ```bash
-gh workflow run lowerdecklabs-validate-labels.yml
+gh workflow run validate-labels.yml -f environment=lowerdecklabs
 ```
 
 **Validation Checks:**
@@ -62,14 +66,15 @@ gh workflow run lowerdecklabs-validate-labels.yml
 
 ---
 
-### LowerDeckLabs - Export OIG Resources
-**File:** `.github/workflows/lowerdecklabs-export-oig.yml`
+### Export OIG Resources (Environment-Agnostic)
+**File:** `.github/workflows/export-oig.yml`
 
 **Purpose:** Exports OIG API-only resources (Labels and Resource Owners) to JSON
 
 **Trigger:** Manual (`workflow_dispatch`)
 
 **Parameters:**
+- `environment` - Target environment (lowerdecklabs, production, etc.) **REQUIRED**
 - `export_labels` - Export governance labels (default: `true`)
 - `export_owners` - Export resource owners (default: `false`)
 - `resource_orns` - Space-separated list of resource ORNs for owner export (optional)
@@ -84,19 +89,21 @@ gh workflow run lowerdecklabs-validate-labels.yml
 **Usage:**
 ```bash
 # Export labels only (default)
-gh workflow run lowerdecklabs-export-oig.yml
+gh workflow run export-oig.yml -f environment=lowerdecklabs
 
 # Export labels only (explicit)
-gh workflow run lowerdecklabs-export-oig.yml -f export_labels=true -f export_owners=false
+gh workflow run export-oig.yml -f environment=lowerdecklabs -f export_labels=true -f export_owners=false
 
 # Export both labels and owners (requires resource ORNs)
-gh workflow run lowerdecklabs-export-oig.yml \
+gh workflow run export-oig.yml \
+  -f environment=lowerdecklabs \
   -f export_labels=true \
   -f export_owners=true \
   -f resource_orns="orn:okta:idp:org:apps:oauth2:0oa123 orn:okta:directory:org:groups:00g456"
 
 # Export owners only for specific resources
-gh workflow run lowerdecklabs-export-oig.yml \
+gh workflow run export-oig.yml \
+  -f environment=lowerdecklabs \
   -f export_labels=false \
   -f export_owners=true \
   -f resource_orns="orn:okta:governance:org:entitlement-bundles:enb789"
@@ -108,18 +115,19 @@ gh workflow run lowerdecklabs-export-oig.yml \
 
 ---
 
-### LowerDeckLabs - Apply Resource Owners
-**File:** `.github/workflows/lowerdecklabs-apply-owners.yml`
+### Apply Resource Owners (Environment-Agnostic)
+**File:** `.github/workflows/apply-owners.yml`
 
 **Purpose:** Applies resource owner assignments from `config/owner_mappings.json` to Okta
 
 **Trigger:** Manual (`workflow_dispatch`)
 
 **Parameters:**
+- `environment` - Target environment (lowerdecklabs, production, etc.) **REQUIRED**
 - `dry_run` - Preview changes without applying (default: `true`)
 
 **What It Does:**
-1. Loads owner assignments from `config/owner_mappings.json`
+1. Loads owner assignments from `environments/{environment}/config/owner_mappings.json`
 2. Assigns owners to apps, groups, and entitlement bundles
 3. Reports success/failure for each resource
 4. Supports dry-run mode for safe previewing
@@ -127,10 +135,10 @@ gh workflow run lowerdecklabs-export-oig.yml \
 **Usage:**
 ```bash
 # Dry run (preview changes)
-gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=true
+gh workflow run apply-owners.yml -f environment=lowerdecklabs -f dry_run=true
 
 # Apply owners
-gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
+gh workflow run apply-owners.yml -f environment=lowerdecklabs -f dry_run=false
 ```
 
 **Prerequisites:**
@@ -141,81 +149,61 @@ gh workflow run lowerdecklabs-apply-owners.yml -f dry_run=false
 
 ---
 
-### LowerDeckLabs - Import Okta Resources
-**File:** `.github/workflows/lowerdecklabs-import.yml`
+### Import All Resources (Environment-Agnostic)
+**File:** `.github/workflows/import-all-resources.yml`
 
-**Purpose:** Imports existing Okta base resources using Terraformer
-
-**Trigger:** Manual (`workflow_dispatch`) or scheduled (weekly)
-
-**What It Does:**
-1. Runs Terraformer to import existing Okta resources
-2. Generates Terraform configuration files
-3. Cleans up and refactors generated code
-4. Detects drift from previous state
-5. Creates detailed import report
-
-**Supported Resources:**
-- Users
-- Groups
-- Apps (OAuth, SAML, etc.)
-- Policies
-- Authorization servers
-
-**Note:** OIG resources are NOT supported by Terraformer (use Import OIG Resources workflow instead)
-
----
-
-### LowerDeckLabs - Import OIG Resources
-**File:** `.github/workflows/lowerdecklabs-import-oig.yml`
-
-**Purpose:** Imports OIG resources (entitlement bundles, reviews, sequences) from Okta and generates Terraform configurations
+**Purpose:** Complete import of Okta resources including base resources and OIG resources
 
 **Trigger:** Manual (`workflow_dispatch`)
 
 **Parameters:**
+- `tenant_environment` - Target environment (LowerDeckLabs, Production, etc.) **REQUIRED**
 - `update_terraform` - Automatically update production-ready TF files (default: `false`)
+- `commit_changes` - Commit imported files to repository (default: `false`)
 
 **What It Does:**
-1. Queries Okta API for OIG resources (entitlement bundles, access reviews, approval sequences)
-2. Generates Terraform configuration files (.tf)
-3. Generates JSON exports with full API data for reference
-4. Creates terraform import commands (import.sh)
-5. Optionally updates production-ready/oig_entitlements.tf
+1. Imports standard Okta resources using Terraformer
+2. Imports OIG resources (entitlement bundles, reviews, sequences) via API
+3. Generates Terraform configuration files (.tf)
+4. Generates JSON exports with full API data
+5. Creates terraform import commands
+6. Optionally updates production files and commits to repo
 
 **Usage:**
 ```bash
-# Import and review (doesn't update Terraform files)
-gh workflow run lowerdecklabs-import-oig.yml
+# Import and review (doesn't update or commit)
+gh workflow run import-all-resources.yml -f tenant_environment=LowerDeckLabs
 
 # Import and automatically update Terraform files
-gh workflow run lowerdecklabs-import-oig.yml -f update_terraform=true
+gh workflow run import-all-resources.yml \
+  -f tenant_environment=LowerDeckLabs \
+  -f update_terraform=true
+
+# Import, update, and commit
+gh workflow run import-all-resources.yml \
+  -f tenant_environment=LowerDeckLabs \
+  -f update_terraform=true \
+  -f commit_changes=true
 ```
 
-**Output:**
-- `entitlements.tf` - Terraform resource definitions
-- `entitlements.json` - Full API response data
-- `reviews.tf` - Access review campaigns
-- `request_sequences.tf` - Approval workflows
-- `import.sh` - Terraform import commands
+**Note:** This workflow replaces the following archived workflows:
+- `lowerdecklabs-import.yml`
+- `lowerdecklabs-import-oig.yml`
+- `lowerdecklabs-import-complete.yml`
 
-**Workflow:**
-1. Run workflow to import resources
-2. Download artifacts to review generated files
-3. If satisfied, re-run with `update_terraform=true` to update production files
-4. Review and complete TODO comments in generated .tf files
-5. Run `terraform import` commands to bring resources into state
-
-**Note:** Terraformer does NOT support OIG resources - this workflow provides equivalent functionality via direct API import.
+Use `import-all-resources.yml` for all import operations going forward.
 
 ---
 
-### LowerDeckLabs - Governance Setup
-**File:** `.github/workflows/lowerdecklabs-governance-setup.yml`
+### Governance Setup (Environment-Agnostic)
+**File:** `.github/workflows/governance-setup.yml`
 
 **Purpose:** Initial setup of OIG governance features
 
 **Trigger:** Manual (`workflow_dispatch`)
+
+**Parameters:**
+- `environment` - Target environment (lowerdecklabs, production, etc.) **REQUIRED**
 
 **What It Does:**
 1. Creates initial OIG configuration
@@ -223,7 +211,10 @@ gh workflow run lowerdecklabs-import-oig.yml -f update_terraform=true
 3. Configures access reviews
 4. Initializes catalog entries
 
-**Usage:** Run once for initial setup
+**Usage:**
+```bash
+gh workflow run governance-setup.yml -f environment=lowerdecklabs
+```
 
 ---
 
@@ -254,12 +245,12 @@ These workflows were used during development and are kept for reference:
 
 ---
 
-### LowerDeckLabs - Apply Labels (Legacy)
-**File:** `.github/workflows/lowerdecklabs-apply-labels.yml`
+### Apply Labels (Environment-Agnostic)
+**File:** `.github/workflows/apply-labels.yml`
 
-**Purpose:** Original label application workflow
+**Purpose:** Apply governance labels to resources
 
-**Status:** Superseded by `lowerdecklabs-apply-admin-labels.yml`
+**Status:** Superseded by `apply-admin-labels.yml` and `apply-labels-from-config.yml`
 
 ---
 
@@ -267,11 +258,13 @@ These workflows were used during development and are kept for reference:
 
 ### Environment Secrets Required
 
-All workflows require these secrets to be configured in the `LowerDeckLabs` GitHub environment:
+All environment-specific workflows require these secrets to be configured in the corresponding GitHub environment (e.g., `LowerDeckLabs`, `Production`):
 
 - `OKTA_API_TOKEN` - API token with governance scopes
 - `OKTA_ORG_NAME` - Okta organization name
-- `OKTA_BASE_URL` - Base URL (e.g., `okta.com`)
+- `OKTA_BASE_URL` - Base URL (e.g., `okta.com` or `oktapreview.com`)
+
+**Note:** Workflows now require an `environment` parameter to select which environment's secrets to use.
 
 ### Permissions
 

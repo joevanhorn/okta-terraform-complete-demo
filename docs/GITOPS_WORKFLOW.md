@@ -769,9 +769,9 @@ Governance labels are managed through a dedicated GitOps workflow that provides 
 ┌──────────────────────────────────────────────────────────┐
 │          Phase 2: Automatic Dry-Run on Merge             │
 │                                                           │
-│  Workflow: lowerdecklabs-apply-labels-from-config.yml    │
+│  Workflow: apply-labels-from-config.yml                  │
 │  Trigger: Push to main (label_mappings.json changed)     │
-│  Environment: LowerDeckLabs (with Okta API secrets)      │
+│  Environment: Auto-detected from file path, uses secrets │
 │  Mode: DRY RUN (no changes made)                         │
 │                                                           │
 │  🔍 Connect to Okta API                                  │
@@ -789,13 +789,14 @@ Governance labels are managed through a dedicated GitOps workflow that provides 
 ┌──────────────────────────────────────────────────────────┐
 │            Phase 3: Manual Apply Trigger                 │
 │                                                           │
-│  Workflow: lowerdecklabs-apply-labels-from-config.yml    │
+│  Workflow: apply-labels-from-config.yml                  │
 │  Trigger: Manual workflow dispatch                       │
-│  Environment: LowerDeckLabs (with Okta API secrets)      │
+│  Environment: Specified via input parameter              │
 │  Mode: APPLY (makes changes to Okta)                     │
 │                                                           │
 │  Command:                                                 │
-│  gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+│  gh workflow run apply-labels-from-config.yml \          │
+│    -f environment=lowerdecklabs \                        │
 │    -f dry_run=false                                       │
 │                                                           │
 │  ✅ Create labels in Okta                                │
@@ -905,7 +906,7 @@ GitHub Actions automatically:
 #### 7. Automatic Dry-Run
 
 On merge to main, GitHub Actions automatically:
-- Runs `lowerdecklabs-apply-labels-from-config.yml` in dry-run mode
+- Runs `apply-labels-from-config.yml` in dry-run mode
 - Connects to Okta API (using environment secrets)
 - Shows what would be created/assigned
 - Uploads results as artifacts
@@ -920,7 +921,8 @@ On merge to main, GitHub Actions automatically:
 
 ```bash
 # Trigger apply workflow manually
-gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+gh workflow run apply-labels-from-config.yml \
+  -f environment=lowerdecklabs \
   -f dry_run=false
 
 # Monitor execution
@@ -1008,9 +1010,9 @@ The `label_mappings.json` file has this structure:
 6. Posts validation results as PR comment
 7. Exits with error if validation fails (blocks merge)
 
-#### Workflow 2: lowerdecklabs-apply-labels-from-config.yml
+#### Workflow 2: apply-labels-from-config.yml
 
-**Purpose:** Apply labels to Okta (with dry-run support)
+**Purpose:** Apply labels to Okta (with dry-run support, environment-agnostic)
 
 **Triggers:**
 - Push to main (when `label_mappings.json` changes) - Auto dry-run
@@ -1038,7 +1040,7 @@ The `label_mappings.json` file has this structure:
 
 ### Environment Protection Strategy
 
-The deployment workflow (`lowerdecklabs-apply-labels-from-config.yml`) uses GitHub Environment protection:
+The deployment workflow (`apply-labels-from-config.yml`) uses GitHub Environment protection:
 
 **Why No Pull Request Trigger:**
 - GitHub Environment protection applies to ALL workflow runs
@@ -1079,7 +1081,7 @@ The deployment workflow (`lowerdecklabs-apply-labels-from-config.yml`) uses GitH
 4. **Monitor Workflow Runs**
    ```bash
    # List recent label workflow runs
-   gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml
+   gh run list --workflow=apply-labels-from-config.yml
 
    # Watch a specific run
    gh run watch <RUN_ID>

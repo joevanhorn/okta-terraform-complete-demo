@@ -332,22 +332,25 @@ This document provides a comprehensive manual validation plan for testing the Ok
 
 - [ ] **Trigger OIG Import Workflow**
   ```bash
-  gh workflow run lowerdecklabs-import-oig.yml \
+  # Note: Use import-all-resources.yml instead of archived import-oig workflow
+  gh workflow run import-all-resources.yml \
+    -f tenant_environment=LowerDeckLabs \
     -f update_terraform=false \
     -f commit_changes=false
   ```
   - ✅ Pass: Workflow triggered successfully
   - ❌ Fail: Workflow failed to trigger
+  - **Note:** The new `import-all-resources.yml` replaces archived import workflows
 
 - [ ] **Monitor OIG Workflow**
   ```bash
-  gh run list --workflow=lowerdecklabs-import-oig.yml --limit 1
+  gh run list --workflow=import-all-resources.yml --limit 1
   gh run watch <RUN_ID>
   ```
   - ✅ Pass: Workflow completes successfully
   - ❌ Fail: Workflow fails or times out
-  - **Expected Duration:** 1-2 minutes
-  - **Note:** This workflow is OIG-focused and may run faster than full import
+  - **Expected Duration:** 2-5 minutes (imports both base and OIG resources)
+  - **Note:** This workflow includes both Terraformer and API-based imports
 
 - [ ] **Verify OIG Artifacts**
   ```bash
@@ -378,7 +381,8 @@ This document provides a comprehensive manual validation plan for testing the Ok
 - [ ] **Test Workflow with Auto-Commit**
   ```bash
   # Test with update_terraform=true to verify end-to-end flow
-  gh workflow run lowerdecklabs-import-oig.yml \
+  gh workflow run import-all-resources.yml \
+    -f tenant_environment=LowerDeckLabs \
     -f update_terraform=true \
     -f commit_changes=true
 
@@ -386,7 +390,7 @@ This document provides a comprehensive manual validation plan for testing the Ok
   ```
   - ✅ Pass: Workflow completes and creates commit
   - ❌ Fail: Workflow fails or doesn't commit
-  - **Note:** Check that commit message follows format and includes updated OIG files
+  - **Note:** Check that commit message follows format and includes updated files
 
 ### 3.4 Complete Environment Import with Terraformer
 
@@ -394,22 +398,25 @@ This document provides a comprehensive manual validation plan for testing the Ok
 
 - [ ] **Trigger Complete Environment Import**
   ```bash
-  gh workflow run lowerdecklabs-import-complete.yml \
-    -f resource_types=all \
+  # Note: Use import-all-resources.yml for complete imports
+  gh workflow run import-all-resources.yml \
+    -f tenant_environment=LowerDeckLabs \
+    -f update_terraform=false \
     -f commit_changes=false
   ```
   - ✅ Pass: Workflow triggered successfully
   - ❌ Fail: Workflow failed to trigger
+  - **Note:** This workflow replaces `lowerdecklabs-import-complete.yml`
 
 - [ ] **Monitor Terraformer Import Workflow**
   ```bash
-  gh run list --workflow=lowerdecklabs-import-complete.yml --limit 1
+  gh run list --workflow=import-all-resources.yml --limit 1
   gh run watch <RUN_ID>
   ```
   - ✅ Pass: Workflow completes successfully
   - ❌ Fail: Workflow fails or times out
   - **Expected Duration:** 5-10 minutes (depending on org size)
-  - **Note:** Terraformer imports ALL standard resources (users, groups, apps, policies, etc.)
+  - **Note:** Imports ALL resources (base via Terraformer + OIG via API)
 
 - [ ] **Verify Terraformer Artifacts**
   ```bash
@@ -852,14 +859,14 @@ Review results → Manual apply (workflow dispatch with dry_run=false)
 - [ ] **Verify Automatic Dry-Run Execution**
   ```bash
   # Deployment workflow should trigger automatically on push to main
-  gh run list --workflow=lowerdecklabs-apply-labels-from-config.yml --limit 3
+  gh run list --workflow=apply-labels-from-config.yml --limit 3
 
   # Monitor the automatic dry-run
   gh run watch <RUN_ID>
   ```
   - ✅ Pass: Workflow runs automatically in dry-run mode
   - ❌ Fail: Workflow doesn't trigger or fails
-  - **Expected:** Triggered by push to main, uses environment secrets, runs with dry_run=true
+  - **Expected:** Triggered by push to main, detects environment from file path, runs with dry_run=true
 
 - [ ] **Review Dry-Run Results**
   - Check workflow summary for:
@@ -879,11 +886,13 @@ Review results → Manual apply (workflow dispatch with dry_run=false)
 - [ ] **Manual Workflow Dispatch for Apply**
   ```bash
   # Manually trigger with dry_run=false to apply changes
-  gh workflow run lowerdecklabs-apply-labels-from-config.yml \
+  gh workflow run apply-labels-from-config.yml \
+    -f environment=lowerdecklabs \
     -f dry_run=false
   ```
   - ✅ Pass: Workflow triggered successfully
   - ❌ Fail: Failed to trigger
+  - **Note:** Environment parameter is now required
 
 - [ ] **Monitor Apply Workflow**
   ```bash
@@ -946,8 +955,8 @@ Review results → Manual apply (workflow dispatch with dry_run=false)
 ##### Workflow Integration Testing
 
 - [ ] **Verify Environment Protection**
-  - Deployment workflow uses `environment: LowerDeckLabs`
-  - Environment has Okta API secrets configured
+  - Deployment workflow requires `environment` input parameter
+  - Corresponding GitHub Environment (e.g., LowerDeckLabs) has Okta API secrets configured
   - PR validation workflow does NOT use environment (no secrets needed)
   - ✅ Pass: Correct environment usage for each workflow
   - ❌ Fail: Environment misconfiguration
@@ -973,7 +982,7 @@ Review results → Manual apply (workflow dispatch with dry_run=false)
   - Check `.github/workflows/validate-label-mappings.yml` permissions:
     - `contents: read` - Can read repository
     - `pull-requests: write` - Can post PR comments
-  - Check `.github/workflows/lowerdecklabs-apply-labels-from-config.yml` permissions:
+  - Check `.github/workflows/apply-labels-from-config.yml` permissions:
     - `contents: write` - Can commit if needed
     - `actions: read` - Can read workflow info
   - ✅ Pass: Minimal necessary permissions configured
