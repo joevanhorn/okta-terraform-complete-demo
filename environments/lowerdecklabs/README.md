@@ -160,14 +160,27 @@ Imports all OIG resources from this tenant:
 4. Governance labels → `config/`
 
 ### Export OIG Resources
-**Workflow:** `lowerdecklabs-export-oig.yml`
+**Workflow:** `export-oig.yml`
 
 Exports labels and resource owners to JSON for backup/audit.
 
+```bash
+gh workflow run export-oig.yml \
+  -f environment=lowerdecklabs \
+  -f export_labels=true \
+  -f export_owners=true
+```
+
 ### Apply Resource Owners
-**Workflow:** `lowerdecklabs-apply-owners.yml`
+**Workflow:** `apply-owners.yml`
 
 Applies resource owner assignments from `config/owner_mappings.json`.
+
+```bash
+gh workflow run apply-owners.yml \
+  -f environment=lowerdecklabs \
+  -f dry_run=false
+```
 
 ## Notes
 

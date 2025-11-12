@@ -36,3 +36,6 @@ terraform-debug.log
 # Local environment
 .env
 .env.local
+
+# Temporary sync output files
+environments/*/config/*_synced.json
