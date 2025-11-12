@@ -6,7 +6,7 @@ on:
       dry_run:
         description: 'Dry run mode (show what would be done without applying)'
         required: false
-        default: 'true'
+        default: 'false'
         type: choice
         options:
           - 'true'
