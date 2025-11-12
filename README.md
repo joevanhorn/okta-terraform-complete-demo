@@ -2,6 +2,29 @@
 
 This repository demonstrates the **Okta Terraform Provider v6.4.0+** with **Okta Identity Governance (OIG)** endpoints, automated through GitHub Actions, with full **Terraformer** support for importing existing Okta configurations.
 
+## 🎯 Looking for the Clean Template?
+
+**Want to fork this for your own organization?** Check out the **clean template version**:
+
+👉 **[okta-terraform-demo-template](https://github.com/joevanhorn/okta-terraform-demo-template)** ⭐
+
+The template repository is ready to fork and customize:
+- ✅ No personal demo environments
+- ✅ Generic templates for production, staging, development
+- ✅ Complete setup guide ([TEMPLATE_SETUP.md](https://github.com/joevanhorn/okta-terraform-demo-template/blob/main/TEMPLATE_SETUP.md))
+- ✅ All workflows and automation ready to use
+- ✅ "Use this template" button enabled
+
+**This repository** (`okta-terraform-complete-demo`) is my working implementation with:
+- 🏢 Fully configured LowerDeckLabs demo environment
+- 📦 31 entitlement bundles
+- 🔍 200 access review campaigns
+- 📚 Real-world examples and configurations
+
+Use the **template** to start your own, or browse **this repo** to see it in action!
+
+---
+
 ## 🚨 Important: Terraformer Limitations
 
 **Terraformer does NOT import OIG resources** (the Terraform provider endpoints are new).
