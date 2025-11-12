@@ -67,7 +67,7 @@
   "assignments": {
     "apps": {
       "Privileged": [],
-      "Crown Jewel": [],
+      "Crown Jewel": ["orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7"],
       "Compliance:SOX": [
         "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7",
         "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:workday:0oaq4iodcifSLp30Q1d7",
