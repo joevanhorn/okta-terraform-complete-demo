@@ -28,6 +28,14 @@ on:
         options:
           - 'true'
           - 'false'
+      export_risk_rules:
+        description: 'Export risk rules (SOD policies)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
       resource_orns:
         description: 'Resource ORNs for owner export (space-separated, optional)'
         required: false
@@ -55,6 +63,7 @@ jobs:
           echo "Operation: Export OIG API-only resources"
           echo "Export Labels: ${{ inputs.export_labels }}"
           echo "Export Owners: ${{ inputs.export_owners }}"
+          echo "Export Risk Rules: ${{ inputs.export_risk_rules }}"
           echo "Resource ORNs: ${{ inputs.resource_orns || 'N/A' }}"
           echo "=================================================="
 
@@ -141,6 +150,34 @@ jobs:
             echo "Export completed with warnings"
           fi
 
+      - name: Export risk rules
+        id: export_risk_rules
+        if: inputs.export_risk_rules == 'true'
+        run: |
+          echo "Exporting risk rules..."
+          chmod +x scripts/import_risk_rules.py
+
+          python3 scripts/import_risk_rules.py \
+            --output "${EXPORT_DIR}/${{ inputs.environment }}_risk_rules.json" 2>&1 | tee export_risk_rules.log
+
+          EXPORT_STATUS=$?
+          if [ $EXPORT_STATUS -eq 0 ]; then
+            echo "export_status=success" >> $GITHUB_OUTPUT
+            echo "Risk rules export completed successfully"
+          else
+            echo "export_status=partial" >> $GITHUB_OUTPUT
+            echo "Risk rules export completed with warnings"
+          fi
+
+          # Count risk rules
+          if [ -f "${EXPORT_DIR}/${{ inputs.environment }}_risk_rules.json" ]; then
+            RULES_COUNT=$(jq '.rules | length' "${EXPORT_DIR}/${{ inputs.environment }}_risk_rules.json" 2>/dev/null || echo "0")
+            echo "rules_count=$RULES_COUNT" >> $GITHUB_OUTPUT
+            echo "Risk rules: $RULES_COUNT"
+          else
+            echo "rules_count=0" >> $GITHUB_OUTPUT
+          fi
+
       - name: Parse export results
         id: parse_results
         run: |
@@ -204,3 +241,4 @@ jobs:
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Labels | ${{ steps.parse_results.outputs.labels_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Resource Owners | ${{ steps.parse_results.outputs.owners_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Risk Rules | ${{ steps.export_risk_rules.outputs.rules_count || '0' }} |" >> $GITHUB_STEP_SUMMARY
