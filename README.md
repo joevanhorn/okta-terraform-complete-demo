@@ -97,7 +97,7 @@ This demo creates a complete OIG workflow with support for importing existing co
 4. **Entitlements**: Principal-based access definitions
 5. **Access Reviews**: Quarterly certification campaigns
 6. **Request Management**: Automated access request creation
-7. **Resource Owners & Labels**: API-based management (not in Terraform provider yet)
+7. **Resource Owners, Labels & Risk Rules**: API-based management (not in Terraform provider yet)
 8. **Terraformer Integration**: Import existing Okta resources into Terraform
 
 ## 📦 Features
