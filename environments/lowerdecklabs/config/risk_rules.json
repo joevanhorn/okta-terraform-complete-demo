@@ -1,67 +1,433 @@
 {
-  "description": "Risk rules (Separation of Duties policies) for lowerdecklabs Okta tenant",
-  "last_synced": null,
+  "description": "Risk rules (Separation of Duties policies) synced from Okta OIG",
+  "last_synced": "2025-11-13T20:31:41.303296Z",
   "version": "1.0",
-  "rules": [],
+  "rules": [
+    {
+      "name": "Change Management Conflct",
+      "description": "Users who approve changes should not be the same as individuals who implement changes",
+      "type": "SEPARATION_OF_DUTIES",
+      "resources": [
+        {
+          "resourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:servicenow_ud:0oar0edy8iuBrRn6t1d7"
+        }
+      ],
+      "conflictCriteria": {
+        "and": [
+          {
+            "name": "List 1",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "ent12pve87e6OIyjW1d7",
+                      "name": "itil",
+                      "externalValue": "{\"name\":\"itil\"}",
+                      "externalId": "282bf1fac6112285017366cb5f867469",
+                      "description": "Can perform standard actions for an ITIL helpdesk technician. This is the out-of-box ''technician'' role. Can open, update, close incidents, problems, changes, config management items. Out-of-box, only users with the itil role can have tasks assigned to them",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve87e6OIyjW1d7"
+                    },
+                    {
+                      "id": "ent12pvecwH0jSS211d7",
+                      "name": "sn_change_task_assigned_user",
+                      "externalValue": "{\"name\":\"sn_change_task_assigned_user\"}",
+                      "externalId": "3ccbfa8943213110f2cd3d1e2ab8f2ab",
+                      "description": "Access to change_task if the change_task is assigned to the user.",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pvecwH0jSS211d7"
+                    }
+                  ],
+                  "id": "esp12pvbc9GsRkvu31d7",
+                  "name": "Roles",
+                  "externalValue": "roles",
+                  "description": "Roles",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ALL"
+          },
+          {
+            "name": "List 2",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "ent12pve249pIX0AC1d7",
+                      "name": "change_manager",
+                      "externalValue": "{\"name\":\"change_manager\"}",
+                      "externalId": "ca55cd759f2002002920bde8132e70b4",
+                      "description": "Role For Change Manager.",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:ent12pve249pIX0AC1d7"
+                    }
+                  ],
+                  "id": "esp12pvbc9GsRkvu31d7",
+                  "name": "Roles",
+                  "externalValue": "roles",
+                  "description": "Roles",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          }
+        ]
+      },
+      "_metadata": {
+        "id": "ris12pmq4tIdARCaa1d7",
+        "status": "ACTIVE",
+        "created": "2025-10-16T04:00:32Z",
+        "lastUpdated": "2025-10-24T14:38:59Z",
+        "createdBy": "00umx5xxnoi9Yy40i1d7",
+        "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+      }
+    },
+    {
+      "name": "Example Rule",
+      "type": "SEPARATION_OF_DUTIES",
+      "resources": [
+        {
+          "resourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:salesforce:0oamxiwg4zsrWaeJF1d7"
+        }
+      ],
+      "conflictCriteria": {
+        "and": [
+          {
+            "name": "List 1",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entybuyj5xw4F8xth1d6",
+                      "name": "Channel Sales Team",
+                      "externalValue": "{\"name\":\"Channel Sales Team\"}",
+                      "externalId": "00EgL000001nvj5UAA",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybuyj5xw4F8xth1d6"
+                    }
+                  ],
+                  "id": "espybuyfcqGShVuDQ1d6",
+                  "name": "Role",
+                  "externalValue": "role",
+                  "description": "Role",
+                  "multiValue": false,
+                  "required": false,
+                  "dataType": "string"
+                },
+                {
+                  "values": [
+                    {
+                      "id": "entzksl3cnp3pAzVK1d6",
+                      "name": "AgentPlatformBuilder",
+                      "externalValue": "{\"name\":\"AgentPlatformBuilder\"}",
+                      "externalId": "AgentPlatformBuilder",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entzksl3cnp3pAzVK1d6"
+                    }
+                  ],
+                  "id": "espybuyfdDblx1vFd1d6",
+                  "name": "Permission Sets",
+                  "externalValue": "salesforceGroups",
+                  "description": "Permission Sets",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          },
+          {
+            "name": "List 2",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entybuyionM414n791d6",
+                      "name": "External Identity User",
+                      "externalValue": "{\"name\":\"External Identity User\"}",
+                      "externalId": "00egL0000024NQKQA2",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entybuyionM414n791d6"
+                    }
+                  ],
+                  "id": "espybuyfet4uKnC9j1d6",
+                  "name": "Profile",
+                  "externalValue": "profile",
+                  "description": "Profile",
+                  "multiValue": false,
+                  "required": true,
+                  "dataType": "string"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ALL"
+          }
+        ]
+      },
+      "_metadata": {
+        "id": "ris10ufnbuTdlQNkG1d7",
+        "status": "ACTIVE",
+        "created": "2025-08-26T19:23:24Z",
+        "lastUpdated": "2025-08-26T19:23:24Z",
+        "createdBy": "00umx5xxnoi9Yy40i1d7",
+        "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+      }
+    },
+    {
+      "name": "Prevent Payment and Purchaser Conflict",
+      "type": "SEPARATION_OF_DUTIES",
+      "resources": [
+        {
+          "resourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_marketti_1:0oamxbw5sdvxDgPry1d7"
+        }
+      ],
+      "conflictCriteria": {
+        "and": [
+          {
+            "name": "List 1",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entyln2a8p6ICgLb11d6",
+                      "name": "Invoice Processing",
+                      "externalValue": "q_invoice",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a8p6ICgLb11d6"
+                    }
+                  ],
+                  "id": "espyln2a6CE8GxcYz1d6",
+                  "name": "Roles",
+                  "externalValue": "roles",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          },
+          {
+            "name": "List 2",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entyln2a9rCVBtG9c1d6",
+                      "name": "Purchaser",
+                      "externalValue": "q_purchaser",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyln2a9rCVBtG9c1d6"
+                    }
+                  ],
+                  "id": "espyln2a6CE8GxcYz1d6",
+                  "name": "Roles",
+                  "externalValue": "roles",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          }
+        ]
+      },
+      "_metadata": {
+        "id": "risylme6zyXD8xSIf1d6",
+        "status": "ACTIVE",
+        "created": "2025-06-13T20:04:30Z",
+        "lastUpdated": "2025-06-13T20:28:01Z",
+        "createdBy": "00un405cteWNUz71P1d7",
+        "lastUpdatedBy": "00un405cteWNUz71P1d7"
+      }
+    },
+    {
+      "name": "Paid Trial SOD Rule",
+      "description": "Prevents users from being able to manage paid trials and also manage payments for those trials. ",
+      "type": "SEPARATION_OF_DUTIES",
+      "resources": [
+        {
+          "resourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_salesday_1:0oamxc34dudXXjGJT1d7"
+        }
+      ],
+      "conflictCriteria": {
+        "and": [
+          {
+            "name": "List 1",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entyirusnLsvvibvg1d6",
+                      "name": "Paid Trial Manager",
+                      "externalValue": "p_trial_manage",
+                      "description": "Allows users to create and manage paid trials for customers",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyirusnLsvvibvg1d6"
+                    }
+                  ],
+                  "id": "espyirusl3g5Acmjb1d6",
+                  "name": "User Role",
+                  "externalValue": "user_role",
+                  "description": "Roles available to users within the Salesday CRM interaction platform",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          },
+          {
+            "name": "List 2",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entyirusmOPUhfmLX1d6",
+                      "name": "Paid Trial Finance",
+                      "externalValue": "p_trial_finance",
+                      "description": "Allows users to input, manage, and process payment information for paid trials",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyirusmOPUhfmLX1d6"
+                    }
+                  ],
+                  "id": "espyirusl3g5Acmjb1d6",
+                  "name": "User Role",
+                  "externalValue": "user_role",
+                  "description": "Roles available to users within the Salesday CRM interaction platform",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          }
+        ]
+      },
+      "_metadata": {
+        "id": "risyirusqd3avqoIB1d6",
+        "status": "ACTIVE",
+        "created": "2025-06-10T20:29:57Z",
+        "lastUpdated": "2025-06-10T20:29:57Z",
+        "createdBy": "00umx5xxnoi9Yy40i1d7",
+        "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+      }
+    },
+    {
+      "name": "Realm SOD",
+      "description": "Users are not allowed to be Realm Admins and also a Realm Auditor. Realm Admin access to intended for users in the relationship management function, while Realm Audit is intended for users in Security and GRC functions focused on partner teams and B2B customers. ",
+      "type": "SEPARATION_OF_DUTIES",
+      "resources": [
+        {
+          "resourceOrn": "orn:oktapreview:idp:00omx5xxhePEbjFNp1d7:apps:demo-lowerdecklabs_realmrequest_1:0oamz8tk2nj4bZnbI1d7"
+        }
+      ],
+      "conflictCriteria": {
+        "and": [
+          {
+            "name": "List 1",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entyce5bdBAWSYVEI1d6",
+                      "name": "Realm Admin",
+                      "externalValue": "realm_admin",
+                      "description": "Grants the Partner Admin role assigned to a resource group based on access request. ",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyce5bdBAWSYVEI1d6"
+                    }
+                  ],
+                  "id": "espyce5bbgNyEsRN41d6",
+                  "name": "Realm Role",
+                  "externalValue": "realm_role",
+                  "description": "Used for an access request to automate Realm management. ",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          },
+          {
+            "name": "List 2",
+            "attribute": "principal.effective_grants",
+            "value": {
+              "value": [
+                {
+                  "values": [
+                    {
+                      "id": "entyce5bcOM2DDBEE1d6",
+                      "name": "Realm Auditor",
+                      "externalValue": "realm_audit",
+                      "description": "Allows required access to view and audit realm access for all realms",
+                      "orn": "orn:okta:governance:00omx5xxhePEbjFNp1d7:entitlement-values:entyce5bcOM2DDBEE1d6"
+                    }
+                  ],
+                  "id": "espyce5bbgNyEsRN41d6",
+                  "name": "Realm Role",
+                  "externalValue": "realm_role",
+                  "description": "Used for an access request to automate Realm management. ",
+                  "multiValue": true,
+                  "required": false,
+                  "dataType": "array"
+                }
+              ],
+              "type": "ENTITLEMENTS"
+            },
+            "operation": "CONTAINS_ONE"
+          }
+        ]
+      },
+      "_metadata": {
+        "id": "risyce5bjWn58c9Jk1d6",
+        "status": "ACTIVE",
+        "created": "2025-06-04T14:24:49Z",
+        "lastUpdated": "2025-06-04T14:24:49Z",
+        "createdBy": "00umx5xxnoi9Yy40i1d7",
+        "lastUpdatedBy": "00umx5xxnoi9Yy40i1d7"
+      }
+    }
+  ],
   "notes": [
     "This file manages risk rules (SOD policies) for Access Certifications and Access Requests",
     "Risk rules define criteria for granted principal access that are a risk to your org",
     "To add a new risk rule, submit a PR adding the rule to the 'rules' array",
-    "Run 'gh workflow run apply-risk-rules.yml -f environment=lowerdecklabs -f dry_run=false' to apply changes to Okta",
-    "Run 'gh workflow run import-risk-rules.yml -f environment=lowerdecklabs' to sync from Okta",
+    "Run 'python3 scripts/apply_risk_rules.py' or the GitHub Actions workflow to apply changes to Okta",
+    "Run 'python3 scripts/import_risk_rules.py' to sync this file from Okta",
     "",
-    "Risk rule structure:",
-    "  {",
-    "    \"name\": \"Process and Approve Payment\",",
-    "    \"description\": \"Prevent users from processing and approving payments\",",
-    "    \"notes\": \"Additional context about this SOD policy\",",
-    "    \"type\": \"SEPARATION_OF_DUTIES\",",
-    "    \"resources\": [",
-    "      {",
-    "        \"resourceOrn\": \"orn:okta:idp:<org>:apps:salesforce:<appId>\"",
-    "      }",
-    "    ],",
-    "    \"conflictCriteria\": {",
-    "      \"and\": [",
-    "        {",
-    "          \"name\": \"list1\",",
-    "          \"attribute\": \"principal.effective_grants\",",
-    "          \"operation\": \"CONTAINS_ONE\",",
-    "          \"value\": {",
-    "            \"type\": \"ENTITLEMENTS\",",
-    "            \"value\": [",
-    "              {",
-    "                \"id\": \"<entitlement-set-id>\",",
-    "                \"values\": [",
-    "                  {",
-    "                    \"id\": \"<entitlement-value-id>\"",
-    "                  }",
-    "                ]",
-    "              }",
-    "            ]",
-    "          }",
-    "        },",
-    "        {",
-    "          \"name\": \"list2\",",
-    "          \"attribute\": \"principal.effective_grants\",",
-    "          \"operation\": \"CONTAINS_ALL\",",
-    "          \"value\": {",
-    "            \"type\": \"ENTITLEMENTS\",",
-    "            \"value\": [",
-    "              {",
-    "                \"id\": \"<entitlement-set-id>\",",
-    "                \"values\": [",
-    "                  {",
-    "                    \"id\": \"<entitlement-value-id>\"",
-    "                  }",
-    "                ]",
-    "              }",
-    "            ]",
-    "          }",
-    "        }",
-    "      ]",
-    "    }",
-    "  }",
+    "The '_metadata' field in each rule contains read-only information from Okta:",
+    "  - id: Risk rule ID (assigned by Okta, used for updates)",
+    "  - status: Current status (ACTIVE, INACTIVE)",
+    "  - created/lastUpdated: Timestamps",
+    "  - createdBy/lastUpdatedBy: User IDs",
     "",
     "Operations:",
     "  - CONTAINS_ONE: Principal has at least one of the specified entitlements",
