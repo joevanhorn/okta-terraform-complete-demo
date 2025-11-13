@@ -130,7 +130,8 @@ jobs:
 
           # Build PR body
           if [ "$MERGE_STATUS" = "conflicts" ]; then
-            PR_BODY="## ⚠️ Template Updates (Merge Conflicts)
+            PR_BODY=$(cat <<EOF
+## ⚠️ Template Updates (Merge Conflicts)
 
 This PR syncs updates from the template repository but has **merge conflicts** that need manual resolution.
 
@@ -155,14 +156,17 @@ git status
 
 # Resolve conflicts in your editor, then:
 git add .
-git commit -m \"Resolve merge conflicts\"
+git commit -m "Resolve merge conflicts"
 git push origin $BRANCH_NAME
 \`\`\`
 
 ---
-🤖 Generated automatically by [Sync Template Updates workflow](.github/workflows/sync-template.yml)"
+🤖 Generated automatically by [Sync Template Updates workflow](.github/workflows/sync-template.yml)
+EOF
+)
           else
-            PR_BODY="## ✨ Template Updates Available
+            PR_BODY=$(cat <<EOF
+## ✨ Template Updates Available
 
 This PR syncs updates from the template repository.
 
@@ -188,7 +192,9 @@ terraform validate
 \`\`\`
 
 ---
-🤖 Generated automatically by [Sync Template Updates workflow](.github/workflows/sync-template.yml)"
+🤖 Generated automatically by [Sync Template Updates workflow](.github/workflows/sync-template.yml)
+EOF
+)
           fi
 
           # Create PR
